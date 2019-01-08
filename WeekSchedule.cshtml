@@ -1,0 +1,297 @@
+﻿@{
+ var db = Database.Open("HOME_PHUMY");
+ string query = @"SELECT *
+        FROM MeetingSchedule
+        WHERE pheduyet = 1 AND loai = N'Công tác tuần' AND thoigian >= dateadd(day, 2-datepart(dw, getdate()), CONVERT(date,getdate())) and thoigian < dateadd(day, 7-datepart(dw, getdate()), CONVERT(date,getdate()))
+        ";
+// string query = @"SELECT *
+//        FROM MeetingSchedule
+//        WHERE loai = N'Công tác tuần' AND thoigian >= '2016-06-20' AND thoigian < '2016-06-25'
+//        ";
+ var rs = db.Query(query);
+ 
+ 
+ <!--CALCULATE DATE-->
+ var day = DateTime.Now.Day;
+ var date = DateTime.Now.Date;
+ var dayOfWeek = DateTime.Now.DayOfWeek;
+
+ string monday = "",tuesday = "",wednesday = "",thursday = "",friday = "";
+ if (dayOfWeek == System.DayOfWeek.Monday)
+ {
+     monday = DateTime.Now.Date.ToString("dd/MM");
+     tuesday = DateTime.Now.AddDays(1).ToString("dd/MM");
+     wednesday = DateTime.Now.AddDays(2).ToString("dd/MM");
+     thursday = DateTime.Now.AddDays(3).ToString("dd/MM");
+     friday = DateTime.Now.AddDays(4).ToString("dd/MM");
+     
+ }
+ else if (dayOfWeek == System.DayOfWeek.Tuesday)
+ {
+     monday = DateTime.Now.AddDays(-1).ToString("dd/MM");
+     tuesday = DateTime.Now.Date.ToString("dd/MM");
+     wednesday = DateTime.Now.AddDays(1).ToString("dd/MM");
+     thursday = DateTime.Now.AddDays(2).ToString("dd/MM");
+     friday = DateTime.Now.AddDays(3).ToString("dd/MM");
+ }
+ else if (dayOfWeek == System.DayOfWeek.Wednesday)
+ {
+     monday = DateTime.Now.AddDays(-2).ToString("dd/MM");
+     tuesday = DateTime.Now.AddDays(-1).ToString("dd/MM");
+     wednesday = DateTime.Now.Date.ToString("dd/MM");
+     thursday = DateTime.Now.AddDays(1).ToString("dd/MM");
+     friday = DateTime.Now.AddDays(2).ToString("dd/MM");
+ }
+ else if (dayOfWeek == System.DayOfWeek.Thursday)
+ {
+     monday = DateTime.Now.AddDays(-3).ToString("dd/MM");
+     tuesday = DateTime.Now.AddDays(-2).ToString("dd/MM");
+     wednesday = DateTime.Now.AddDays(-1).ToString("dd/MM");
+     thursday = DateTime.Now.Date.ToString("dd/MM"); 
+     friday = DateTime.Now.AddDays(1).ToString("dd/MM");
+ }
+ else if (dayOfWeek == System.DayOfWeek.Friday)
+ {
+     monday = DateTime.Now.AddDays(-4).ToString("dd/MM");
+     tuesday = DateTime.Now.AddDays(-3).ToString("dd/MM");
+     wednesday = DateTime.Now.AddDays(-2).ToString("dd/MM");
+     thursday = DateTime.Now.AddDays(-1).ToString("dd/MM");
+     friday = DateTime.Now.Date.ToString("dd/MM"); 
+ }
+ else if (dayOfWeek == System.DayOfWeek.Saturday)
+ {
+     monday = DateTime.Now.AddDays(-5).ToString("dd/MM");
+     tuesday = DateTime.Now.AddDays(-4).ToString("dd/MM");
+     wednesday = DateTime.Now.AddDays(-3).ToString("dd/MM");
+     thursday = DateTime.Now.AddDays(-2).ToString("dd/MM");
+     friday = DateTime.Now.AddDays(-1).ToString("dd/MM");
+ }
+ else if (dayOfWeek == System.DayOfWeek.Sunday)
+ {
+     monday = DateTime.Now.AddDays(-6).ToString("dd/MM");
+     tuesday = DateTime.Now.AddDays(-5).ToString("dd/MM");
+     wednesday = DateTime.Now.AddDays(-4).ToString("dd/MM");
+     thursday = DateTime.Now.AddDays(-3).ToString("dd/MM");
+     friday = DateTime.Now.AddDays(-2).ToString("dd/MM");
+ }
+ 
+ 
+ <!--MONDAY-->
+    var monSchedule = from c in rs
+                      orderby c.thoigian
+                      where c.thu == "Thứ hai"
+                      select c;
+
+    int numberMondayMeeting = monSchedule.Count();
+    var firstMondayMeeting = numberMondayMeeting > 0 ? monSchedule.ElementAt(0) : null;
+    <!--TUESDAY-->
+    var tueSchedule = from c in rs
+                      orderby c.thoigian
+                      where c.thu == "Thứ ba"
+                      select c;
+    int numberTuesdayMeeting = tueSchedule.Count();
+    var firstTuesdayMeeting = numberTuesdayMeeting > 0 ? tueSchedule.ElementAt(0) : null;
+    
+    <!--WEDNESDAY-->
+    var wedSchedule = from c in rs
+                      orderby c.thoigian
+                      where c.thu == "Thứ tư"
+                      select c;
+    int numberWednesdayMeeting = wedSchedule.Count();
+    var firstWednesdayMeeting = numberWednesdayMeeting > 0 ? wedSchedule.ElementAt(0) : null;
+    
+    <!--THURSDAY-->
+    var thurSchedule = from c in rs
+                       orderby c.thoigian
+                       where c.thu == "Thứ năm"
+                       select c;
+    int numberThursdayMeeting = thurSchedule.Count();
+    var firstThursdayMeeting = numberThursdayMeeting > 0 ? thurSchedule.ElementAt(0) : null;
+    
+    <!--FRIDAY-->
+    var friSchedule = from c in rs
+                      orderby c.thoigian
+                      where c.thu == "Thứ sáu"
+                      select c;
+    int numberFridayMeeting = friSchedule.Count();
+    var firstFridayMeeting = numberFridayMeeting > 0 ? friSchedule.ElementAt(0) : null;
+}
+
+<div class="row">
+    <div class="col-md-12"> 
+        <div class = "panel panel-defaul" style="box-shadow:none;border-color: none;background-color: transparent;border: none;">
+            <div class = "panel-heading" style="background: none;padding: 0;border: 0;">
+                <h3 class = "panel-title"> 
+                    <button type="button" class="btn btn-info ribbon">LỊCH TUẦN</button>
+                </h3>
+            </div>
+   
+            <div class = "panel-body" style="padding-bottom:0;">
+                <div class="panel with-nav-tabs panel-success" style="margin-bottom:0;">
+                    <div class="panel-heading">
+                            <ul class="nav nav-tabs" id="tab-week-schedule">
+                                <li><a href="#tab1success" data-toggle="tab">Thứ hai (@monday)</a></li>
+                                <li><a href="#tab2success" data-toggle="tab">Thứ ba (@tuesday)</a></li>
+                                <li><a href="#tab3success" data-toggle="tab">Thứ tư (@wednesday)</a></li>
+                                <li><a href="#tab4success" data-toggle="tab">Thứ năm (@thursday)</a></li>
+                                <li><a href="#tab5success" data-toggle="tab">Thứ sáu (@friday)</a></li>
+                            </ul>
+                    </div>
+                    <div class="panel-body">
+                <div class="tab-content">
+                    <div class="tab-pane fade in active" id="tab1success">
+                        <table  class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th><strong>Thời gian</strong></th>
+                                    <th><strong>Nội dung</strong></th>
+                                    <th><strong>Thành phần</strong></th>
+                                    <th><strong>Chuẩn bị</strong></th>
+                                    <th><strong>Địa điểm</strong></th>
+                                    <th><strong>Chủ trì</strong></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach(var row in monSchedule){
+                                    <tr>
+                                    <td>@row.thoigian.ToString("HH:mm")</td>
+                                    <td>@row.noidung</td>
+                                    <td>@row.thanhphan</td>
+                                    <td>@row.chuanbi</td>
+                                    <td>@row.diadiem</td>
+                                    <td>@row.chutri</td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="tab-pane fade" id="tab2success">
+                        <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th><strong>Thời gian</strong></th>
+                        <th><strong>Nội dung</strong></th>
+                        <th><strong>Thành phần</strong></th>
+                        <th><strong>Chuẩn bị</strong></th>
+                        <th><strong>Địa điểm</strong></th>
+                        <th><strong>Chủ trì</strong></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        @foreach(var row in tueSchedule){
+                        <tr>
+                        <td>@row.thoigian.ToString("HH:mm")</td>
+                        <td>@row.noidung</td>
+                        <td>@row.thanhphan</td>
+                        <td>@row.chuanbi</td>
+                        <td>@row.diadiem</td>
+                        <td>@row.chutri</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+                    </div>
+                    <div class="tab-pane fade" id="tab3success">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th><strong>Thời gian</strong></th>
+                                    <th><strong>Nội dung</strong></th>
+                                    <th><strong>Thành phần</strong></th>
+                                    <th><strong>Chuẩn bị</strong></th>
+                                    <th><strong>Địa điểm</strong></th>
+                                    <th><strong>Chủ trì</strong></th>
+                                </tr>
+                                </thead>
+                            <tbody>
+                                @foreach(var row in wedSchedule){
+                                    <tr>
+                                    <td>@row.thoigian.ToString("HH:mm")</td>
+                                    <td>@row.noidung</td>
+                                    <td>@row.thanhphan</td>
+                                    <td>@row.chuanbi</td>
+                                    <td>@row.diadiem</td>
+                                    <td>@row.chutri</td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="tab-pane fade" id="tab4success">
+
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th><strong>Thời gian</strong></th>
+                                    <th><strong>Nội dung</strong></th>
+                                    <th><strong>Thành phần</strong></th>
+                                    <th><strong>Chuẩn bị</strong></th>
+                                    <th><strong>Địa điểm</strong></th>
+                                    <th><strong>Chủ trì</strong></th>
+                                </tr>
+                                </thead>
+                            <tbody>
+                                @foreach(var row in thurSchedule){
+                                    <tr>
+                                    <td>@row.thoigian.ToString("HH:mm")</td>
+                                    <td>@row.noidung</td>
+                                    <td>@row.thanhphan</td>
+                                    <td>@row.chuanbi</td>
+                                    <td>@row.diadiem</td>
+                                    <td>@row.chutri</td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="tab-pane fade" id="tab5success">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th><strong>Thời gian</strong></th>
+                                    <th><strong>Nội dung</strong></th>
+                                    <th><strong>Thành phần</strong></th>
+                                    <th><strong>Chuẩn bị</strong></th>
+                                    <th><strong>Địa điểm</strong></th>
+                                    <th><strong>Chủ trì</strong></th>
+                                </tr>
+                                </thead>
+                            <tbody>
+                                @foreach(var row in friSchedule){
+                                    <tr>
+                                    <td>@row.thoigian.ToString("HH:mm")</td>
+                                    <td>@row.noidung</td>
+                                    <td>@row.thanhphan</td>
+                                    <td>@row.chuanbi</td>
+                                    <td>@row.diadiem</td>
+                                    <td>@row.chutri</td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        var day = new Date().getDay();
+        if (day == 1) {
+            $('#tab-week-schedule a[href = "#tab1success"]').tab('show');
+        } else if (day == 2) {
+            $('#tab-week-schedule a[href = "#tab2success"]').tab('show');
+        } else if (day == 3) {
+            $('#tab-week-schedule a[href = "#tab3success"]').tab('show');
+        } else if (day == 4) {
+            $('#tab-week-schedule a[href = "#tab4success"]').tab('show');
+        } else {
+            $('#tab-week-schedule a[href = "#tab5success"]').tab('show');
+        }
+    });
+</script>
