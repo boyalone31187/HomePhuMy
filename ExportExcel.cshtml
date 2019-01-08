@@ -1,0 +1,182 @@
+﻿@{
+    Layout = null;
+    var db = Database.Open("HOME_PHUMY");
+    var listDepartment = Functions.getList("Department");
+   
+    string[] nhomCongViec = { "Công việc giải quyết theo thông báo kết luận", "Công việc giải quyết theo thời hạn chỉ đạo" };
+    
+    string tinhtrang = "";
+    string title = "";
+    string filename = "";
+    if (UrlData[2] == "solved")
+    {
+        filename = "DaThucHien.xls";
+        tinhtrang = "Đã giải quyết";
+        title = "TỔNG HỢP CÁC CÔNG VIỆC GIẢI QUYẾT CÓ THỜI HẠN (Đã giải quyết)";
+    }
+    else if (UrlData[2] == "unsolved")
+    {
+        filename = "DangThucHien.xls";
+        tinhtrang = "Đang giải quyết";
+        title = "TỔNG HỢP CÁC CÔNG VIỆC GIẢI QUYẾT CÓ THỜI HẠN (Đang giải quyết)";
+    }
+    string fromDate = DateTime.ParseExact(UrlData[0], "dd-MM-yyyy", System.Globalization.CultureInfo.InvariantCulture).ToString("yyyy-MM-dd");
+    string toDate = DateTime.ParseExact(UrlData[1], "dd-MM-yyyy", System.Globalization.CultureInfo.InvariantCulture).ToString("yyyy-MM-dd 23:59");
+    string selectCommmand = @"SELECT *
+                      FROM CongViecTuan
+                      WHERE TinhTrang = N'" + tinhtrang + "' AND NgayTao >='" + fromDate + "' AND NgayTao <'" + toDate + "'";
+    var rs = db.Query(selectCommmand);
+    
+    var listWeekJob = from CongViecTuan in rs
+                      join Department in listDepartment
+                      on CongViecTuan.DonViGiaiQuyet equals Department.id
+                      into cd
+                      from tbl_CongViecTuan_DonViGiaiQuyet in cd.DefaultIfEmpty()
+                      select new
+                      {
+                          CongViecTuan.id,
+                          CongViecTuan.TinhTrang,
+                          CongViecTuan.NhomCongViec,
+                          CongViecTuan.SoDen,
+                          CongViecTuan.NgayCongVan,
+                          CongViecTuan.DonViGui,
+                          CongViecTuan.SoKyHieu,
+                          CongViecTuan.NoiDung,
+                          CongViecTuan.NgayGiaoCongVan,
+                          CongViecTuan.ThoiHan,
+                          CongViecTuan.KetQua,
+                          CongViecTuan.NguoiDangKy,
+                          CongViecTuan.DonViNhan,
+                          DonViGiaiQuyet = tbl_CongViecTuan_DonViGiaiQuyet.name,
+                          ID_DonViGiaiQuyet = tbl_CongViecTuan_DonViGiaiQuyet.id,
+                      };
+    Response.AddHeader("Content-disposition", "attachment; filename="+filename+"");
+    Response.ContentType = "application/octet-stream";
+    
+}
+<table border="0" bordercolor="#c3daf9" cellpadding="0" cellspacing="0">
+    <tr align="center" height="25">
+        <td align="center" colspan="5"><font size="3" face="Times New Roman">CÔNG TY NHIỆT ĐIỆN PHÚ MỸ </font></td>
+        <th width="200" align="center">&nbsp;</th>
+        <th align="center" colspan="5"><font face="Times New Roman" size="3">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</font></th>
+    </tr>
+    <tr align="center" height="25">
+        <th align="center" colspan="5"><font face="Times New Roman" size="3">HÀNH CHÍNH & LAO ĐỘNG</font></th>
+        <th width="200" align="center"><font face="Arial"></font></th>
+        <th align="center" colspan="5"><font face="Times New Roman" size="3">Độc lập - Tự do - Hạnh phúc</font></th>
+    </tr>
+    <tr align="center" height="25">
+        <th align="center" colspan="5"><font face="Arial"></font></th>
+        <th width="200" align="center"><font face="Arial"></font></th>
+        <th align="center" colspan="5"><font face="Arial"></font></th>
+    </tr>
+    <tr align="center" height="25">
+        <th align="center" colspan="5"><font face="Arial"></font></th>
+        <th width="200" align="center"><font face="Arial"></font></th>
+        <td align="RIGHT" colspan="5"><font face="Times New Roman" size="3"><em>Phú Mỹ, ngày    tháng   năm</em></font></td>
+    </tr>
+    <tr align="center" height="25">
+        <th align="center" colspan="5"><font face="Arial"></font></th>
+        <th width="200" align="center"><font face="Arial"></font></th>
+        <th align="center" colspan="5"><font face="Arial"> </font></th>
+    </tr>
+    <tr align="center" height="25">
+        <th align="center" colspan="11"><font face="Times New Roman" size="3">@title</font></th>
+    </tr>
+    <tr align="center" height="25">
+        <td align="center" colspan="11"><font face="Times New Roman" size="3">Từ ngày @UrlData[0].Replace("-","/") đến ngày @UrlData[1].Replace("-","/")</font></td>
+    </tr>
+    <tr align="center" height="25">
+        <th align="center" colspan="11"><font face="Times New Roman" size="3">Kính gửi: Ông  Giám Đốc Công ty
+    </font></th>
+    </tr>
+    <tr align="center" height="25">
+        <td align="left" colspan="11" height="30"><font face="Times New Roman" size="3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Thực hiện sự chỉ đạo của Ông  Giám Đốc, Phòng Hành chính & Lao động đã kiểm tra việc thực hiện các công việc của các đơn vị, kính trình Ông  Giám đốc bảng tổng hợp các công việc có thời hạn giải quyết như sau:</font></td>
+    </tr>
+    <tr align="center" height="25">
+        <td align="left" colspan="11"><font face="Times New Roman" size="3">&nbsp;</font></td>
+    </tr>
+</table>
+<table border="1" cellpadding="0" cellspacing="0" width="100%">
+    <thead>
+         <tr align="center" bgcolor="#cccccc" height="35">
+            <th width="5" align="center"><font face="Times New Roman" size="3">STT</font></th>
+            <th width="8" align="center"><font face="Times New Roman" size="3">Số đến</font></th>
+            <th width="10" align="center"><font face="Times New Roman" size="3">Ngày công văn</font></th>
+            <th width="10" align="center"><font face="Times New Roman" size="3">Đơn vị gửi</font></th>
+            <th width="15" align="center"><font face="Times New Roman" size="3">Số ký hiệu</font></th>
+            <th width="200" align="center"><font face="Times New Roman" size="3">Trích yếu nội dung</font></th>
+            <th width="90" align="center"><font face="Times New Roman" size="3">Phối hợp giải quyết</font></th>
+            <th width="40" align="center"><font face="Times New Roman" size="3">Giải quyết chính</font></th>
+            <th width="70" align="center"><font face="Times New Roman" size="3">Ngày giao công văn/ công việc</font></th>
+            <th width="70" align="center"><font face="Times New Roman" size="3">Thời hạn trước ngày</font></th>
+            <th align="center"><font face="Times New Roman" size="3">Kết quả thực hiện</font></th>
+        </tr>
+    </thead>
+   <tbody>
+    @{ string[] ordering = { "I", "II", "III", "IV", "V", "VI", "VII", "VIII" }; int i = 0; int j = 0;}
+    @foreach (var d in listDepartment)
+    {
+        i = 1;
+        <tr class="bg-info" style="text-transform:uppercase">
+            <td style="padding: 5px; font-family:'Times New Roman'; text-transform: uppercase; font-weight: bolder; text-align: left;" colspan="11"><font size="4">@ordering[j]. @d.name</font></td>
+        </tr>
+        foreach (var row in listWeekJob)
+        {
+            if (d.id == row.ID_DonViGiaiQuyet)
+            {
+                
+                int overLimit = DateTime.Compare(DateTime.Now, row.ThoiHan);
+                <tr style=" @if (overLimit > 0) {<text>font-weight: bold;</text>}">
+                    <td style="padding: 5px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@i</font></td>
+                    <td style="padding: 5px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@row.SoDen</font></td>
+                    <td style="padding: 5px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@if (@row.NgayCongVan != null) { @row.NgayCongVan.ToString("dd/MM/yyyy"); } </font></td>
+                    <td style="padding: 5px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@row.DonViGui</font></td>
+                    <td style="padding: 5px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@row.SoKyHieu</font></td>
+                    <td style="padding: 5px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@row.NoiDung</font></td>
+                    <td style="padding: 5px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@if (!String.IsNullOrEmpty(@row.DonViNhan)) { Functions.convert(@row.DonViNhan, listDepartment); }</font></td>
+                    <td style="padding: 5px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@row.DonViGiaiQuyet</font></td>
+                    <td style="padding: 5px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@if (@row.NgayGiaoCongVan != null) { @row.NgayGiaoCongVan.ToString("dd/MM/yyyy"); } </font></td>
+                    <td style="padding: 5px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@if (@row.ThoiHan != null) { @row.ThoiHan.ToString("dd/MM/yyyy"); }</font></td>
+                    <td style="padding: 5px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@row.KetQua</font></td>
+
+                </tr>
+                i++;
+            }
+
+            
+        }
+        j++;
+    }
+       </tbody>
+</table>
+<table border="0" bordercolor="#c3daf9" cellpadding="0" cellspacing="0">
+    <tr align="center" height="25">
+        <td align="left" colspan="11"><font face="Times New Roman" size="3">&nbsp;</font></td>
+    </tr>
+    <tr align="center" height="25">
+        <td align="left" colspan="11" height="20"><font face="Times New Roman" size="3">&nbsp;&nbsp;&nbsp;&nbsp;Trên đây là báo cáo tình trạng giải quyết công việc có thời hạn của các đơn vị, Phòng Hành chính & Lao động kính trình Ông Giám đốc xem xét.<br>&nbsp;&nbsp;&nbsp;&nbsp;Trân trọng kính trình</font></td>
+    </tr>
+    <tr align="center" height="25">
+        <td align="left" colspan="11"><font face="Times New Roman" size="3">&nbsp;</font></td>
+    </tr>
+    <tr align="center" height="25">
+        <th align="center" colspan="5"><font face="Times New Roman" size="3">NGƯỜI BÁO CÁO</font></th>
+        <th width="200" align="center"><font face="Arial"></font></th>
+        <th align="center" colspan="5"><font face="Times New Roman" size="3">HÀNH CHÍNH & LAO ĐỘNG</font></th>
+    </tr>
+    <tr align="center" height="50">
+        <th align="center" colspan="5" valign="bottom" height="50"><font face="Times New Roman" size="3">Bùi Thị Thu Thảo</font></th>
+        <th width="200" align="center"><font face="Arial"></font></th>
+        <th align="center" colspan="5" valign="bottom"><font face="Times New Roman" size="3">Tống Thị Thanh Thủy</font></th>
+    </tr>
+
+    <tr align="center">
+        <th align="left" colspan="5" valign="bottom" height="30"><font face="Times New Roman" size="3"><em>Nơi nhận:</em></font></th>
+        <th width="200" align="center"><font face="Arial"></font></th>
+        <th align="center" colspan="5" valign="bottom"><font face="Times New Roman"></font></th>
+    </tr>
+    <tr align="center" height="50">
+        <td align="left" colspan="11" valign="bottom" height="50"><font face="Times New Roman" size="3"><br>- Như kính gửi;<br> - Các phòng, PX/NĐPM; <br> - Lưu: VP. <p>* Ghi chú: Những công việc đã quá hạn giải quyết được in đậm</font></td>
+    </tr>
+</table>

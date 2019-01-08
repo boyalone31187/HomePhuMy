@@ -1,0 +1,6 @@
+﻿@{
+    var db = Database.Open("StarterSite");
+    string userID = Request["userID"];
+    string updateCommand = "UPDATE UserProfile SET Active = 0 WHERE UserId = @0";
+    db.Execute(updateCommand, userID);
+}

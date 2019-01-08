@@ -1,0 +1,25 @@
+﻿@{
+    if(!Roles.IsUserInRole("admin") && !Roles.IsUserInRole("vanthu") && !Roles.IsUserInRole("booked") ){
+        AppState["message_error"] = "Bạn không có quyền xóa lịch";
+        Response.Redirect("~/Error");
+    }
+    int id = Convert.ToInt32(UrlData[0]);
+    var db = Database.Open("HOME_PHUMY");
+    if(Roles.IsUserInRole("booked")){
+        string username= WebSecurity.CurrentUserName;
+        string selectCommand = "SELECT * FROM MeetingSchedule WHERE id = " + id;
+        var rs = db.Query(selectCommand);
+        if(rs.Count() > 0){
+            if(username != rs.ElementAt(0).nguoidangky){
+                AppState["message_error"] = "Bạn không có quyền xóa lịch";
+                Response.Redirect("~/Error");
+            }
+        }
+    }
+    string deleteCommand = "DELETE FROM MeetingSchedule WHERE id = @0";
+    db.Execute(deleteCommand,id);
+    Response.Redirect("~/ManageSchedule");
+    
+    
+    
+}

@@ -1,0 +1,21 @@
+﻿@{
+    
+    if (Roles.IsUserInRole("admin") || Roles.IsUserInRole("manage_gallery"))
+    {
+        var db = Database.Open("HOME_PHUMY");
+        int id = Convert.ToInt32(Request.Form["id"]);
+        string filename = Request.Form["filename"];
+        string deleteCommand = "DELETE FROM ImageGallery_Image WHERE id = " + id;
+        db.Execute(deleteCommand);
+        
+        //xoa file tren server
+        var fullPath = Server.MapPath("~/UploadedFiles/ImageGallery/" + filename);
+
+        if (File.Exists(fullPath))
+        {
+            File.Delete(fullPath);
+        }
+        
+    }
+    
+}

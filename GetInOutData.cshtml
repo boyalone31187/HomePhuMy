@@ -1,0 +1,315 @@
+﻿@{
+    if (IsPost){
+
+        var db = Database.Open("PM_ANNINH");
+        string ms_pb = Request["ms_pb"];
+        string giovao = DateTime.ParseExact(Request["giovao"], "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture).ToString("yyyy-MM-dd");
+        string action = Request["action"];
+        string selectCommand = "";
+        var listDepartment = Functions.getList("Department");
+
+
+        if (action == "vaora"){
+            <style>
+                #row-tinhtrang {
+                    display: none;
+                }
+            </style>
+            if(ms_pb == "0"){
+                
+                //lấy tất cả
+                selectCommand = @"SELECT  CONGNHAN.MSTHE, CONGNHAN.TENCN, 
+		                    FileChamCong_PM_Luu.giovao, FileChamCong_PM_Luu.giora,FileChamCong_PM_Luu.sogio,
+		                    PhongBan.MS_PB
+                            FROM dbo.PhongBan 
+                            INNER JOIN dbo.CONGNHAN ON dbo.PhongBan.MS_PB = dbo.CONGNHAN.MS_PB 
+                            INNER JOIN dbo.FileChamCong_PM_Luu ON dbo.CONGNHAN.MSTHE = dbo.FileChamCong_PM_Luu.msthe
+                            WHERE CONVERT(VARCHAR(25), giovao, 126) LIKE '" + giovao + "%' ORDER BY PhongBan.MS_PB DESC, giovao ASC, giora ASC";
+            }
+            else {
+                selectCommand = @"SELECT  CONGNHAN.MSTHE, CONGNHAN.TENCN, 
+		                    FileChamCong_PM_Luu.giovao, FileChamCong_PM_Luu.giora,FileChamCong_PM_Luu.sogio,
+		                    PhongBan.MS_PB
+                            FROM dbo.PhongBan 
+                            INNER JOIN dbo.CONGNHAN ON dbo.PhongBan.MS_PB = dbo.CONGNHAN.MS_PB 
+                            INNER JOIN dbo.FileChamCong_PM_Luu ON dbo.CONGNHAN.MSTHE = dbo.FileChamCong_PM_Luu.msthe
+                            WHERE PhongBan.MS_PB = " + ms_pb + " AND CONVERT(VARCHAR(25), giovao, 126) LIKE '" + giovao + "%' ORDER BY PhongBan.MS_PB DESC, giovao ASC, giora ASC";
+            }
+
+        }else if(action == "dtvs"){
+             <style>
+                #row-tinhtrang {
+                    display: block !important;
+                }
+            </style>
+            string startTime = giovao + " 07:35:00";
+            string endTime = giovao + " 17:00:00";
+            string tinhtrang = Request["tinhtrang"];
+            selectCommand = @"SELECT  CONGNHAN.MSTHE, CONGNHAN.TENCN, 
+		                    FileChamCong_PM_Luu.giovao, FileChamCong_PM_Luu.giora,FileChamCong_PM_Luu.sogio,
+		                    PhongBan.MS_PB
+                            FROM dbo.PhongBan 
+                            INNER JOIN dbo.CONGNHAN ON dbo.PhongBan.MS_PB = dbo.CONGNHAN.MS_PB AND dbo.CONGNHAN.TT = '0'
+                            INNER JOIN dbo.FileChamCong_PM_Luu ON dbo.CONGNHAN.MSTHE = dbo.FileChamCong_PM_Luu.msthe
+                            WHERE CONGNHAN.MSTHE NOT IN ('22007', '22055') AND CONGNHAN.MSTHE NOT IN (SELECT MSCN from CongNhan_KDL where PB = " + ms_pb + " AND CONVERT(VARCHAR(25), NGAY, 126) LIKE '" + giovao +
+                           "%') AND PhongBan.LoaiSX = '1'";
+                           
+            if (ms_pb != "0"){
+                selectCommand += " AND PhongBan.MS_PB = " + ms_pb;
+            }
+            
+            if (String.IsNullOrEmpty(tinhtrang))
+            {
+                selectCommand += @" AND CONVERT(VARCHAR(25), giovao, 126) LIKE '" + giovao + "%' AND ( giovao > '" + startTime + "' OR giora < '" + endTime + "')";
+
+            }
+            else if (tinhtrang == "late")
+            {
+                selectCommand += @" AND CONVERT(VARCHAR(25), giovao, 126) LIKE '" + giovao + "%' AND giovao > '" + startTime + "'";
+            }
+            else if (tinhtrang == "soon")
+            {
+                selectCommand += @" AND CONVERT(VARCHAR(25), giovao, 126) LIKE '" + giovao + "%' AND giora < '" + endTime + "'";
+            }
+            
+            
+            
+
+            //kiểm tra vào sớm ra trễ của nhân viên tạp vụ thuộc phòng HCLD
+            if (ms_pb == "42")
+            {
+                startTime = giovao + " 07:00:00";
+                endTime = giovao + " 16:30:00";
+                
+                selectCommand += @" UNION 
+                            SELECT CONGNHAN.MSTHE, CONGNHAN.TENCN, FileChamCong_PM_Luu.giovao, FileChamCong_PM_Luu.giora,FileChamCong_PM_Luu.sogio, PhongBan.MS_PB 
+                            FROM dbo.PhongBan 
+                            INNER JOIN dbo.CONGNHAN ON dbo.PhongBan.MS_PB = dbo.CONGNHAN.MS_PB AND dbo.CONGNHAN.TT = '0' INNER JOIN dbo.FileChamCong_PM_Luu ON dbo.CONGNHAN.MSTHE = dbo.FileChamCong_PM_Luu.msthe 
+                            WHERE CONGNHAN.MSTHE IN ('22007', '22055') AND CONGNHAN.MSTHE NOT IN (SELECT MSCN from CongNhan_KDL where PB = " + ms_pb + " AND CONVERT(VARCHAR(25), NGAY, 126) LIKE '" + giovao +
+                           "%') AND PhongBan.LoaiSX = '1'";
+
+
+                if (ms_pb != "0")
+                {
+                    selectCommand += " AND PhongBan.MS_PB = " + ms_pb;
+                }
+
+                if (String.IsNullOrEmpty(tinhtrang))
+                {
+                    selectCommand += @" AND CONVERT(VARCHAR(25), giovao, 126) LIKE '" + giovao + "%' AND ( giovao > '" + startTime + "' OR giora < '" + endTime + "')";
+
+                }
+                else if (tinhtrang == "late")
+                {
+                    selectCommand += @" AND CONVERT(VARCHAR(25), giovao, 126) LIKE '" + giovao + "%' AND giovao > '" + startTime + "'";
+                }
+                else if (tinhtrang == "soon")
+                {
+                    selectCommand += @" AND CONVERT(VARCHAR(25), giovao, 126) LIKE '" + giovao + "%' AND giora < '" + endTime + "'";
+                }
+
+                selectCommand += " ORDER BY FileChamCong_PM_Luu.giovao ASC,FileChamCong_PM_Luu.giora ASC";
+                //Response.Write(selectCommand);
+            }
+        }
+        else if (action == "kqt")
+        {
+             <style>
+                #row-tinhtrang {
+                    display: none;
+                }
+            </style>
+            
+            selectCommand = @"SELECT CONGNHAN.MSTHE, CONGNHAN.TENCN, CongNhan_KDL.GHICHU, CONGNHAN.MS_PB
+                            FROM CONGNHAN
+                            JOIN CongNhan_KDL ON CongNhan_KDL.MSCN = CONGNHAN.MSTHE AND CongNhan_KDL.NGAY = '" + giovao +
+                            "' WHERE CONGNHAN.tt<>'1' AND MSTHE NOT IN (SELECT MSTHE FROM FileChamcong_PM_Luu WHERE CONVERT(VARCHAR(10), giovao, 126) LIKE '" + giovao +
+                            "%')";
+            if (ms_pb != "0")
+            {
+                selectCommand += " AND CONGNHAN.MS_PB = " + ms_pb;
+            }
+        }
+
+        var listEmployee = db.Query(selectCommand);
+        int i = 1;
+
+        //response
+        if (action == "kqt")
+        {
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+		                <th>Mã thẻ</th>		
+		                <th>Họ và tên</th>
+		                <th>Lý do</th>
+	                </tr>
+                </thead>
+                <tbody>
+            @if(ms_pb == "0"){
+                foreach (var d in listDepartment)
+                {
+                    i = 1;
+                    <tr class="bg-info" style="text-transform:uppercase">
+                        <td colspan="13"><strong>@d.name</strong></td>
+                    </tr>
+                    foreach (var row in listEmployee)
+                    {
+                        if (d.ms_pb == Convert.ToInt16(row.MS_PB))
+                        {
+
+                            <tr>
+                                <td>@i</td>
+		                        <td>@row.MSTHE</td>		
+		                        <td>@row.TENCN</td>
+		                        <td>@row.GHICHU</td>
+	                        </tr>
+                            i++;
+                        }
+
+
+                    }
+                }
+            }else{
+                
+                foreach (var row in listEmployee)
+                {
+                    <tr>
+                        <td>@i</td>
+		                <td>@row.MSTHE</td>		
+		                <td>@row.TENCN</td>
+		                <td>@row.GHICHU</td>
+	                </tr>
+                    i++;
+                }
+              
+            }  
+                </tbody>
+            </table> 
+        }
+        else if (ms_pb == "0")
+        {
+            if (action == "vaora")
+            {
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+		                <th>Mã thẻ</th>		
+		                <th>Họ và tên</th>
+		                <th>Thời gian vào</th>
+		                <th>Thời gian ra</th>
+		                <th>Thời gian làm việc</th>
+	                </tr>
+                </thead>
+                <tbody>
+                    @{ 
+                        var allDepartment = Functions.getAllDepartment();
+                    }
+                    @foreach (var d in allDepartment)
+                    {
+                        i = 1;
+                        <tr class="bg-info" style="text-transform:uppercase">
+                            <td colspan="13"><strong>@d.TenPhongBan</strong></td>
+                        </tr>
+                        foreach (var row in listEmployee)
+                        {
+                            if (d.ms_pb == row.MS_PB)
+                            {
+
+                                <tr>
+                                    <td>@i</td>
+		                            <td>@row.MSTHE</td>		
+		                            <td>@row.TENCN</td>
+		                            <td> @(row.giovao != null ? row.giovao.ToString("dd/MM/yyyy HH:mm") : "")</td>
+		                            <td>@(row.giora != null ? row.giora.ToString("dd/MM/yyyy HH:mm") : "")</td>
+		                            <td>@row.sogio</td>
+	                            </tr>
+                                i++;
+                            }
+
+
+                        }
+                    }
+                    </tbody>
+                </table>
+            }
+            else if (action == "dtvs")
+            {
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Mã thẻ</th>
+                            <th>Họ và tên</th>
+                            <th>Thời gian vào</th>
+                            <th>Thời gian ra</th>
+                            <th>Thời gian làm việc</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var d in listDepartment)
+                        {
+                            i = 1;
+                            <tr class="bg-info" style="text-transform:uppercase">
+                                <td colspan="13"><strong>@d.name</strong></td>
+                            </tr>
+                            foreach (var row in listEmployee)
+                            {
+                                if (d.ms_pb == Convert.ToInt16(row.MS_PB))
+                                {
+
+                                    <tr>
+                                        <td>@i</td>
+                                        <td>@row.MSTHE</td>
+                                        <td>@row.TENCN</td>
+                                        <td> @(row.giovao != null ? row.giovao.ToString("dd/MM/yyyy HH:mm") : "")</td>
+                                        <td>@(row.giora != null ? row.giora.ToString("dd/MM/yyyy HH:mm") : "")</td>
+                                        <td>@row.sogio</td>
+                                    </tr>
+                                    i++;
+                                }
+
+
+                            }
+                        }
+                    </tbody>
+                </table>
+            }
+        }
+        else
+        {
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+		                <th>Mã thẻ</th>		
+		                <th>Họ và tên</th>
+		                <th>Thời gian vào</th>
+		                <th>Thời gian ra</th>
+		                <th>Thời gian làm việc</th>
+	                </tr>
+                </thead>
+                <tbody>
+                @foreach (var row in listEmployee)
+                {
+                                   
+                    <tr>
+                        <td>@i</td>
+		                <td>@row.MSTHE</td>		
+		                <td>@row.TENCN</td>
+		                <td> @(row.giovao != null ? row.giovao.ToString("dd/MM/yyyy HH:mm") : "")</td>
+		                <td>@(row.giora != null ? row.giora.ToString("dd/MM/yyyy HH:mm") : "")</td>
+		                <td>@row.sogio</td>
+	                </tr>
+                    i++;
+                }
+                </tbody>
+            </table>
+        }
+        
+        
+    }    
+    
+}

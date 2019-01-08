@@ -1,0 +1,170 @@
+﻿@{
+    Layout = "~/_SiteLayoutGencoNoSlider.cshtml";
+    Page.Title = "Bang Luong";
+    string username = WebSecurity.CurrentUserName;
+    //get get MS_PB where user belong to
+    if (!WebSecurity.IsAuthenticated)
+    {
+        AppState["message_error"] = "Bạn cần phải đăng nhập để sử dụng chức năng này";
+        Response.Redirect("~/Error");
+    }
+
+    var db = Database.Open("HOME_PHUMY");
+    
+    int userID = WebSecurity.CurrentUserId;
+    string maNV = Functions.getMaNVByID(userID);
+    string selectCommand = "SELECT TOP 1 * FROM Salary WHERE Col0='" + maNV + "' ORDER BY Year DESC, Month DESC, KyLuong DESC, CreatedDate DESC";
+    //Response.Write(selectCommand); Response.End();
+    var rs = db.QuerySingle(selectCommand);
+    string ky_luong = "";
+    string thang = "";
+    string nam = "";
+    if (rs != null)
+    {
+        ky_luong = rs.KyLuong.ToString();
+        thang = rs.Month.ToString();
+        nam = rs.Year.ToString();
+    }else{
+        AppState["message_error"] = "Mã Số Nhân viên không hợp lệ!";
+        Response.Redirect("~/Error");
+    }
+    
+    
+   
+    int currentYear = DateTime.Now.Year;
+    if(IsPost){
+        ky_luong = Request.Form["ky_luong"];
+        thang = Request.Form["thang"];
+        nam = Request.Form["nam"];
+        selectCommand = "SELECT TOP 1 * FROM Salary WHERE Col0='" + maNV + "' AND KyLuong='" + ky_luong + "' AND Month='" + thang + "' AND Year='" + nam + "'";
+        rs = db.QuerySingle(selectCommand);
+    }
+    
+   
+
+    
+    //LAY RA CAC COT TUONG UNG 
+    selectCommand = String.Format("SELECT * FROM Salary WHERE KyLuong={0} AND Month={1} AND Year={2} AND ColumnTotal IS NOT NULL",ky_luong,thang,nam);
+    
+    var objCol = db.QuerySingle(selectCommand);
+    int columnTotal = 0;
+    if(objCol != null){
+        columnTotal = objCol.ColumnTotal;
+    }
+    
+}
+
+
+<link rel="stylesheet" href="~/CSS/InOut.css" />
+<style>
+    .form-group {
+        padding-right:20px;
+    }
+    .table-salary {
+        font-size:14px;
+    }
+   
+</style>
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <div class="row">
+                    <div class="col-md-3" style="padding-left:2px;padding-right:0;">
+                        <button class="btn btn-primary btn-xs btn-glyphicon"><span class="glyphicon glyphicon-usd"></span></button>
+                        <div class="title">XEM BẢNG LƯƠNG »</div>
+                    </div>
+                </div>
+
+
+            </div>
+            
+                
+            <div class="panel-body" id="panel-body">
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        <h3 style="font-weight:bold; font-size: 12px;" class="panel-title">BẢNG LƯƠNG KỲ @ky_luong THÁNG @thang NĂM @nam</h3>
+                    </div>
+
+                    <div class="panel-body">
+                        <div class="row" style="margin:0px;padding-bottom:20px;">
+                            <form class="form-inline" method="post" action="~/salarytable">
+                                <div class="form-group">
+                                    <label>Lương kỳ</label>
+                                    <select class="form-control" name="ky_luong">
+                                        @for (int kyluong = 1; kyluong <= 2; kyluong++)
+                                        {
+                                            <option  @(kyluong.ToString() == ky_luong ? "selected" : "") value="@kyluong">@kyluong</option>
+                                        }
+                                        
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                     <label>Tháng</label>
+                                    <select class="form-control" name="thang">
+                                        @for (int i = 1; i <= 12; i++) { 
+                                            <option value="@i" @(thang == i.ToString() ? "selected" : "")>@i</option>
+                                        }
+                                    </select>
+                              </div>
+
+                            <div class="form-group">
+                                <label>Năm</label>
+                                <select class="form-control" name="nam">
+                                    <option value="@currentYear">@currentYear</option>
+                                </select>
+                             </div>
+
+                                <div class="form-group">
+                                <button type = "submit" class = "btn btn-primary">Xem</button>
+                             </div>
+                        </form>
+                        </div>
+                         @if(rs != null)   {
+                         <div class="row">
+                            <div class="col-md-12" id="response-data">
+                                <table class="table table-bordered table-salary">
+                                    @{int j = 1;}
+                                    @for (int i = 1; i < columnTotal; i++)
+                                    {
+                                       
+                                        var property = "Col" + i;
+
+                                        string value = rs[property];
+
+
+                                        if (!String.IsNullOrEmpty(value) && value != "0")
+                                        {
+                                            j++;
+                                            string className = j % 2 == 0 ? "active" : "warning";
+                                            int num;
+                                            bool isNum = int.TryParse(value, out num);
+                                          <tr class="@className">
+                                                <td>@objCol[property]</td>
+                                                <td>@(isNum == true ? string.Format("{0:n0}", num) : value) </td>
+                                                    
+
+                                                
+                                            </tr>
+                                        }
+
+
+
+                                        
+                                    }
+                                  
+                                </table>
+                            </div>
+                        </div>
+                         }
+                    </div>
+                </div>
+            </div>
+                
+            
+        </div>
+
+    </div>
+
+
+</div>

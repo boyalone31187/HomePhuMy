@@ -1,0 +1,183 @@
+﻿@{
+    
+    Layout = "~/_ScheduleLayout.cshtml";
+    Page.Title = "Dang Ky Lam Them T7,CN";
+
+    var db = Database.Open("HOME_PHUMY");
+
+    //init variables for form-edit
+    DateTime current = DateTime.Now;
+    string username = WebSecurity.CurrentUserName;
+    int userId = WebSecurity.CurrentUserId;
+    int departmentId = Functions.getDepartmentID(userId);
+    
+    //get users list in same department
+    var userList = Functions.getUsersByDepartment(departmentId);
+    
+    string sat = "0";
+    int hours1 = 0;
+    string sun = "0";
+    int hours2 = 0;
+    string createdTime = current.ToString();
+    string id = "";
+    string btnTitle = "Đăng ký";
+    string status = "Chưa duyệt";
+    string tencn = "";
+    string query = "";
+    if (IsPost)
+    {
+
+        if(Request["chkSat"] == "on")
+        {
+            sat = "1";
+            hours1 = Convert.ToInt32(Request["sogiolamthu7"]) ;
+        }
+        if (Request["chkSun"] == "on")
+        {
+            sun = "1";
+            hours2 = Convert.ToInt32(Request["sogiolamchunhat"]);
+        }
+
+        id = Request["id"];
+        tencn = Request["tencn"];
+        if(id == "")
+        {
+            query = "INSERT INTO WorkOverTime(userId,username,sat,hours1,sun,hours2,createdTime,departmentId, status, tencn) VALUES(@0,@1,@2,@3,@4,@5,@6,@7,@8,@9)";
+            db.Execute(query, userId, username, sat, hours1, sun, hours2, createdTime, departmentId, status, tencn);
+        }else
+        {
+            query = "UPDATE WorkOverTime SET userId=@0, username=@1, sat=@2, hours1=@3, sun=@4, hours2=@5, updatedTime=@6, departmentId=@7, tencn=@8  WHERE id=@9";
+            db.Execute(query, userId, username, sat, hours1, sun, hours2, createdTime, departmentId, tencn,id);
+        }
+        Response.Redirect("~/danhsachlamthem");
+    }
+    else
+    { // DISPLAY VIEW
+        id = UrlData[0];
+        if(id != "")
+        {
+            
+            btnTitle = "Cập nhật";
+            query = "SELECT * FROM WorkOverTime WHERE id = " + id;
+            var rs = db.QuerySingle(query);
+            //neu da duyet, chi co sep moi duoc chinh sua
+            status = rs.status;
+            if(Roles.IsUserInRole("approve_ot") || Roles.IsUserInRole("admin") || (status == "Chưa duyệt" && Roles.IsUserInRole("booked"))){
+            }else{
+                Response.Redirect("~/danhsachlamthem");
+            }
+            
+            sat = rs.sat;
+            hours1 = rs.hours1;
+            sun = rs.sun;
+            hours2 = rs.hours2;
+            sat = rs.sat;
+            tencn = rs.tencn;
+            
+        }
+    }
+
+
+}
+<link href="~/CSS/RegisterSchedule.css" rel="stylesheet" />
+<style>
+    input[type=checkbox]{
+        margin: 1px 0 0;
+    }
+</style>
+<div class="container">
+
+    <h1 class="thick-heading">||Đăng Ký Làm Thêm Thứ 7, Chủ Nhật||
+      </h1>
+
+    <!-- First Featurette -->
+    <div id="about">
+        <!------------------------code---------------start---------------->
+            <div class="row">
+                <form role="form" method="post">
+                   
+                    <div class="col-lg-10 col-lg-offset-1 bg-frm-register-schedule">
+                         <div class="form-group">
+                            <label>Họ và tên</label>
+                            <select class="form-control" name="tencn">
+                                @foreach(var row in userList){
+                                    <option @(row.tencn == tencn ? "selected" : "") value="@row.tencn">@row.tencn</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="checkbox">
+                            <label><input @(sat == "1" ? "checked" : "") name="chkSat" id="chkSat" type="checkbox">Thứ bảy</label>
+                        </div>
+                       <div class="form-group" id="sogiolamthu7">
+                           <label>Số giờ làm thêm</label>
+                           <select name="sogiolamthu7" class="form-control">
+                               @for (int i = 1; i < 9; i++)
+                               {
+                                <option @(i == hours1 ? "selected" : "") value="@i">@i</option>
+                               }
+                               
+                           </select>
+                       </div>
+                        <div class="checkbox">
+                            <label><input @(sun == "1" ? "checked" : "") name="chkSun" id="chkSun" type="checkbox">Chủ nhật</label>
+                        </div>
+                        <div class="form-group" id="sogiolamchunhat">
+                            <label>Số giờ làm thêm</label>
+                            <select name="sogiolamchunhat"  class="form-control">
+                                @for (int i = 1; i < 9; i++)
+                                {
+                                    <option @(i == hours2 ? "selected" : "") value="@i">@i</option>
+                                }
+
+                            </select>
+                        </div>
+                        <input type="hidden" name="tinhtrang_status" id="tinhtrang_status" value=""/>
+                        <input type="hidden" name="pheduyet" value="" />
+                        <input type="hidden" name="id" value="@id"/>
+                        <input type="submit" name="submit" id="submit" value="@btnTitle" class="btn btn-danger pull-right">
+                    </div>
+                </form>
+
+            </div>
+
+
+            <!----Code------end----------------------------------->
+        
+    </div>
+</div>
+
+
+
+
+<!-- DATE PICKER -->
+<script>
+    $(document).ready(function () {
+        if ($("#chkSat").is(":checked")) {
+            $('#sogiolamthu7').show();
+        } else {
+            $('#sogiolamthu7').hide();
+        }
+        if ($("#chkSun").is(":checked")) {
+            $('#sogiolamchunhat').show();
+        } else {
+            $('#sogiolamchunhat').hide();
+        }
+
+
+        $("#chkSat").change(function () {
+            if (this.checked) {
+                $('#sogiolamthu7').show();
+            } else {
+                $('#sogiolamthu7').hide();
+            }
+        });
+
+        $("#chkSun").change(function () {
+            if (this.checked) {
+                $('#sogiolamchunhat').show();
+            } else {
+                $('#sogiolamchunhat').hide();
+            }
+        });
+    });
+</script>

@@ -1,0 +1,413 @@
+﻿@{
+   
+    var db = Database.Open("HOME_PHUMY");
+    int departmentID = 0;
+    
+    //LOCK UPDATE WEEK JOB
+    string buttonTitle = "Khóa cập nhật";
+    var config = db.QuerySingle("SELECT * FROM Config");
+    int lockUpdateWeekJob = config.LockUpdateWeekJob;
+    if (lockUpdateWeekJob == 1)
+    {
+        buttonTitle = "Mở khóa";
+    }
+    
+    //JUST ADMIN,VANTHU,BOOKER HAVE PERMISSION CURD
+    if (!Roles.IsUserInRole("admin") && !Roles.IsUserInRole("vanthu") && !Roles.IsUserInRole("booked"))
+    {
+        <script>
+            $(document).ready(function () {
+                $('.edit').hide();
+                $('.delete').hide();
+            })
+            
+        </script>
+    }
+    else if (Roles.IsUserInRole("booked")){
+        <script>
+            $(document).ready(function () {
+                $('.delete').hide();
+            })
+        </script>
+        if (lockUpdateWeekJob == 1)
+        {
+            <script>
+                $(document).ready(function () {
+                    $('.edit').hide();
+                })
+            </script>
+        }
+        //GET DEPARTMENT WHERE USER BELONG TO
+        var dbUser = Database.Open("StarterSite");
+        var user = dbUser.QuerySingle("SELECT Department FROM UserProfile WHERE UserId = " + WebSecurity.CurrentUserId);
+        departmentID = Convert.ToInt32(user.Department);
+    }
+    Layout = "~/_ScheduleLayout.cshtml";
+    Page.Title = "Quan Ly Cong Viec Tuan";
+
+
+
+
+    string query = "";
+    //CALCULATE FIRST DAY OF WEEK AND LAST DAY OF WEEK
+    DateTime firstDay = new DateTime();
+    DateTime lastDay = new DateTime();
+    var dayOfWeek = DateTime.Now.DayOfWeek;
+    string strPrevFirstDay = "";
+    string strPrevLastDay = "";
+    string strNextFirstDay = "";
+    string strNextLastDay = "";
+    string fromDate = "";
+    string toDate = "";
+
+    string originalFromDate = "";
+    string originalToDate = "";
+
+    //WHEN USER CLICK LINK : PREVIOUS OR NEXT, GET FIRST DAY AND LAST DAY
+    if (!string.IsNullOrEmpty(UrlData[0]) && !string.IsNullOrEmpty(UrlData[1]))
+    {
+        originalFromDate = UrlData[0];
+        originalToDate = UrlData[1];
+        fromDate = DateTime.ParseExact(UrlData[0], "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture).ToString("dd/MM/yyyy");
+        toDate = DateTime.ParseExact(UrlData[1], "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture).ToString("dd/MM/yyyy");
+
+        //USER CAN NOT EDIT DATA IN LASTWEEK - JUST PREVENT IN CLIENT SIDE - DONT DO IN SERVER SIDE
+        if (!Roles.IsUserInRole("admin") && !Roles.IsUserInRole("vanthu") && DateTime.Compare(DateTime.Now, DateTime.ParseExact(UrlData[1], "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)) > 0)
+        {
+             <script>
+                 $(document).ready(function () {
+                     $('.edit').hide();
+                     $('.delete').hide();
+                 })
+            </script>
+        }
+        //GET RECORDS BY FROM DATE TO DATE
+        query = @"SELECT *
+                      FROM CongViecTuan
+                      WHERE NgayTao >='" + UrlData[0] + "' AND NgayTao <'" + UrlData[1] + "'";
+
+
+
+
+
+        string[] firstDayParamArray = UrlData[0].Split(new char[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
+        DateTime firstDayParam = new DateTime(Convert.ToInt32(firstDayParamArray[0]), Convert.ToInt32(firstDayParamArray[1]), Convert.ToInt32(firstDayParamArray[2]));
+
+        string[] lastDayParamArray = UrlData[1].Split(new char[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
+        DateTime lastDayParam = new DateTime(Convert.ToInt32(lastDayParamArray[0]), Convert.ToInt32(lastDayParamArray[1]), Convert.ToInt32(lastDayParamArray[2]));
+        if (UrlData[2] == "prev")
+        {
+            strPrevFirstDay = firstDayParam.AddDays(-7).ToString("yyyy-MM-dd");
+            strPrevLastDay = firstDayParam.AddDays(-2).ToString("yyyy-MM-dd");
+            strNextFirstDay = lastDayParam.AddDays(2).ToString("yyyy-MM-dd");
+            strNextLastDay = lastDayParam.AddDays(7).ToString("yyyy-MM-dd");
+        }
+        else if (UrlData[2] == "next")
+        {
+            strNextFirstDay = lastDayParam.AddDays(2).ToString("yyyy-MM-dd");
+            strNextLastDay = lastDayParam.AddDays(7).ToString("yyyy-MM-dd");
+
+            strPrevFirstDay = firstDayParam.AddDays(-7).ToString("yyyy-MM-dd");
+            strPrevLastDay = firstDayParam.AddDays(-2).ToString("yyyy-MM-dd");
+
+        }
+
+        if (!string.IsNullOrEmpty(UrlData[3]) && UrlData[3] == "approveAll")
+        {
+            //UPDATE ALL SCHEDULE
+            string updateCommand = "UPDATE CongViecTuan SET pheduyet=1 WHERE thoigian >= @0 AND thoigian < @1 AND pheduyet = 0";
+            db.Execute(updateCommand, UrlData[0], UrlData[1]);
+        }
+    }
+    else
+    { //GET TO CURRENT TIME
+
+        if (dayOfWeek == System.DayOfWeek.Monday)
+        {
+            firstDay = DateTime.Now;
+            lastDay = DateTime.Now.AddDays(4);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Tuesday)
+        {
+            firstDay = DateTime.Now.AddDays(-1);
+            lastDay = DateTime.Now.AddDays(3);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Wednesday)
+        {
+            firstDay = DateTime.Now.AddDays(-2);
+            lastDay = DateTime.Now.AddDays(2);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Thursday)
+        {
+            firstDay = DateTime.Now.AddDays(-3);
+            lastDay = DateTime.Now.AddDays(1);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Friday)
+        {
+            firstDay = DateTime.Now.AddDays(-4);
+            lastDay = DateTime.Now;
+        }
+        else if (dayOfWeek == System.DayOfWeek.Saturday)
+        {
+            firstDay = DateTime.Now.AddDays(-5);
+            lastDay = DateTime.Now.AddDays(-1);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Sunday)
+        {
+            firstDay = DateTime.Now.AddDays(-6);
+            lastDay = DateTime.Now.AddDays(-2);
+        }
+        strPrevFirstDay = firstDay.AddDays(-7).ToString("yyyy-MM-dd");
+        strPrevLastDay = firstDay.AddDays(-2).ToString("yyyy-MM-dd");
+        strNextFirstDay = lastDay.AddDays(3).ToString("yyyy-MM-dd");
+        strNextLastDay = lastDay.AddDays(8).ToString("yyyy-MM-dd");
+        fromDate = firstDay.ToString("dd/MM/yyyy");
+        toDate = lastDay.ToString("dd/MM/yyyy");
+        originalFromDate = firstDay.ToString("yyyy-MM-dd");
+        originalToDate = lastDay.ToString("yyyy-MM-dd");
+        //DEFAULT QUERY
+        query = @"SELECT *
+                FROM CongViecTuan
+                WHERE NgayTao >= '" + firstDay.ToString("yyyy-MM-dd") + "' AND Ngaytao < '" + lastDay.ToString("yyyy-MM-dd HH:mm:ss") + "'";
+
+    }
+
+
+    var rs = db.Query(query);
+    //GET LIST DEPARTMENT
+    var listDepartment = Functions.getList("Department");
+    var listWeekJob = from CongViecTuan in rs
+                      join Department in listDepartment
+                      on CongViecTuan.DonViGiaiQuyet equals Department.id
+                      into cd
+                      from tbl_CongViecTuan_DonViGiaiQuyet in cd.DefaultIfEmpty()
+                     
+                      select new
+                      {
+                          CongViecTuan.id,
+                          CongViecTuan.TinhTrang,
+                          CongViecTuan.NhomCongViec,
+                          CongViecTuan.SoDen,
+                          CongViecTuan.NgayCongVan,
+                          CongViecTuan.DonViGui,
+                          CongViecTuan.SoKyHieu,
+                          CongViecTuan.NoiDung,
+                          CongViecTuan.NgayGiaoCongVan,
+                          CongViecTuan.ThoiHan,
+                          CongViecTuan.KetQua,
+                          CongViecTuan.NguoiDangKy,
+                          CongViecTuan.DonViNhan,
+                          DonViGiaiQuyet = tbl_CongViecTuan_DonViGiaiQuyet.name,
+                          ID_DonViGiaiQuyet = tbl_CongViecTuan_DonViGiaiQuyet.id,
+                      };
+
+    
+}
+<style>
+    table tr th {
+        background-color: #2196F3;
+        color: #fff;
+        font-weight: bold;
+    }
+    .btn-xs {
+        padding-top: 4px;
+        padding-bottom: 4px;
+    }
+    tr.solved td {
+        font-weight: bolder;
+    }
+</style>
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            @if (rs.Count() > 0)
+            { 
+            
+                <table class="table table-bordered">
+                <caption class="text-center">
+                    <h4><button type="button" class="btn btn-danger ribbon" style="text-align:center; width:30%;">DANH SÁCH CÔNG VIỆC TUẦN</button></h4>
+                    <div class="row" style="margin-bottom: 20px;">
+                        <div class="col-md-2"></div>
+                        <div class="col-md-2 text-right" ><a href="~/ManageWeekJob/@strPrevFirstDay/@strPrevLastDay/prev"><span class="glyphicon glyphicon-backward"></span></a></div>
+                        <div class="col-md-4"><span class = "label label-warning" style="font-size: 13px;">Từ ngày @fromDate đến ngày @toDate</span></div>
+                        <div class="col-md-1 text-left"><a href="~/ManageWeekJob/@strNextFirstDay/@strNextLastDay/next"><span class="glyphicon glyphicon-forward"></span></a></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 text-left">
+                            <i>* Những công việc quá hạn thực hiện được <strong>tô đậm</strong></i><br />
+                            <i>* Những công việc đã thực hiện được tô màu</i> <div style="background-color:#f2dede; width: 30px;height: 15px;display: inline-block;"></div>
+                        </div>
+                        <div class="col-md-4">
+                            @if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                            { 
+                                <a class="btn btn-success btn-xs" href="~/TransferWeekJob.cshtml">Chuyển công việc</a>
+                                <a class="btn btn-success btn-xs" href="~/RegisterWeekJob.cshtml">Nhập mới</a>
+                                <a status="@lockUpdateWeekJob" class="toogleLock btn btn-success btn-xs" href="#">@buttonTitle</a>
+                            }
+                            
+                        </div>
+                        <div class="col-md-4">
+                            <a class="btn btn-primary btn-xs"><span class="glyphicon glyphicon-print"></span></a>
+                            <a target="_blank" href="~/WeekJobPrinter/@fromDate.Replace("/","-")/@toDate.Replace("/","-")/solved"><strong>Đã thực hiện</strong></a> | <a target="_blank" href="~/WeekJobPrinter/@fromDate.Replace("/","-")/@toDate.Replace("/","-")/unsolved"><strong>Đang thực hiện</strong></a><br />
+                            <div style="padding-top: 10px;">
+                                <img width="24" height="22" src="~/Images/file-xls-excel-icon.png" />
+                                <a href="~/ExportExcel.cshtml/@fromDate.Replace("/","-")/@toDate.Replace("/","-")/solved"><strong>Đã thực hiện</strong></a> | <a href="~/ExportExcel/@fromDate.Replace("/","-")/@toDate.Replace("/","-")/unsolved"><strong>Đang thực hiện</strong></a><br />
+                            </div>
+                        </div>
+                    </div>
+                    @if (AppState["transferMessage"] != null && !String.IsNullOrEmpty(AppState["transferMessage"].ToString()))
+                    {
+                        <div class="row">
+                            <div class="col-md-8 col-md-offset-4 text-left" style="font-size: 14px; color: red;font-weight: bold;">
+                                @AppState["transferMessage"]
+                            </div>
+                        </div>
+                        AppState["transferMessage"] = "";
+                    }
+                </caption>
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Số đến</th>
+                        <th style="width: 95px;">Ngày công văn</th>
+                        <th>Đơn vị gửi</th>
+                        <th>Số ký hiệu</th>
+                        <th>Trích yếu nội dung</th>
+                        <th>Đơn vị giải quyết chính</th>
+                        <th>Đơn vị phối hợp giải quyết</th>
+                        
+                        <th>Ngày giao công văn/công việc</th>
+                        <th style="width: 95px;">Thời hạn trước ngày</th>
+                        <th>Kết quả thực hiện</th>
+                        <th class="edit">Sửa</th>
+                        <th class="delete">Xóa</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var d in listDepartment)
+                    {
+                        int i = 1;
+                        <tr class="bg-info" style="text-transform:uppercase">
+                            <td colspan="13"><strong>@d.name</strong></td>
+                        </tr>
+                        foreach (var row in listWeekJob)
+                        {
+                            if (d.id == row.ID_DonViGiaiQuyet)
+                            {
+
+                                int overLimit = DateTime.Compare(DateTime.Now, row.ThoiHan);
+                                <tr class="@if (overLimit > 0)
+                                           {<text>solved</text>} @if (row.TinhTrang == "Đã giải quyết")
+                                                                                   {<text>bg-danger</text>}" >
+                                     <td>@i</td>
+                                     <td>@row.SoDen</td>
+                                     <td>@if (@row.NgayCongVan != null) { @row.NgayCongVan.ToString("dd-MM-yyyy");}</td>
+                                     <td>@row.DonViGui</td>
+                                     <td>@row.SoKyHieu</td>
+                                     <td>@row.NoiDung</td>
+                                    <td>@row.DonViGiaiQuyet</td>
+                                     <td>@if (!String.IsNullOrEmpty(@row.DonViNhan)) { @Functions.convert(@row.DonViNhan, listDepartment); }</td>
+                                     
+                                     <td>@if (@row.NgayGiaoCongVan != null) { @row.NgayGiaoCongVan.ToString("dd-MM-yyyy") }</td>
+                                     <td>@if (@row.ThoiHan != null) { @row.ThoiHan.ToString("dd-MM-yyyy");  }</td>
+                                     <td>@row.KetQua</td>
+                                     <td class="edit" style="vertical-align: middle;">
+                                         @if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin") || (Roles.IsUserInRole("booked") && d.id == departmentID))
+                                         {
+                                            <a href="~/RegisterWeekJob/@row.id" class="btn btn-primary btn-xs"><span class="glyphicon glyphicon-pencil"></span></a>
+                                         }
+                                         
+                                     </td>
+                                     <td class="delete" style="vertical-align: middle;"><button onclick="deleteWeekJob(this,@row.id)" class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-trash"></span></button></td>
+                                </tr>
+                                         i++;
+                            }
+
+
+                        }
+                    }
+                    
+                </tbody>
+            </table>
+            }
+            else
+            {
+                <table class="table table-bordered">
+                    <caption class="text-center">
+                        <h4><button type="button" class="btn btn-danger ribbon" style="text-align:center; width:30%;">DANH SÁCH CÔNG VIỆC TUẦN</button></h4>
+                        <div class="row">
+                            <div class="col-md-2"></div>
+                            <div class="col-md-2 text-right" ><a href="~/ManageWeekJob/@strPrevFirstDay/@strPrevLastDay/prev"><span class="glyphicon glyphicon-backward"></span></a></div>
+                            <div class="col-md-4"><span class = "label label-warning" style="font-size: 13px;">Từ ngày @fromDate đến ngày @toDate</span></div>
+                            <div class="col-md-1 text-left"><a href="~/ManageWeekJob/@strNextFirstDay/@strNextLastDay/next"><span class="glyphicon glyphicon-forward"></span></a></div>
+                        </div>
+                        <div class="row" style="margin-top: 15px;">
+                            <div class="col-md-4 col-md-offset-4">
+                                @if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                                { 
+                                    <a class="btn btn-success btn-xs" href="~/TransferWeekJob.cshtml">Chuyển công việc</a>
+                                    <a class="btn btn-success btn-xs" href="~/RegisterWeekJob.cshtml">Nhập mới</a>
+                                    <a status="@lockUpdateWeekJob" class="toogleLock btn btn-success btn-xs" href="#">@buttonTitle</a>
+                                }
+                            
+                            </div>
+                        </div>
+
+                    </caption>
+                </table>
+                <div class="alert alert-info text-center">
+                    @if (AppState["transferMessage"] != null && !String.IsNullOrEmpty(AppState["transferMessage"].ToString()))
+                    {
+                        <div class="row">
+                            <div class="col-md-8 col-md-offset-4 text-left" style="font-size: 14px; color: red;font-weight: bold;">
+                                @AppState["transferMessage"]
+                            </div>
+                        </div>
+                        AppState["transferMessage"] = "";
+                    }
+                   <h4>Hiện tại chưa có dữ liệu công việc cho tuần này.</h4><br>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+
+
+
+
+<script>
+    function deleteWeekJob(me, id) {
+        
+        $.ajax({
+            type: "POST",
+            url: "/DeleteWeekJob.cshtml",
+            data: { id: id },
+            success: function (response) {
+                $(me).closest('tr').remove();
+            }
+        })
+    }
+
+    $(document).ready(function () {
+        $('a.toogleLock').click(function () {
+            var status = $(this).attr('status');
+            var me = $(this);
+            $.ajax({
+                type: "POST",
+                url: "/LockUpdateWeekJob.cshtml",
+                data: { status: status },
+                success: function (response) {
+                    if (status == "1") {
+                        me.html("Khóa cập nhật");
+                        me.attr('status', 0);
+
+                    } else {
+                        me.html("Mở khóa");
+                        me.attr('status', 1);
+                    }
+                }
+            })
+        });
+    });
+</script>

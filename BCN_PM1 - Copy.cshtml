@@ -1,0 +1,1061 @@
+﻿@{
+    Layout = "~/_ScheduleLayout.cshtml";
+    Page.Title = "Bao Cao Ngay San Xuat Dien";
+    var db = Database.Open("QLTHSL_TTD");
+    int ngay = DateTime.Now.Day - 1;
+    int thang = DateTime.Now.Month;
+    int nam = DateTime.Now.Year;
+
+    if (IsPost)
+    {
+        var date = Request["date"];
+        var date_array = date.Split(new char[] { '/' });
+        ngay = Convert.ToInt32(date_array[0]);
+        thang = Convert.ToInt32(date_array[1]);
+        nam = Convert.ToInt32(date_array[2]);
+        <script>
+            $(document).ready(function () {
+                $('#date').jqxDateTimeInput({ value: new Date(@nam, @thang - 1, @ngay) });
+            });
+        </script>
+    }
+
+    //variable for PM4
+    var pm4_tdnsx_dc_kt = 0;
+
+    //PM4 To May 43
+
+    //variable for PM1
+    double last_dn_sxd_pm1 = 0.0;
+
+    double last_mw_chay_dau_ofPM1 = 0.0;
+
+    double dn_sxd_tomay11 = 0.0;
+    double dn_sxd_tomay12 = 0.0;
+    double dn_sxd_tomay13 = 0.0;
+
+    double last_dn_sxg_pm1 = 0.0;
+
+    var tdn_sx_tomay14 = 0.0;
+
+    var dn_sxg_tomay11 = 0.0;
+    var dn_sxg_tomay12 = 0.0;
+    var dn_sxg_tomay13 = 0.0;
+    var dn_sxg_tomay14 = 0.0;
+
+    double t7 = 0.0;
+    double t8 = 0.0;
+    double total_t7 = 0.0;
+    double total_t8 = 0.0;
+
+    double mw_chay_dau_tomay11 = 0.0;
+    double mw_chay_dau_tomay12 = 0.0;
+    double mw_chay_dau_tomay13 = 0.0;
+
+    double total_mw_chay_dau_tomay11 = 0.0;
+    double total_mw_chay_dau_tomay12 = 0.0;
+    double total_mw_chay_dau_tomay13 = 0.0;
+
+    //to may 11
+
+    double tdn_td_tomay11 = 0.0;
+    double tdn_kt_tomay11 = 0.0;
+    //to may 12
+    double tdn_td_tomay12 = 0.0;
+    double tdn_kt_tomay12 = 0.0;
+    //to may 13
+    double tdn_td_tomay13 = 0.0;
+    double tdn_kt_tomay13 = 0.0;
+    //to may 14
+    double tdn_td_tomay14 = 0.0;
+    double tdn_kt_tomay14 = 0.0;
+
+
+    double total_tdn_td_tomay11 = 0.0;
+    double total_tdn_td_tomay12 = 0.0;
+    double total_tdn_td_tomay13 = 0.0;
+    double total_tdn_td_tomay14 = 0.0;
+
+    double total_tdn_kt_tomay11 = 0.0;
+    double total_tdn_kt_tomay12 = 0.0;
+    double total_tdn_kt_tomay13 = 0.0;
+    double total_tdn_kt_tomay14 = 0.0;
+
+    var total_tdn_sx_in_month_ofPM1 = 0.0;
+    double total_tdn_sx_tomay11 = 0.0;
+    double total_tdn_sx_tomay12 = 0.0;
+    double total_tdn_sx_tomay13 = 0.0;
+    double total_tdn_sx_tomay14 = 0.0;
+    double last_total_tdn_sx_pm1 = 0.0;
+    double last_tdn_sx_tomay11 = 0.0;
+    double last_tdn_sx_tomay12 = 0.0;
+    double last_tdn_sx_tomay13 = 0.0;
+    double last_tdn_sx_tomay14 = 0.0;
+    double pm1_tdn_sx = 0.0;
+
+
+    var total_dn_sxg_in_month_ofPM1 = 0.0;
+    double total_dn_sxg_tomay11 = 0.0;
+    double total_dn_sxg_tomay12 = 0.0;
+    double total_dn_sxg_tomay13 = 0.0;
+    double total_dn_sxg_tomay14 = 0.0;
+    double last_total_dn_sxg_pm1 = 0.0;
+    double last_dn_sxg_tomay11 = 0.0;
+    double last_dn_sxg_tomay12 = 0.0;
+    double last_dn_sxg_tomay13 = 0.0;
+    double last_dn_sxg_tomay14 = 0.0;
+    double pm1_dn_sxg = 0.0;
+
+    var total_dn_sxd_in_month_ofPM1 = 0.0;
+    double total_dn_sxd_tomay11 = 0.0;
+    double total_dn_sxd_tomay12 = 0.0;
+    double total_dn_sxd_tomay13 = 0.0;
+    double total_dn_sxd_tomay14 = 0.0;
+    double last_total_dn_sxd_pm1 = 0.0;
+    double last_dn_sxd_tomay11 = 0.0;
+    double last_dn_sxd_tomay12 = 0.0;
+    double last_dn_sxd_tomay13 = 0.0;
+    double last_dn_sxd_tomay14 = 0.0;
+    double pm1_dn_sxd = 0.0;
+
+    int count_tomay11 = 0;
+
+    int count_tomay11_in_month = 0;
+    int count_tomay12_in_month = 0;
+    int count_tomay13_in_month = 0;
+    int count_tomay14_in_month = 0;
+
+    double total_mw_chay_dau_in_month_pm1 = 0.0;
+
+    double gas_tieuthu_tomay11 = 0.0;
+    double gas_tieuthu_tomay12 = 0.0;
+    double gas_tieuthu_tomay13 = 0.0;
+    double last_gas_tieuthu_pm1 = 0.0;
+
+    double ncs_m3_tomay14 = 0.0;
+    double total_ncs_m3_in_month_pm1 = 0.0;
+
+    double ncs_btu_tomay14 = 0.0;
+    double total_ncs_btu_in_month_pm1 = 0.0;
+
+
+    double dau_tt_tomay11 = 0.0;
+    double dau_tt_tomay12 = 0.0;
+    double dau_tt_tomay13 = 0.0;
+    double total_dau_tt_in_month_pm1 = 0.0;
+
+    double shk_ttd_tomay11 = 0.0;
+    double shk_ttd_tomay12 = 0.0;
+    double shk_ttd_tomay13 = 0.0;
+
+    double shd_ttd_tomay11 = 0.0;
+    double shd_ttd_tomay12 = 0.0;
+    double shd_ttd_tomay13 = 0.0;
+
+    double ptb_k_tomay11 = 0.0;
+    double ptb_k_tomay12 = 0.0;
+    double ptb_k_tomay13 = 0.0;
+    double ptb_k_tomay14 = 0.0;
+    double total_ptb_k_tomay11_in_month = 0.0;
+    double total_ptb_k_tomay12_in_month = 0.0;
+    double total_ptb_k_tomay13_in_month = 0.0;
+    double total_ptb_k_tomay14_in_month = 0.0;
+
+    double ptb_d_tomay11 = 0.0;
+    double ptb_d_tomay12 = 0.0;
+    double ptb_d_tomay13 = 0.0;
+    double total_ptb_d_tomay11_in_month = 0.0;
+    double total_ptb_d_tomay12_in_month = 0.0;
+    double total_ptb_d_tomay13_in_month = 0.0;
+
+    double do_ton_evn_tomay11 = 0.0;
+    double do_ton_evn_tomay12 = 0.0;
+    double do_ton_evn_tomay13 = 0.0;
+    double do_ton_evn_tomay14 = 0.0;
+    double do_ton_evn_tomay15 = 0.0;
+
+    //variable for PM2
+    double pm2_tdn_sx = 0.0;
+    string selectCommand = "SELECT * FROM TTD_BCN_PX WHERE nam = " + nam + " AND thang <= " + thang + " AND ngay <= " + ngay + " ORDER BY nam DESC, thang DESC, ngay DESC";
+    var rs = db.Query(selectCommand);
+
+    //variable for Luy Ke
+    double tdn_sx_tomay11_in_year = 0.0;
+    double tdn_sx_tomay12_in_year = 0.0;
+    double tdn_sx_tomay13_in_year = 0.0;
+    double tdn_sx_tomay14_in_year = 0.0;
+
+    double tdn_sx_in_year_pm1 = 0.0;
+
+    double tdn_sx_tomay11_previous_years = 0.0;
+    double tdn_sx_tomay12_previous_years = 0.0;
+    double tdn_sx_tomay13_previous_years = 0.0;
+    double tdn_sx_tomay14_previous_years = 0.0;
+
+    foreach (var row in rs)
+    {
+        //CAC TO MAY THUOC PM4
+        if (row.IDTOMAY == 41 || row.IDTOMAY == 42 || row.IDTOMAY == 43)
+        {
+            pm4_tdnsx_dc_kt += row.tdnsx_dc_kt;
+        }
+        else if (row.IDTOMAY == 11 || row.IDTOMAY == 12 || row.IDTOMAY == 13 || row.IDTOMAY == 14 || row.IDTOMAY == 15) // cac to may PM1
+        {
+            //lay du lieu cua nhung nam truoc
+            if (row.nam < nam) {
+                if (row.IDTOMAY == 11)
+                {
+                    tdn_sx_tomay11_previous_years += row.tdn_sx;
+                }
+                else if (row.IDTOMAY == 12)
+                {
+                    tdn_sx_tomay12_previous_years += row.tdn_sx;
+                }
+                else if (row.IDTOMAY == 13)
+                {
+                    tdn_sx_tomay13_previous_years += row.tdn_sx;
+                }
+                else if (row.IDTOMAY == 14)
+                {
+                    tdn_sx_tomay14_previous_years += row.tdn_sx;
+                }
+            }
+            //lay du lieu trong nam
+            if ((row.ngay <= ngay && row.thang == thang && row.nam == nam) || (row.thang < thang && row.nam == nam))
+            {
+                tdn_sx_in_year_pm1 += row.tdn_sx;
+                if (row.IDTOMAY == 11) {
+                    tdn_sx_tomay11_in_year += row.tdn_sx;
+                }
+                else if(row.IDTOMAY == 12) {
+                    tdn_sx_tomay12_in_year += row.tdn_sx;
+                }
+                else if (row.IDTOMAY == 13)
+                {
+                    tdn_sx_tomay13_in_year += row.tdn_sx;
+                }
+                else if (row.IDTOMAY == 14)
+                {
+                    tdn_sx_tomay14_in_year += row.tdn_sx;
+                }
+
+            }
+
+            //lay du lieu hien tai
+            if (row.ngay == ngay && row.thang == thang && row.nam == nam)
+            {
+
+                last_dn_sxg_pm1 += row.dn_sxg;
+                last_dn_sxd_pm1 += row.dn_sxd;
+                if (row.IDTOMAY == 11)
+                {
+                    do_ton_evn_tomay11 = row.do_ton_evn;
+                    ptb_d_tomay11 = row.ptb_d;
+                    ptb_k_tomay11 = row.ptb_k;
+                    shd_ttd_tomay11 = row.shd_ttd;
+                    shk_ttd_tomay11 = row.shk_ttd;
+                    dau_tt_tomay11 = row.dau_tt;
+                    last_gas_tieuthu_pm1 += row.gas_tieuthu;
+                    gas_tieuthu_tomay11 = row.gas_tieuthu;
+                    last_mw_chay_dau_ofPM1 += row.mw_chay_dau;
+                    dn_sxd_tomay11 = row.dn_sxd;
+                    dn_sxg_tomay11 = row.dn_sxg;
+                    mw_chay_dau_tomay11 = row.mw_chay_dau;
+                    tdn_td_tomay11 = row.tdn_td;
+                    tdn_kt_tomay11 = row.tdn_kt;
+
+                    count_tomay11++;
+                    last_tdn_sx_tomay11 = row.tdn_sx;
+                    last_dn_sxg_tomay11 = row.dn_sxg;
+                    last_dn_sxd_tomay11 = row.dn_sxd;
+                }
+                else if (row.IDTOMAY == 12)
+                {
+                    do_ton_evn_tomay12 = row.do_ton_evn;
+                    ptb_d_tomay12 = row.ptb_d;
+                    ptb_k_tomay12 = row.ptb_k;
+                    shd_ttd_tomay12 = row.shd_ttd;
+                    shk_ttd_tomay12 = row.shk_ttd;
+                    dau_tt_tomay12 = row.dau_tt;
+                    last_gas_tieuthu_pm1 += row.gas_tieuthu;
+                    gas_tieuthu_tomay12 = row.gas_tieuthu;
+                    last_mw_chay_dau_ofPM1 += row.mw_chay_dau;
+                    dn_sxd_tomay12 = row.dn_sxd;
+                    dn_sxg_tomay12 = row.dn_sxg;
+                    mw_chay_dau_tomay12 = row.mw_chay_dau;
+
+                    tdn_td_tomay12 = row.tdn_td;
+                    tdn_kt_tomay12 = row.tdn_kt;
+
+                    last_tdn_sx_tomay12 = row.tdn_sx;
+                    last_dn_sxg_tomay12 = row.dn_sxg;
+                    last_dn_sxd_tomay12 = row.dn_sxd;
+                }
+                else if (row.IDTOMAY == 13)
+                {
+                    do_ton_evn_tomay13 = row.do_ton_evn;
+                    ptb_d_tomay13 = row.ptb_d;
+                    ptb_k_tomay13 = row.ptb_k;
+                    shd_ttd_tomay13 = row.shd_ttd;
+                    shk_ttd_tomay13 = row.shk_ttd;
+                    dau_tt_tomay13 = row.dau_tt;
+                    last_gas_tieuthu_pm1 += row.gas_tieuthu;
+                    gas_tieuthu_tomay13 = row.gas_tieuthu;
+                    last_mw_chay_dau_ofPM1 += row.mw_chay_dau;
+                    dn_sxd_tomay13 = row.dn_sxd;
+                    dn_sxg_tomay13 = row.dn_sxg;
+                    mw_chay_dau_tomay13 = row.mw_chay_dau;
+
+                    tdn_td_tomay13 = row.tdn_td;
+                    tdn_kt_tomay13 = row.tdn_kt;
+
+                    last_tdn_sx_tomay13 = row.tdn_sx;
+                    last_dn_sxg_tomay13 = row.dn_sxg;
+                    last_dn_sxd_tomay13 = row.dn_sxd;
+                }
+                else if (row.IDTOMAY == 14)
+                {
+                    do_ton_evn_tomay14 = row.do_ton_evn;
+                    ptb_k_tomay14 = row.ptb_k;
+                    ncs_btu_tomay14 = row.ncs_btu;
+                    ncs_m3_tomay14 = row.ncs_m3;
+                    dn_sxg_tomay14 = row.dn_sxg;
+                    tdn_sx_tomay14 = row.tdn_sx;
+
+                    t7 = row.t7;
+                    t8 = row.t8;
+
+                    tdn_td_tomay14 = row.tdn_td;
+                    tdn_kt_tomay14 = row.tdn_kt;
+
+                    last_tdn_sx_tomay14 = row.tdn_sx;
+                    last_dn_sxg_tomay14 = row.dn_sxg;
+                    last_dn_sxd_tomay14 = row.dn_sxd;
+                }
+                else if (row.IDTOMAY == 15)
+                {
+                    do_ton_evn_tomay15 = row.do_ton_evn;
+                }
+            }
+            //lay du lieu trong thang
+            //tinh tong tdn_sx cua tung to may pm1 trong thang
+            if (row.ngay <= ngay && row.thang == thang && row.nam == nam)
+            {
+                total_mw_chay_dau_in_month_pm1 += row.mw_chay_dau;
+                if (row.IDTOMAY == 11)
+                {
+                    total_ptb_d_tomay11_in_month += row.ptb_d;
+                    count_tomay11_in_month++;
+
+                    total_ptb_k_tomay11_in_month += row.ptb_k;
+                    total_dau_tt_in_month_pm1 += row.dau_tt;
+                    total_mw_chay_dau_tomay11 += row.mw_chay_dau;
+                    total_tdn_kt_tomay11 += row.tdn_kt;
+                    total_tdn_td_tomay11 += row.tdn_td;
+                    total_tdn_sx_tomay11 += row.tdn_sx;
+                    total_dn_sxg_tomay11 += row.dn_sxg;
+                    total_dn_sxd_tomay11 += row.dn_sxd;
+                }
+                else if (row.IDTOMAY == 12)
+                {
+                    total_ptb_d_tomay12_in_month += row.ptb_d;
+                    count_tomay12_in_month++;
+                    total_ptb_k_tomay12_in_month += row.ptb_k;
+                    total_dau_tt_in_month_pm1 += row.dau_tt;
+                    total_mw_chay_dau_tomay12 += row.mw_chay_dau;
+                    total_tdn_kt_tomay12 += row.tdn_kt;
+                    total_tdn_td_tomay12 += row.tdn_td;
+                    total_tdn_sx_tomay12 += row.tdn_sx;
+                    total_dn_sxg_tomay12 += row.dn_sxg;
+                    total_dn_sxd_tomay12 += row.dn_sxd;
+                }
+                else if (row.IDTOMAY == 13)
+                {
+                    total_ptb_d_tomay13_in_month += row.ptb_d;
+                    count_tomay13_in_month++;
+                    total_ptb_k_tomay13_in_month += row.ptb_k;
+                    total_dau_tt_in_month_pm1 += row.dau_tt;
+                    total_mw_chay_dau_tomay13 += row.mw_chay_dau;
+                    total_tdn_kt_tomay13 += row.tdn_kt;
+                    total_tdn_td_tomay13 += row.tdn_td;
+                    total_tdn_sx_tomay13 += row.tdn_sx;
+                    total_dn_sxg_tomay13 += row.dn_sxg;
+                    total_dn_sxd_tomay13 += row.dn_sxd;
+                }
+                else if (row.IDTOMAY == 14)
+                {
+                    count_tomay14_in_month++;
+                    total_ptb_k_tomay14_in_month += row.ptb_k;
+                    total_ncs_btu_in_month_pm1 += row.ncs_btu;
+                    total_ncs_m3_in_month_pm1 += row.ncs_m3;
+                    total_t7 += row.t7;
+                    total_t8 += row.t8;
+                    total_tdn_kt_tomay14 += row.tdn_kt;
+                    total_tdn_td_tomay14 += row.tdn_td;
+                    total_tdn_sx_tomay14 += row.tdn_sx;
+                    total_dn_sxg_tomay14 += row.dn_sxg;
+                    total_dn_sxd_tomay14 += row.dn_sxd;
+                }
+            }
+
+            pm1_tdn_sx += row.tdn_sx;
+            pm1_dn_sxg += row.dn_sxg;
+            pm1_dn_sxd += row.dn_sxd;
+        }
+        else if (row.IDTOMAY == 21 || row.IDTOMAY == 22 || row.IDTOMAY == 23 || row.IDTOMAY == 24 || row.IDTOMAY == 25 || row.IDTOMAY == 26) // cac to may PM2
+        {
+            pm2_tdn_sx += row.tdn_sx;
+        }
+    }
+    total_ptb_k_tomay11_in_month = total_ptb_k_tomay11_in_month / count_tomay11_in_month;
+    total_ptb_k_tomay12_in_month = total_ptb_k_tomay12_in_month / count_tomay12_in_month;
+    total_ptb_k_tomay13_in_month = total_ptb_k_tomay13_in_month / count_tomay13_in_month;
+    total_ptb_k_tomay14_in_month = total_ptb_k_tomay14_in_month / count_tomay14_in_month;
+
+    last_total_tdn_sx_pm1 = last_tdn_sx_tomay11 + last_tdn_sx_tomay12 + last_tdn_sx_tomay13 + last_tdn_sx_tomay14;
+    total_tdn_sx_in_month_ofPM1 = total_tdn_sx_tomay11 + total_tdn_sx_tomay12 + total_tdn_sx_tomay13 + total_tdn_sx_tomay14;
+    total_dn_sxg_in_month_ofPM1 = total_dn_sxg_tomay11 + total_dn_sxg_tomay12 + total_dn_sxg_tomay13 + total_dn_sxg_tomay14;
+    total_dn_sxd_in_month_ofPM1 = total_dn_sxd_tomay11 + total_dn_sxd_tomay12 + total_dn_sxd_tomay13 + total_dn_sxd_tomay14;
+
+    selectCommand = "Select top 1 dsx,tong_pm1,tong_pm4,tong_pm21,nam from K_SANLUONG_KH_EVN order by nam desc";
+    var rsevn = db.QuerySingle(selectCommand);
+    //total_ptb_k = sum_ptb_k / count_ptb_k;
+    //total_ptb_d = sum_ptb_d / count_ptb_d;
+    //
+    //san luong dien so voi ke hoach
+    string sldSoVoiKH = "";
+    if (count_tomay11 > 0)
+    {
+        sldSoVoiKH = ((((pm1_tdn_sx + pm2_tdn_sx + pm4_tdnsx_dc_kt) * 100000)) / rsevn.dsx).ToString("P");
+    }
+    else
+    {
+        sldSoVoiKH = " (chưa đọc số liệu ngày này!)";
+    }
+
+    //LUY KE
+    double g_lkgt11 = 0.0;
+    double g_lkgt12 = 0.0;
+    double g_lkgt13 = 0.0;
+    double d_lkgt11 = 0.0;
+    double d_lkgt12 = 0.0;
+    double d_lkgt13 = 0.0;
+    double g_lkst14 = 0.0;
+    double lktongnam = 0.0;
+    g_lkgt11 = g_lkgt11 / 1000 + total_dn_sxg_tomay11;
+    g_lkgt12 = g_lkgt12 / 1000 + total_dn_sxg_tomay12;
+    g_lkgt13 = g_lkgt13 / 1000 + total_dn_sxg_tomay13;
+    d_lkgt11 = d_lkgt11 / 1000 + total_dn_sxd_tomay11;
+    d_lkgt12 = d_lkgt12 / 1000 + total_dn_sxd_tomay12;
+    d_lkgt13 = d_lkgt13 / 1000 + total_dn_sxd_tomay13;
+    g_lkst14 = g_lkst14 / 1000 + total_dn_sxd_tomay14;
+    lktongnam = g_lkgt11 + g_lkgt12 + g_lkgt13 + d_lkgt11 + d_lkgt12 + d_lkgt13 + g_lkst14;
+}
+
+<!-- DATE PICKER -->
+<script type="text/javascript" src="~/Scripts/jqxcore.js"></script>
+<script type="text/javascript" src="~/Scripts/jqxdatetimeinput.js"></script>
+<script type="text/javascript" src="~/Scripts/jqxcalendar.js"></script>
+<script type="text/javascript" src="~/Scripts/globalize.js"></script>
+<link rel="stylesheet" href="~/CSS/jqx.base.css" type="text/css" />
+<script>
+    $(document).ready(function () {
+        $("#date").jqxDateTimeInput({ width: '150px', height: '20px', formatString: 'dd/MM/yyyy' });
+    })
+    
+</script>
+<div class="container">
+    <div class="main">
+        <div class="col-mainfull">
+            <!-- InstanceBeginEditable name="LeftColumn" -->
+
+
+            <script language="Javascript">
+                function ShowDate(date_form, date_field, thang, nam, ngay) {
+
+                    url = 'ntnmc_calendar.asp?date_form=' + date_form + '&date_field=' + date_field + '&thang=' + thang + '&nam=' + nam + '&ngay=' + ngay;
+                    window.open(url, "_blank", "height=260,width=330, resizable=No,left=400%,top=200%,status=No,toolbar=No,menubar=No,address=no");
+
+                }
+
+            </script>
+            <script language="javascript">
+
+                function OpenFormUp(idt) {
+                    url = 'InsertTHVHPM1.asp?id=' + idt;
+                    window.open(url, "xxxx", "toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=no,resizable=yes,copyhistory=no,width=500,height=250,top=" + (screen.height - 250) / 2 + ",left=" + (screen.width - 500) / 2);
+                }
+            </script>
+
+            <style type="text/css">
+                #bangchinh {
+                    border-left: 1px solid #ffcc99;
+                    border-top: 1px solid #ffcc99;
+                    border-bottom: 1px solid #ffcc99;
+                    border-right: 1px solid #ffcc99;
+                }
+
+                #bangphu {
+                    border-left: 1px solid #ffcc99;
+                    border-top: 1px solid #ffcc99;
+                    border-bottom: 1px solid #ffcc99;
+                    border-right: 1px solid #ffcc99;
+                }
+
+                    #bangphu tr th {
+                        border-top: 1px solid #ffcc99;
+                        border-right: 1px solid #ffcc99;
+                        border-bottom: 1px solid #ffcc99;
+                    }
+
+                    #bangphu tr td {
+                        border-right: 1px solid #ffcc99;
+                        border-bottom: 1px solid #ffcc99;
+                    }
+
+                .tdechinh {
+                    height: 30px;
+                    text-align: center;
+                    font-family: Tahoma;
+                    font-size: 16px;
+                    font-weight: bold;
+                    color: red;
+                    vertical-align: bottom;
+                }
+
+                .Hide {
+                    visibility: hidden;
+                }
+                .main {
+                    margin: 0 auto;
+                    padding: 0px 5px 0px;
+                    background-color: #FFFFFF;
+                }
+            </style>
+            <div class="box recently">
+                <div class="category-head" style="padding-left: 0px">
+                    <h2 class="subtitlemenu">
+                        <img id="btChitiet" src="~/Images/manual_icon.png" border="1" style="padding-top: 0px" width="20">&nbsp;<strong>BÁO CÁO NGÀY SẢN XUẤT ĐIỆN »</strong> &nbsp;<a href="BCN_PM1.cshtml" target="_self" title="Các tổ máy Phú Mỹ 1">Phú Mỹ 1</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="BCN_PM4.cshtml" target="_self" title="Các tổ máy Phú Mỹ 4">Phú Mỹ 4</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="BCN_PM21.cshtml" target="_self" title="Các tổ máy Phú Mỹ 2.1 và 2.1MR">Phú Mỹ 2.1 &amp;2.1MR</a>
+                        <span class="noidung" style="padding-left: 8%; font-weight: 600">Các NMĐ Phú Mỹ thực hiện so với kế hoạch tính đến ngày @DateTime.Now.AddDays(-1).ToString("dd/MM/yyyy") đạt: @sldSoVoiKH</span>
+                    </h2>
+                </div>
+            </div>
+            <table id="bangchinh" width="998" cellpadding="0" cellspacing="0">
+                <tbody>
+                    <tr>
+                        <td class="tdechinh">TÌNH HÌNH SẢN XUẤT ĐIỆN CÁC TỔ MÁY PHÚ MỸ 1</td>
+                    </tr>
+
+                    <tr>
+                        <td class="noidung">
+                            <form id="form1" name="form1" action="BCN_PM1.cshtml" method="post">
+                                <div class="row" style="padding: 10px 0">
+
+                                    <div class="col-md-2 col-md-offset-3 text-right" style="padding-top:3px;">Chọn ngày</div>
+                                    <div class="col-md-2 pull-left">
+                                        <div id="date" name="date"></div>
+                                    </div>
+                                    <div class="col-md-1 pull-left">
+                                        <input class="btn btn-primary btn-xs" type="submit" value="Xem" alt="Xem" name="btSubmit">
+                                    </div>
+                                    <div class="col-md-2 pull-right">
+                                        <input class="btn btn-xs btn-primary" type="button" value="Xuất Excel" alt="Xem" name="Xuất Excel">
+                                    </div>
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="noidung" style="padding-top: 5px">
+                            <table id="bangphu" width="998" border="0" cellspacing="0" cellpadding="0" align="center">
+
+                                <tbody>
+                                    <tr>
+                                        <th class="noidung" height="25" width="220" bgcolor="#FFFF99"><strong>CHỈ TIÊU</strong></th>
+                                        <th class="noidung" width="50" bgcolor="#FFFF99"><strong>Đơn vị </strong></th>
+                                        <th class="noidung" width="60" bgcolor="#FFFF99"><strong>GT11</strong></th>
+                                        <th class="noidung" width="60" bgcolor="#FFFF99"><strong>GT12</strong></th>
+                                        <th class="noidung" width="60" bgcolor="#FFFF99"><strong>GT13</strong></th>
+                                        <th class="noidung" width="60" bgcolor="#FFFF99"><strong>ST14</strong></th>
+                                        <th class="noidung" width="60" bgcolor="#FFFF99"><strong>Tổng ngày</strong></th>
+                                        <th width="1" bgcolor="#ffcc99"></th>
+                                        <th class="noidung" width="60" bgcolor="#FFFF99"><strong>GT11</strong></th>
+                                        <th class="noidung" width="60" bgcolor="#FFFF99"><strong>GT12</strong></th>
+                                        <th class="noidung" width="60" bgcolor="#FFFF99"><strong>GT13</strong></th>
+                                        <th class="noidung" width="60" bgcolor="#FFFF99"><strong>ST14</strong></th>
+                                        <th class="noidung" width="65" bgcolor="#FFFF99"><strong>Tổng tháng</strong></th>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;Tổng sản lượng điện</td>
+                                        <td class="noidung">MWh</td>
+                                        <td class="noidungr">@(last_tdn_sx_tomay11 != 0 ? last_tdn_sx_tomay11.ToString("#,###") : "0")&nbsp;</td>
+                                        <td class="noidungr">@(last_tdn_sx_tomay12 != 0 ? last_tdn_sx_tomay12.ToString("#,###") : "0")&nbsp;</td>
+                                        <td class="noidungr">@(last_tdn_sx_tomay13 != 0 ? last_tdn_sx_tomay13.ToString("#,###") : "0")&nbsp;</td>
+                                        <td class="noidungr">@(last_tdn_sx_tomay14 != 0 ? last_tdn_sx_tomay14.ToString("#,###") : "0")&nbsp;</td>
+                                        <td class="noidungr">@(last_total_tdn_sx_pm1 != 0 ? last_total_tdn_sx_pm1.ToString("#,###") : "0") &nbsp;</td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidungr">@total_tdn_sx_tomay11.ToString("#,###")&nbsp;</td>
+                                        <td class="noidungr">@total_tdn_sx_tomay12.ToString("#,###")&nbsp;</td>
+                                        <td class="noidungr">@total_tdn_sx_tomay13.ToString("#,###")&nbsp;</td>
+                                        <td class="noidungr">@total_tdn_sx_tomay14.ToString("#,###")&nbsp;</td>
+                                        <td class="noidungr">@total_tdn_sx_in_month_ofPM1.ToString("#,###")&nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;- Sản lượng điện phát bằng khí</td>
+                                        <td class="noidung"></td>
+                                        <td class="noidungr">@(last_dn_sxg_tomay11 != 0 ? last_dn_sxg_tomay11.ToString("#,###") : "-")&nbsp;</td>
+                                        <td class="noidungr">@(last_dn_sxg_tomay12 != 0 ? last_dn_sxg_tomay12.ToString("#,###") : "-")&nbsp;</td>
+                                        <td class="noidungr">@(last_dn_sxg_tomay13 != 0 ? last_dn_sxg_tomay13.ToString("#,###") : "-")&nbsp;</td>
+                                        <td class="noidungr">@(last_dn_sxg_tomay14 != 0 ? last_dn_sxg_tomay14.ToString("#,###") : "")&nbsp;</td>
+                                        <td class="noidungr">@(last_total_dn_sxg_pm1 != 0 ? last_total_dn_sxg_pm1.ToString("#,###") : "0") &nbsp;</td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidungr">@total_dn_sxg_tomay11.ToString("#,###")&nbsp;</td>
+                                        <td class="noidungr">@total_dn_sxg_tomay12.ToString("#,###")&nbsp;</td>
+                                        <td class="noidungr">@total_dn_sxg_tomay13.ToString("#,###")&nbsp;</td>
+                                        <td class="noidungr">@total_dn_sxg_tomay14.ToString("#,###")&nbsp;</td>
+                                        <td class="noidungr">@total_dn_sxg_in_month_ofPM1.ToString("#,###")&nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;- Sản lượng điện phát bằng dầu</td>
+                                        <td class="noidung"></td>
+                                        <td class="noidungr">@(last_dn_sxd_tomay11 != 0 ? last_dn_sxd_tomay11.ToString("#,###") : "-")&nbsp;</td>
+                                        <td class="noidungr">@(last_dn_sxd_tomay12 != 0 ? last_dn_sxd_tomay12.ToString("#,###") : "-")&nbsp;</td>
+                                        <td class="noidungr">@(last_dn_sxd_tomay13 != 0 ? last_dn_sxd_tomay13.ToString("#,###") : "-")&nbsp;</td>
+                                        <td class="noidungr">@(last_dn_sxd_tomay14 != 0 ? last_dn_sxd_tomay14.ToString("#,###") : "")&nbsp;</td>
+                                        <td class="noidungr">@(last_total_dn_sxd_pm1 != 0 ? last_total_dn_sxd_pm1.ToString("#,###") : "-") &nbsp;</td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidungr">@(total_dn_sxd_tomay11 != 0 ? total_dn_sxd_tomay11.ToString("#,###") : "-")&nbsp;</td>
+                                        <td class="noidungr">@(total_dn_sxd_tomay12 != 0 ? total_dn_sxd_tomay12.ToString("#,###") : "-")&nbsp;</td>
+                                        <td class="noidungr">@(total_dn_sxd_tomay13 != 0 ? total_dn_sxd_tomay13.ToString("#,###") : "-")&nbsp;</td>
+                                        <td class="noidungr">@total_dn_sxd_tomay14.ToString("#,###")&nbsp;</td>
+                                        <td class="noidungr">@(total_dn_sxd_in_month_ofPM1 != 0 ? total_dn_sxd_in_month_ofPM1.ToString("#,###") : "-")&nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;- Sản lượng điện phát bằng ST14</td>
+                                        <td class="noidung"></td>
+                                        <td class="noidungr">&nbsp;</td>
+                                        <td class="noidungr">&nbsp;</td>
+                                        <td class="noidungr">&nbsp;</td>
+                                        <td class="noidungr">@(last_tdn_sx_tomay14 != 0 ? last_tdn_sx_tomay14.ToString("#,###") : "-")&nbsp;</td>
+                                        <td class="noidungr">@(last_tdn_sx_tomay14 != 0 ? last_tdn_sx_tomay14.ToString("#,###") : "-")&nbsp;</td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidungr">&nbsp;</td>
+                                        <td class="noidungr">&nbsp;</td>
+                                        <td class="noidungr">&nbsp;</td>
+                                        <td class="noidungr">@(last_tdn_sx_tomay14 == 0 ? "-" : total_tdn_sx_tomay14.ToString("#,###"))&nbsp;</td>
+                                        <td class="noidungr">@(last_tdn_sx_tomay14 == 0 ? "-" : total_tdn_sx_tomay14.ToString("#,###"))&nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;Điện tự dùng:<span style="padding-left:20px">- Khí</span></td>
+                                        <td class="noidung">MWh</td>
+                                        <td class="noidungr">@(tdn_td_tomay11 + tdn_kt_tomay11 != 0 ? String.Format("{0:#,0.0}", tdn_td_tomay11 + tdn_kt_tomay11) : "-")&nbsp;</td>
+                                        <td class="noidungr">@(tdn_td_tomay12 + tdn_kt_tomay12 != 0 ? String.Format("{0:#,0.0}", tdn_td_tomay12 + tdn_kt_tomay12) : "-")&nbsp;</td>
+                                        <td class="noidungr">@(tdn_td_tomay13 + tdn_kt_tomay13 != 0 ? String.Format("{0:#,0.0}", tdn_td_tomay13 + tdn_kt_tomay13) : "-")&nbsp;</td>
+                                        <td class="noidungr" rowspan="2">@(tdn_td_tomay14 + tdn_kt_tomay14 != 0 ? String.Format("{0:#,0.0}", tdn_td_tomay14 + tdn_kt_tomay14) : "-")&nbsp;</td>
+                                        <td class="noidungr">@(tdn_td_tomay11 + tdn_kt_tomay11 + tdn_td_tomay12 + tdn_kt_tomay12 + tdn_td_tomay13 + tdn_kt_tomay13 != 0 ? String.Format("{0:#,0.0}", tdn_td_tomay11 + tdn_kt_tomay11 + tdn_td_tomay12 + tdn_kt_tomay12 + tdn_td_tomay13 + tdn_kt_tomay13) : "-")&nbsp;</td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidungr">@(total_tdn_td_tomay11 + total_tdn_kt_tomay11 != 0 ? String.Format("{0:#,0.0}", total_tdn_td_tomay11 + total_tdn_kt_tomay11) : "-")&nbsp;</td>
+                                        <td class="noidungr">@(total_tdn_td_tomay12 + total_tdn_kt_tomay12 != 0 ? String.Format("{0:#,0.0}", total_tdn_td_tomay12 + total_tdn_kt_tomay12) : "-")&nbsp;</td>
+                                        <td class="noidungr">@(total_tdn_td_tomay13 + total_tdn_kt_tomay13 != 0 ? String.Format("{0:#,0.0}", total_tdn_td_tomay13 + total_tdn_kt_tomay13) : "-")&nbsp;</td>
+                                        <td class="noidungr" rowspan="2">@(total_tdn_td_tomay14 + total_tdn_kt_tomay14 != 0 ? String.Format("{0:#,0.0}", total_tdn_td_tomay14 + total_tdn_kt_tomay14) : "-")&nbsp;</td>
+                                        <td class="noidungr">@(total_tdn_td_tomay11 + total_tdn_kt_tomay11 + total_tdn_td_tomay12 + total_tdn_kt_tomay12 + total_tdn_td_tomay13 + total_tdn_kt_tomay13 != 0 ? String.Format("{0:#,0.0}", total_tdn_td_tomay11 + total_tdn_kt_tomay11 + total_tdn_td_tomay12 + total_tdn_kt_tomay12 + total_tdn_td_tomay13 + total_tdn_kt_tomay13) : "-")&nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;<span style="padding-left:94px">- Dầu</span></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidungr">@(mw_chay_dau_tomay11 == 0 ? "-" : String.Format("{0:#,0.0}", mw_chay_dau_tomay11))&nbsp;</td>
+                                        <td class="noidungr">@(mw_chay_dau_tomay12 == 0 ? "-" : String.Format("{0:#,0.0}", mw_chay_dau_tomay12))</td>
+                                        <td class="noidungr">@(mw_chay_dau_tomay13 == 0 ? "-" : String.Format("{0:#,0.0}", mw_chay_dau_tomay13))&nbsp;</td>
+                                        <td class="noidungr">@(mw_chay_dau_tomay11 + mw_chay_dau_tomay12 + mw_chay_dau_tomay13 == 0 ? "-" : String.Format("{0:#,0.0}", mw_chay_dau_tomay11 + mw_chay_dau_tomay12 + mw_chay_dau_tomay13))&nbsp;</td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidungr">@(total_mw_chay_dau_tomay11 == 0 ? "-" : String.Format("{0:#,0.0}", total_mw_chay_dau_tomay11))&nbsp;</td>
+                                        <td class="noidungr">@(total_mw_chay_dau_tomay12 == 0 ? "-" : String.Format("{0:#,0.0}", total_mw_chay_dau_tomay12))&nbsp;</td>
+                                        <td class="noidungr">@(total_mw_chay_dau_tomay13 == 0 ? "-" : String.Format("{0:#,0.0}", total_mw_chay_dau_tomay13))&nbsp;</td>
+                                        <td class="noidungr">@(total_mw_chay_dau_tomay11 + total_mw_chay_dau_tomay12 + total_mw_chay_dau_tomay13 == 0 ? "-" : String.Format("{0:#,0.0}", total_mw_chay_dau_tomay11 + total_mw_chay_dau_tomay12 + total_mw_chay_dau_tomay13))&nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;Điện tự dùng nhận từ lưới</td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidungr">@(t7 + t8 == 0 ? "-" : String.Format("{0:#,0.0}", (t7 + t8) / 1000))&nbsp;</td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidungr">@(total_t7 + total_t8 == 0 ? "-" : String.Format("{0:#,0.0}", (total_t7 + total_t8) / 1000))&nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;Tỷ lệ điện tự dùng khí:<span style="padding-left:20px">- Khí</span></td>
+                                        <td class="noidung">%</td>
+                                        <td class="noidungr">@(dn_sxg_tomay11 == 0 ? "-" : String.Format("{0:#,0.00}", ((tdn_td_tomay11 + tdn_kt_tomay11) / dn_sxg_tomay11) * 100)) &nbsp;</td>
+                                        <td class="noidungr">@(dn_sxg_tomay12 == 0 ? "-" : String.Format("{0:#,0.00}", ((tdn_td_tomay12 + tdn_kt_tomay12) / dn_sxg_tomay12) * 100)) &nbsp;</td>
+                                        <td class="noidungr">@(dn_sxg_tomay13 == 0 ? "-" : String.Format("{0:#,0.00}", ((tdn_td_tomay13 + tdn_kt_tomay13) / dn_sxg_tomay13) * 100)) &nbsp;</td>
+                                        <td class="noidungr" rowspan="2">@(tdn_sx_tomay14 == 0 ? "-" : String.Format("{0:#,0.00}", ((tdn_td_tomay14 + tdn_kt_tomay14) / tdn_sx_tomay14) * 100))&nbsp;</td>
+                                        <td class="noidungr">@(dn_sxg_tomay11 + dn_sxg_tomay12 + dn_sxg_tomay13 + dn_sxg_tomay14 == 0 ? "-" : String.Format("{0:#,0.00}", ((tdn_td_tomay11 + tdn_kt_tomay11 + tdn_td_tomay12 + tdn_kt_tomay12 + tdn_td_tomay13 + tdn_kt_tomay13) / last_dn_sxg_pm1) * 100)) &nbsp;</td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidungr">@(total_dn_sxg_tomay11 == 0 ? "-" : String.Format("{0:#,0.00}", ((total_tdn_td_tomay11 + tdn_kt_tomay11) / total_dn_sxg_tomay11) * 100))&nbsp;</td>
+                                        <td class="noidungr">@(total_dn_sxg_tomay12 == 0 ? "-" : String.Format("{0:#,0.00}", ((total_tdn_td_tomay12 + tdn_kt_tomay12) / total_dn_sxg_tomay12) * 100))&nbsp;</td>
+                                        <td class="noidungr">@(total_dn_sxg_tomay13 == 0 ? "-" : String.Format("{0:#,0.00}", ((total_tdn_td_tomay13 + tdn_kt_tomay13) / total_dn_sxg_tomay13) * 100))&nbsp;</td>
+                                        <td class="noidungr" rowspan="2">@(total_tdn_sx_tomay14 == 0 ? "-" : String.Format("{0:#,0.00}", ((total_tdn_td_tomay14 + total_tdn_kt_tomay14) / total_tdn_sx_tomay14) * 100))&nbsp;</td>
+                                        <td class="noidungr">@(total_dn_sxg_in_month_ofPM1 == 0 ? "-" : String.Format("{0:#,0.00}", ((total_tdn_td_tomay11 + total_tdn_kt_tomay11 + total_tdn_td_tomay12 + total_tdn_kt_tomay12 + total_tdn_td_tomay13 + total_tdn_kt_tomay13) / total_dn_sxg_in_month_ofPM1) * 100))&nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;<span style="padding-left:138px">- Dầu</span></td>
+                                        <td class="noidung">%</td>
+                                        <td class="noidungr">@(dn_sxd_tomay11 == 0 ? "-" : String.Format("{0:#,0.00}", (mw_chay_dau_tomay11 / dn_sxd_tomay11) * 100))&nbsp;</td>
+                                        <td class="noidungr">@(dn_sxd_tomay12 == 0 ? "-" : String.Format("{0:#,0.00}", (mw_chay_dau_tomay12 / dn_sxd_tomay12) * 100))&nbsp;</td>
+                                        <td class="noidungr">@(dn_sxd_tomay13 == 0 ? "-" : String.Format("{0:#,0.00}", (mw_chay_dau_tomay13 / dn_sxd_tomay13) * 100))&nbsp;</td>
+                                        <td class="noidungr">@(last_total_dn_sxd_pm1 == 0 ? "-" : String.Format("{0:#,0.00}", (last_mw_chay_dau_ofPM1 / last_dn_sxd_pm1) * 100))&nbsp;</td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidungr">@(total_dn_sxd_tomay11 == 0 ? "-" : String.Format("{0:#,0.00}", (total_mw_chay_dau_tomay11 / total_dn_sxd_tomay11) * 100))&nbsp;</td>
+                                        <td class="noidungr">@(total_dn_sxd_tomay12 == 0 ? "-" : String.Format("{0:#,0.00}", (total_mw_chay_dau_tomay12 / total_dn_sxd_tomay12) * 100))&nbsp;</td>
+                                        <td class="noidungr">@(total_dn_sxd_tomay13 == 0 ? "-" : String.Format("{0:#,0.00}", (total_mw_chay_dau_tomay13 / total_dn_sxd_tomay13) * 100))&nbsp;</td>
+                                        <td class="noidungr">@(total_dn_sxd_in_month_ofPM1 == 0 ? "-" : String.Format("{0:#,0.00}", (total_mw_chay_dau_in_month_pm1 / total_dn_sxd_in_month_ofPM1) * 100)) &nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;Nhiên liệu tiêu thụ:</td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;<span style="padding-left:20px">- Lưu lượng khí tại LOCAL</span></td>
+                                        <td class="noidung">m3</td>
+                                        <td class="noidungr">@(gas_tieuthu_tomay11 == 0 ? "0" : String.Format("{0:#,0}", gas_tieuthu_tomay11))&nbsp;</td>
+                                        <td class="noidungr">@(gas_tieuthu_tomay12 == 0 ? "0" : String.Format("{0:#,0}", gas_tieuthu_tomay12))&nbsp;</td>
+                                        <td class="noidungr">@(gas_tieuthu_tomay13 == 0 ? "0" : String.Format("{0:#,0}", gas_tieuthu_tomay13))&nbsp;</td>
+                                        <td class="noidungr"></td>
+                                        <td class="noidungr">@(last_gas_tieuthu_pm1 == 0 ? "0" : String.Format("{0:#,0}", last_gas_tieuthu_pm1))&nbsp;</td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;<span style="padding-left:20px">- Lưu lượng khí tại trạm PM</span></td>
+                                        <td class="noidung">m3</td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidungr">@(ncs_m3_tomay14 == 0 ? "0" : String.Format("{0:#,0}", ncs_m3_tomay14))&nbsp;</td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidungr">@(total_ncs_m3_in_month_pm1 == 0 ? "0" : String.Format("{0:#,0}", total_ncs_m3_in_month_pm1))&nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;<span style="padding-left:20px">- Nhiệt lượng khí tại trạm PM</span></td>
+                                        <td class="noidung">tr.BTU</td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidungr">@(ncs_btu_tomay14 == 0 ? "0" : String.Format("{0:#,0}", ncs_btu_tomay14))&nbsp;</td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidungr">@(total_ncs_btu_in_month_pm1 == 0 ? "0" : String.Format("{0:#,0}", total_ncs_btu_in_month_pm1))&nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;<span style="padding-left:20px">- Dầu</span></td>
+                                        <td class="noidung">kg</td>
+                                        <td class="noidungr">@(dau_tt_tomay11 == 0 ? "-" : String.Format("{0:#,0}", dau_tt_tomay11))&nbsp;</td>
+                                        <td class="noidungr">@(dau_tt_tomay12 == 0 ? "-" : String.Format("{0:#,0}", dau_tt_tomay12))&nbsp;</td>
+                                        <td class="noidungr">@(dau_tt_tomay13 == 0 ? "-" : String.Format("{0:#,0}", dau_tt_tomay13))&nbsp;</td>
+                                        <td class="noidungr"></td>
+                                        <td class="noidungr">@(dau_tt_tomay11 + dau_tt_tomay12 + dau_tt_tomay13 == 0 ? "-" : String.Format("{0:#,0}", dau_tt_tomay11 + dau_tt_tomay12 + dau_tt_tomay13))&nbsp;</td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidungr">@(total_dau_tt_in_month_pm1 == 0 ? "-" : String.Format("{0:#,0}", total_dau_tt_in_month_pm1)) &nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;Suất hao nhiên liêu:</td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;<span style="padding-left:20px">- SHN tra theo đặc tuyến</span></td>
+                                        <td class="noidung">BTU/kWh</td>
+                                        <td class="noidungr">@(shk_ttd_tomay11 == 0 ? "-" : String.Format("{0:#,0}", shk_ttd_tomay11))&nbsp;</td>
+                                        <td class="noidungr">@(shk_ttd_tomay12 == 0 ? "-" : String.Format("{0:#,0}", shk_ttd_tomay11))&nbsp;</td>
+                                        <td class="noidungr">@(shk_ttd_tomay13 == 0 ? "-" : String.Format("{0:#,0}", shk_ttd_tomay11))&nbsp;</td>
+                                        <td class="noidung"></td>
+                                        <td class="noidungr">
+                                            @{
+                                                if (shk_ttd_tomay11 + shk_ttd_tomay12 + shk_ttd_tomay13 == 0)
+                                                {
+                                                    <text>-</text>
+                                                }
+                                                else
+                                                {
+                                                    int count_shk_ttd = 0;
+                                                    if (shk_ttd_tomay11 > 0)
+                                                    {
+                                                        count_shk_ttd++;
+                                                    }
+                                                    if (shk_ttd_tomay12 > 0)
+                                                    {
+                                                        count_shk_ttd++;
+                                                    }
+                                                    if (shk_ttd_tomay13 > 0)
+                                                    {
+                                                        count_shk_ttd++;
+                                                    }
+                                                    String.Format("{0:#,0}", (shk_ttd_tomay11 + shk_ttd_tomay12 + shk_ttd_tomay13) / count_shk_ttd);
+                                                }
+                                            }
+                                            &nbsp;
+                                        </td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;<span style="padding-left:20px">- SHN thực hiện phân bổ theo CSBQ</span></td>
+                                        <td class="noidung">BTU/kWh</td>
+                                        @{
+                                        double g17 = (shk_ttd_tomay11 + shk_ttd_tomay12 + shk_ttd_tomay13) / 3;
+                                        double g18 = (ncs_btu_tomay14 / last_dn_sxg_pm1) * 1000;
+                                        }
+                                        <td class="noidungr">@(shk_ttd_tomay11 == 0 ? "-" : String.Format("{0:#,0}", g18 / g17 * shk_ttd_tomay11))&nbsp;</td>
+                                        <td class="noidungr">@(shk_ttd_tomay12 == 0 ? "-" : String.Format("{0:#,0}", g18 / g17 * shk_ttd_tomay12))&nbsp;</td>
+                                        <td class="noidungr">@(shk_ttd_tomay13 == 0 ? "-" : String.Format("{0:#,0}", g18 / g17 * shk_ttd_tomay13))&nbsp;</td>
+                                        <td class="noidung">@(ncs_btu_tomay14 == 0 ? "-" : String.Format("{0:#,0}", (ncs_btu_tomay14 / last_dn_sxg_pm1) * 1000))</td>
+                                        <td class="noidungr">@(ncs_btu_tomay14 == 0 ? "-" : String.Format("{0:#,0}", (ncs_btu_tomay14 / last_dn_sxg_pm1) * 1000))&nbsp;</td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidungr">@(total_dn_sxg_in_month_ofPM1 == 0 ? "-" : String.Format("{0:#,0}", total_ncs_btu_in_month_pm1 / total_dn_sxg_in_month_ofPM1 * 1000))&nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;<span style="padding-left:20px">- SHD thực hiện phân bố theo CSBQ</span></td>
+                                        <td class="noidung">g/kWh</td>
+                                        @{
+                                            int count_shd_ttd = 0;
+                                            if (shd_ttd_tomay11 > 0)
+                                            {
+                                                count_shd_ttd++;
+                                            }
+                                            if (shd_ttd_tomay12 > 0)
+                                            {
+                                                count_shd_ttd++;
+                                            }
+                                            if (shd_ttd_tomay13 > 0)
+                                            {
+                                                count_shd_ttd++;
+                                            }
+                                            int count_shd_ttd2 = count_shd_ttd;
+                                            if (count_shd_ttd == 0)
+                                            {
+                                                count_shd_ttd = 3;
+                                            }
+                                            double d1 = (shd_ttd_tomay11 + shd_ttd_tomay12 + shd_ttd_tomay13) / count_shd_ttd;
+                                            double d2 = 0.0;
+                                            if (last_total_dn_sxd_pm1 != 0)
+                                            {
+                                                d2 = (dau_tt_tomay11 + dau_tt_tomay12 + dau_tt_tomay13) / last_total_dn_sxd_pm1;
+                                            }
+                                        }
+                                        <td class="noidungr">@(d1 == 0 ? "-" : String.Format("{0:#,0}", (d2 / d1) * shd_ttd_tomay11)) &nbsp;</td>
+                                        <td class="noidungr">@(d1 == 0 ? "-" : String.Format("{0:#,0}", (d2 / d1) * shd_ttd_tomay12))&nbsp;</td>
+                                        <td class="noidungr">@(d1 == 0 ? "-" : String.Format("{0:#,0}", (d2 / d1) * shd_ttd_tomay13))&nbsp;</td>
+                                        <td class="noidung"></td>
+                                        <td class="noidungr">@(d2 == 0 ? "-" : String.Format("{0:#,0}", d2))&nbsp;</td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;<span style="padding-left:20px">- SHD tra theo đặc tuyến</span></td>
+                                        <td class="noidung">g/kWh</td>
+                                        <td class="noidungr">@(shd_ttd_tomay11 == 0 ? "-" : String.Format("{0:#,0}", shd_ttd_tomay11))&nbsp;</td>
+                                        <td class="noidungr">@(shd_ttd_tomay12 == 0 ? "-" : String.Format("{0:#,0}", shd_ttd_tomay12))&nbsp;</td>
+                                        <td class="noidungr">@(shd_ttd_tomay13 == 0 ? "-" : String.Format("{0:#,0}", shd_ttd_tomay13))&nbsp;</td>
+                                        <td class="noidung"></td>
+                                        <td class="noidungr">@(shd_ttd_tomay11 + shd_ttd_tomay12 + shd_ttd_tomay13 == 0 ? "-" : String.Format("{0:#,0}", (shd_ttd_tomay11 + shd_ttd_tomay12 + shd_ttd_tomay13) / count_shd_ttd2)) &nbsp;</td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;Công suất bình quân:<span style="padding-left:20px">- Khí</span></td>
+                                        <td class="noidung">MW</td>
+                                        <td class="noidungr">@String.Format("{0:#,0.0}", ptb_k_tomay11)&nbsp;</td>
+                                        <td class="noidungr">@String.Format("{0:#,0.0}", ptb_k_tomay12)&nbsp;</td>
+                                        <td class="noidungr">@String.Format("{0:#,0.0}", ptb_k_tomay13)&nbsp;</td>
+                                        <td class="noidungr" rowspan="2">@String.Format("{0:#,0.0}", ptb_k_tomay14)&nbsp;</td>
+                                        <td class="noidungr">@String.Format("{0:#,0.0}", (ptb_k_tomay11 + ptb_k_tomay12 + ptb_k_tomay13) / 3)&nbsp;</td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidungr">@String.Format("{0:#,0.0}", total_ptb_k_tomay11_in_month)&nbsp;</td>
+                                        <td class="noidungr">@String.Format("{0:#,0.0}", total_ptb_k_tomay12_in_month)&nbsp;</td>
+                                        <td class="noidungr">@String.Format("{0:#,0.0}", total_ptb_k_tomay13_in_month)&nbsp;</td>
+                                        <td class="noidungr" rowspan="2">@String.Format("{0:#,0.0}", total_ptb_k_tomay14_in_month)&nbsp;</td>
+                                        <td class="noidungr">@String.Format("{0:#,0.0}", (total_ptb_k_tomay11_in_month + total_ptb_k_tomay12_in_month + total_ptb_k_tomay13_in_month) / 3)&nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;<span style="padding-left:138px">- Dầu</span></td>
+                                        <td class="noidung">MW</td>
+                                        <td class="noidungr">@(ptb_d_tomay11 == 0 ? "-" : String.Format("{0:#,0.0}", ptb_d_tomay11))&nbsp;</td>
+                                        <td class="noidungr">@(ptb_d_tomay12 == 0 ? "-" : String.Format("{0:#,0.0}", ptb_d_tomay12))&nbsp;</td>
+                                        <td class="noidungr">@(ptb_d_tomay13 == 0 ? "-" : String.Format("{0:#,0.0}", ptb_d_tomay13))&nbsp;</td>
+                                        <td class="noidungr">@(ptb_d_tomay11 + ptb_d_tomay11 + ptb_d_tomay13 == 0 ? "-" : String.Format("{0:#,0.0}", (ptb_d_tomay11 + ptb_d_tomay11 + ptb_d_tomay13) / 3))&nbsp;</td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidungr">@(total_ptb_d_tomay11_in_month == 0 ? "-" : String.Format("{0:#,0.0}", total_ptb_d_tomay11_in_month))&nbsp;</td>
+                                        <td class="noidungr">@(total_ptb_d_tomay12_in_month == 0 ? "-" : String.Format("{0:#,0.0}", total_ptb_d_tomay12_in_month))&nbsp;</td>
+                                        <td class="noidungr">@(total_ptb_d_tomay13_in_month == 0 ? "-" : String.Format("{0:#,0.0}", total_ptb_d_tomay13_in_month))&nbsp;</td>
+                                        <td class="noidungr">@(total_ptb_d_tomay11_in_month + total_ptb_d_tomay12_in_month + total_ptb_d_tomay13_in_month == 0 ? "-" : String.Format("{0:#,0.0}", (total_ptb_d_tomay11_in_month + total_ptb_d_tomay12_in_month + total_ptb_d_tomay13_in_month) / 3))&nbsp;</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="noidungl" height="20">&nbsp;Dầu D.O tồn trữ lúc 24h00 (báo EVN)</td>
+                                        <td class="noidung">kg</td>
+                                        <td class="noidungr">@String.Format("{0:#,0}", do_ton_evn_tomay11)&nbsp;</td>
+                                        <td class="noidungr">@String.Format("{0:#,0}", do_ton_evn_tomay12)&nbsp;</td>
+                                        <td class="noidungr">@String.Format("{0:#,0}", do_ton_evn_tomay13)&nbsp;</td>
+                                        <td class="noidungr">@String.Format("{0:#,0}", do_ton_evn_tomay14)&nbsp;</td>
+                                        <td class="noidungr">@String.Format("{0:#,0}", do_ton_evn_tomay15)&nbsp;</td>
+                                        <td width="1" bgcolor="#ffcc99"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                        <td class="noidung"></td>
+                                    </tr>
+
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                    @if (dn_sxg_tomay11 > 0)
+                    {
+                        <tr>
+                            <td class="tdechinh" style="padding-top:5px">TÌNH HÌNH SẢN XUẤT ĐIỆN LŨY KẾ CÁC TỔ MÁY PHÚ MỸ 1</td>
+                        </tr>
+                        <tr>
+                        <td class="noidung">
+                            <table id="bangphu" width="998" border="0" cellspacing="0" cellpadding="0" align="center">
+                                <tr>
+                                    <th class="noidung" height="25" width="220" bgcolor="#FFFF99"><strong>CHỈ TIÊU</strong></th>
+                                    <th class="noidung" width="50" bgcolor="#FFFF99"><strong>Đơn vị </strong></th>
+                                    <th class="noidung" width="60" bgcolor="#FFFF99"><strong>GT11</strong></th>
+                                    <th class="noidung" width="60" bgcolor="#FFFF99"><strong>GT12</strong></th>
+                                    <th class="noidung" width="60" bgcolor="#FFFF99"><strong>GT13</strong></th>
+                                    <th class="noidung" width="60" bgcolor="#FFFF99"><strong>ST14</strong></th>
+                                    <th class="noidung" width="60" bgcolor="#FFFF99"><strong>TC @nam</strong></th>
+                                    <th width="1" bgcolor="#ffcc99"></th>
+                                    <th class="noidung" width="60" bgcolor="#FFFF99"><strong>GT11</strong></th>
+                                    <th class="noidung" width="60" bgcolor="#FFFF99"><strong>GT12</strong></th>
+                                    <th class="noidung" width="60" bgcolor="#FFFF99"><strong>GT13</strong></th>
+                                    <th class="noidung" width="60" bgcolor="#FFFF99"><strong>ST14</strong></th>
+                                    <th class="noidung" width="65" bgcolor="#FFFF99"><strong>TC từ khi<br />lắp đặt</strong></th>
+                                </tr>
+                                <tr>
+                                    <td class="noidungl" height="20">&nbsp;Tổng sản lượng điện</td>
+                                    <td class="noidung">MWh</td>
+                                    <td class="noidungr">@String.Format("{0:#,0}", tdn_sx_tomay11_in_year)&nbsp;</td>
+                                    <td class="noidungr">@String.Format("{0:#,0}", tdn_sx_tomay12_in_year)&nbsp;</td>
+                                    <td class="noidungr">@String.Format("{0:#,0}", tdn_sx_tomay13_in_year)&nbsp;</td>
+                                    <td class="noidungr">@String.Format("{0:#,0}", tdn_sx_tomay14_in_year)&nbsp;</td>
+                                    <td class="noidungr">@String.Format("{0:#,0}", tdn_sx_in_year_pm1)&nbsp;</td>
+                                    <td width="1" bgcolor="#ffcc99"></td>
+                                    @{
+                                        double ld1 = 0.0;
+                                        double ld2 = 0.0;
+                                        double ld3 = 0.0;
+                                        double ld4 = 0.0;
+                                        if (tdn_sx_tomay11_previous_years != 0)
+                                        {
+                                            ld1 = tdn_sx_tomay11_previous_years + 18933595 + tdn_sx_tomay11_in_year;
+                                        }
+                                        else {
+                                            ld1 = tdn_sx_tomay11_in_year + 18933595;
+                                        }
+
+                                        if (tdn_sx_tomay12_previous_years != 0)
+                                        {
+                                            ld2 = tdn_sx_tomay12_previous_years + 19119808 + tdn_sx_tomay12_in_year;
+                                        }
+                                        else
+                                        {
+                                            ld2 = tdn_sx_tomay12_in_year + 19119808;
+                                        }
+
+                                        if (tdn_sx_tomay13_previous_years != 0)
+                                        {
+                                            ld3 = tdn_sx_tomay13_previous_years + 18857734 + tdn_sx_tomay13_in_year;
+                                        }
+                                        else
+                                        {
+                                            ld3 = tdn_sx_tomay11_in_year + 18857734;
+                                        }
+
+                                        if (tdn_sx_tomay14_previous_years != 0)
+                                        {
+                                            ld3 = tdn_sx_tomay14_previous_years + 29528525 + tdn_sx_tomay14_in_year;
+                                        }
+                                        else
+                                        {
+                                            ld3 = tdn_sx_tomay11_in_year + 29528525;
+                                        }
+                                        double ldall = ld1 + ld2 + ld3 + ld4;
+
+                                     }
+                                    <td class="noidungr">@String.Format("{0:#,0}", ld1)&nbsp;</td>
+                                    <td class="noidungr">@String.Format("{0:#,0}", ld2)&nbsp;</td>
+                                    <td class="noidungr">@String.Format("{0:#,0}", ld3)&nbsp;</td>
+                                    <td class="noidungr">@String.Format("{0:#,0}", ld4)&nbsp;</td>
+                                    <td class="noidungr">@String.Format("{0:#,0}", ldall)&nbsp;</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                                        }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

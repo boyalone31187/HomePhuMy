@@ -1,0 +1,13 @@
+﻿@{
+    
+    if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+    {
+        var db = Database.Open("HOME_PHUMY");
+        int id = Convert.ToInt32(UrlData[0]);
+
+        string deleteCommand = "DELETE FROM WorkOverTime WHERE id = " + id;
+        db.Execute(deleteCommand);
+        Response.Redirect("~/danhsachlamthem");
+    }
+    
+}

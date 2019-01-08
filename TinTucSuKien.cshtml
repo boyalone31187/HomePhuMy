@@ -1,0 +1,628 @@
+﻿@{
+    var db = Database.Open("HOME_PHUMY");
+    var rs = db.Query("SELECT * FROM BanTinNoiBo ORDER BY feature DESC, createdTime DESC,updatedTime DESC");
+    var tinnoiboList = (from news in rs
+                        where String.IsNullOrEmpty(news.type)
+                        select news).Take(10);
+
+    var tinnganhdienList = (from news in rs
+                            where news.type == "tinnganhdien"
+                        select news).Take(10);
+
+
+    //Get Artical ID that has just inserted
+    decimal insertedID = 0;
+    if (WebCache.Get("showHotIcon") != null)
+    {
+        insertedID = WebCache.Get("showHotIcon");
+    }
+}
+<style>
+    .news_top_ct .ct_left {
+        width: 400px;
+        float: left;
+    }
+
+        .news_top_ct .ct_left .news_item {
+            background-color: #f0f9fe;
+        }
+
+            .news_top_ct .ct_left .news_item .photo {
+                display: inline-block;
+                width: 400px;
+                /*height: 300px;*/
+                overflow: hidden;
+                margin-bottom: 8px;
+            }
+
+                .news_top_ct .ct_left .news_item .photo img {
+                    max-width: 400px;
+                    max-height: 195px;
+                }
+
+            .news_top_ct .ct_left .news_item .text {
+                padding: 0px 10px 15px 10px;
+            }
+
+                .news_top_ct .ct_left .news_item .text h4 {
+                    margin-bottom: 4px;
+                }
+
+                    .news_top_ct .ct_left .news_item .text h4 a {
+                        font-weight: bold;
+                        color: #00bbf3;
+                    }
+
+                        .news_top_ct .ct_left .news_item .text h4 a:hover {
+                            text-decoration: underline;
+                        }
+
+                .news_top_ct .ct_left .news_item .text p {
+                    font-size: 13px;
+                    color: #004f8b;
+                }
+
+    .news_top_ct .ct_right {
+        width: 275px;
+        float: right;
+        padding-top: 8px;
+    }
+
+        .news_top_ct .ct_right .news_lst {
+        }
+
+            .news_top_ct .ct_right .news_lst li {
+                background: url('/images/bantin/icon_list.gif') no-repeat 0 5px transparent;
+                padding-left: 12px;
+                margin-bottom: 5px;
+                margin-left: 5px;
+            }
+
+                .news_top_ct .ct_right .news_lst li a {
+                    line-height: 1.3em;
+                }
+
+        .news_top_ct .ct_right .hot_hd {
+            white-space: nowrap;
+            border-bottom: 1px solid #00bbf3;
+            margin-bottom: 8px;
+            height: 30px;
+        }
+
+            .news_top_ct .ct_right .hot_hd p {
+                font-size: 12px;
+                font-weight: bold;
+                color: #fff;
+                background-color: #00bbf3;
+                display: inline-block;
+                padding: 2px 8px;
+            }
+
+    .layout2col .col_left .news_box_type1 {
+        margin-bottom: 13px;
+        margin-top: 8px;
+    }
+
+        .layout2col .col_left .news_box_type1 .hd {
+            margin-bottom: 13px;
+        }
+
+        .layout2col .col_left .news_box_type1 .main_ct {
+            width: 690px;
+            overflow: hidden;
+        }
+
+            .layout2col .col_left .news_box_type1 .main_ct ul {
+                width: 700px;
+            }
+
+                .layout2col .col_left .news_box_type1 .main_ct ul li {
+                    float: left;
+                    width: 340px;
+                    margin-right: 10px;
+                }
+
+                    .layout2col .col_left .news_box_type1 .main_ct ul li .photo {
+                        display: inline-block;
+                        width: 340px;
+                        height: 255px;
+                        overflow: hidden;
+                        margin-bottom: 12px;
+                    }
+
+                        .layout2col .col_left .news_box_type1 .main_ct ul li .photo img {
+                            display: block;
+                            max-width: 340px;
+                        }
+
+                    .layout2col .col_left .news_box_type1 .main_ct ul li .title_post {
+                        font-size: 18px;
+                        font-weight: bold;
+                        color: #004f8b;
+                    }
+
+                        .layout2col .col_left .news_box_type1 .main_ct ul li .title_post:hover {
+                            color: #00bbf3;
+                        }
+
+    .layout2col .col_left .news_box_type2 {
+        margin-bottom: 6px;
+    }
+
+        .layout2col .col_left .news_box_type2 h4 {
+            margin-bottom: 13px;
+        }
+
+        .layout2col .col_left .news_box_type2 .photo {
+            display: inline-block;
+            width: 340px;
+            height: 255px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+            .layout2col .col_left .news_box_type2 .photo img {
+                display: block;
+                max-width: 340px;
+            }
+
+        .layout2col .col_left .news_box_type2 h5 {
+            margin-bottom: 10px;
+        }
+
+        .layout2col .col_left .news_box_type2 .title_post {
+            font-size: 18px;
+            font-weight: bold;
+            color: #004f8b;
+        }
+
+            .layout2col .col_left .news_box_type2 .title_post:hover {
+                color: #00bbf3;
+            }
+
+        .layout2col .col_left .news_box_type2 ul li {
+            background: url('/images/icon_list.gif') no-repeat 0 5px transparent;
+            padding-left: 14px;
+            margin-bottom: 5px;
+        }
+
+        .layout2col .col_left .news_box_type2 .left_ct {
+            width: 340px;
+            float: left;
+        }
+
+        .layout2col .col_left .news_box_type2 .right_ct {
+            width: 340px;
+            float: right;
+        }
+
+    .layout2col .col_left .news_box_type3 {
+        margin-bottom: 13px;
+    }
+
+        .layout2col .col_left .news_box_type3 h4.title {
+            margin-bottom: 11px;
+        }
+
+        .layout2col .col_left .news_box_type3 .main_ct {
+        }
+
+            .layout2col .col_left .news_box_type3 .main_ct .news_big {
+                width: 340px;
+                float: left;
+                position: relative;
+            }
+
+                .layout2col .col_left .news_box_type3 .main_ct .news_big img {
+                    display: block;
+                    max-width: 340px;
+                }
+
+                .layout2col .col_left .news_box_type3 .main_ct .news_big span {
+                    background: url('/images/bgr_trans_black.png') repeat 0 0 transparent;
+                    width: 100%;
+                    display: inline-block;
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    font-size: 18px;
+                    color: #fff;
+                }
+
+                .layout2col .col_left .news_box_type3 .main_ct .news_big b {
+                    padding: 7px 12px 5px 10px;
+                    display: inline-block;
+                }
+
+                .layout2col .col_left .news_box_type3 .main_ct .news_big a:hover span {
+                    color: #00bbf3;
+                }
+
+            .layout2col .col_left .news_box_type3 .main_ct .news_r {
+                width: 340px;
+                float: right;
+            }
+
+                .layout2col .col_left .news_box_type3 .main_ct .news_r .top {
+                    margin-bottom: 8px;
+                }
+
+                    .layout2col .col_left .news_box_type3 .main_ct .news_r .top .photo {
+                        float: left;
+                        width: 120px;
+                        height: 90px;
+                        overflow: hidden;
+                        margin-right: 12px;
+                    }
+
+                        .layout2col .col_left .news_box_type3 .main_ct .news_r .top .photo img {
+                            display: block;
+                            max-width: 120px;
+                        }
+
+                    .layout2col .col_left .news_box_type3 .main_ct .news_r .top h6 a {
+                        font-size: 14px;
+                        font-weight: bold;
+                        color: #004f8b;
+                    }
+
+                        .layout2col .col_left .news_box_type3 .main_ct .news_r .top h6 a:hover {
+                            color: #00bbf3;
+                        }
+
+                .layout2col .col_left .news_box_type3 .main_ct .news_r ul li {
+                    background: url('/images/icon_list.gif') no-repeat 0 11px transparent;
+                    border-bottom: 1px dashed #ccc;
+                    padding: 6px 0px 8px 13px;
+                }
+
+                    .layout2col .col_left .news_box_type3 .main_ct .news_r ul li:last-child {
+                        border-bottom: none;
+                    }
+
+    .layout2col .col_left .news_box_type4 {
+        margin-bottom: 10px;
+    }
+
+        .layout2col .col_left .news_box_type4 h4.title {
+            margin-bottom: 8px;
+        }
+
+        .layout2col .col_left .news_box_type4 .main_ct {
+        }
+
+            .layout2col .col_left .news_box_type4 .main_ct .m_left {
+                width: 340px;
+                float: left;
+                background-color: #f6f6f6;
+            }
+
+                .layout2col .col_left .news_box_type4 .main_ct .m_left img {
+                    display: block;
+                    max-width: 340px;
+                }
+
+                .layout2col .col_left .news_box_type4 .main_ct .m_left .text {
+                    padding: 0px 14px 18px 14px;
+                }
+
+                    .layout2col .col_left .news_box_type4 .main_ct .m_left .text h5 {
+                        padding-top: 4px;
+                        margin-bottom: 7px;
+                    }
+
+                        .layout2col .col_left .news_box_type4 .main_ct .m_left .text h5 a {
+                            font-size: 18px;
+                            font-weight: bold;
+                            color: #004f8b;
+                        }
+
+                            .layout2col .col_left .news_box_type4 .main_ct .m_left .text h5 a:hover {
+                                color: #00bbf3;
+                            }
+
+                    .layout2col .col_left .news_box_type4 .main_ct .m_left .text p {
+                        font-size: 13px;
+                        color: #004f8b;
+                    }
+
+            .layout2col .col_left .news_box_type4 .main_ct .m_right {
+                width: 342px;
+                float: right;
+                overflow: hidden;
+            }
+
+                .layout2col .col_left .news_box_type4 .main_ct .m_right ul {
+                    width: 355px;
+                }
+
+                    .layout2col .col_left .news_box_type4 .main_ct .m_right ul li {
+                        width: 165px;
+                        float: left;
+                        margin-right: 12px;
+                        margin-bottom: 11px;
+                    }
+
+                        .layout2col .col_left .news_box_type4 .main_ct .m_right ul li img {
+                            display: block;
+                            max-width: 165px;
+                        }
+
+                        .layout2col .col_left .news_box_type4 .main_ct .m_right ul li h6 {
+                            padding: 5px 0px 0px 0px;
+                            min-height: 64px;
+                        }
+
+                            .layout2col .col_left .news_box_type4 .main_ct .m_right ul li h6 a {
+                                font-size: 13px;
+                                color: #004f8b;
+                            }
+
+                                .layout2col .col_left .news_box_type4 .main_ct .m_right ul li h6 a:hover {
+                                    color: #00bbf3;
+                                }
+
+    .layout2col .col_left .news_box_type5 {
+        margin-bottom: 15px;
+    }
+
+        .layout2col .col_left .news_box_type5 .main_ct {
+            width: 217px;
+            float: left;
+            margin-right: 10px;
+        }
+
+            .layout2col .col_left .news_box_type5 .main_ct h4.title {
+                margin-bottom: 12px;
+            }
+
+            .layout2col .col_left .news_box_type5 .main_ct img {
+                display: block;
+                max-width: 217px;
+            }
+
+            .layout2col .col_left .news_box_type5 .main_ct h6 {
+                padding-top: 8px;
+                margin-bottom: 10px;
+                height: 32px;
+            }
+
+                .layout2col .col_left .news_box_type5 .main_ct h6 a {
+                    font-size: 14px;
+                    font-weight: bold;
+                    color: #004f8b;
+                }
+
+                    .layout2col .col_left .news_box_type5 .main_ct h6 a:hover {
+                        color: #00bbf3;
+                    }
+
+            .layout2col .col_left .news_box_type5 .main_ct ul li {
+                background: url('/images/icon_list.gif') no-repeat 0 11px transparent;
+                border-top: 1px dashed #ccc;
+                padding: 6px 0px 6px 15px;
+            }
+
+    .layout2col .col_left .news_box_type6 {
+        margin-bottom: 15px;
+    }
+
+        .layout2col .col_left .news_box_type6 .type6_l {
+            width: 340px;
+            float: left;
+        }
+
+            .layout2col .col_left .news_box_type6 .type6_l .video {
+                position: relative;
+                margin-bottom: 6px;
+            }
+
+                .layout2col .col_left .news_box_type6 .type6_l .video h4.title {
+                    margin-bottom: 12px;
+                }
+
+                .layout2col .col_left .news_box_type6 .type6_l .video img {
+                    display: block;
+                    max-width: 340px;
+                }
+
+                .layout2col .col_left .news_box_type6 .type6_l .video span {
+                    background: url('/images/bgr_trans_blue.png') repeat 0 0 transparent;
+                    width: 100%;
+                    display: inline-block;
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    font-size: 18px;
+                    color: #fff;
+                }
+
+                .layout2col .col_left .news_box_type6 .type6_l .video b {
+                    padding: 7px 50px 5px 12px;
+                    display: inline-block;
+                    background: url('/images/icon_video.png') no-repeat right 50% transparent;
+                    margin-right: 12px;
+                }
+
+                .layout2col .col_left .news_box_type6 .type6_l .video a:hover span {
+                    color: #004f8b;
+                }
+
+            .layout2col .col_left .news_box_type6 .type6_l .picture {
+                width: 340px;
+                overflow: hidden;
+            }
+
+                .layout2col .col_left .news_box_type6 .type6_l .picture h4.title {
+                    margin-bottom: 12px;
+                }
+
+                .layout2col .col_left .news_box_type6 .type6_l .picture ul {
+                    width: 350px;
+                }
+
+                    .layout2col .col_left .news_box_type6 .type6_l .picture ul li {
+                        width: 165px;
+                        float: left;
+                        margin-right: 10px;
+                    }
+
+                        .layout2col .col_left .news_box_type6 .type6_l .picture ul li a img {
+                            display: block;
+                            max-width: 165px;
+                        }
+
+                        .layout2col .col_left .news_box_type6 .type6_l .picture ul li h6 {
+                            padding-top: 7px;
+                        }
+
+                            .layout2col .col_left .news_box_type6 .type6_l .picture ul li h6 a {
+                                font-size: 14px;
+                                font-weight: bold;
+                                color: #004f8b;
+                            }
+
+                                .layout2col .col_left .news_box_type6 .type6_l .picture ul li h6 a:hover {
+                                    color: #00bbf3;
+                                }
+
+        .layout2col .col_left .news_box_type6 .type6_r {
+            width: 340px;
+            float: right;
+        }
+
+            .layout2col .col_left .news_box_type6 .type6_r h4.title {
+                margin-bottom: 12px;
+            }
+
+            .layout2col .col_left .news_box_type6 .type6_r .type6_r_ct {
+                background-color: #f0f9fe;
+                padding: 11px 12px 6px 12px;
+            }
+
+                .layout2col .col_left .news_box_type6 .type6_r .type6_r_ct h6 {
+                    font-size: 13px;
+                    font-weight: bold;
+                    color: #004f8b;
+                    border-bottom: 1px solid #ccc;
+                    padding-bottom: 2px;
+                    margin-bottom: 2px;
+                }
+
+                .layout2col .col_left .news_box_type6 .type6_r .type6_r_ct ul {
+                    margin-bottom: 2px;
+                }
+
+                    .layout2col .col_left .news_box_type6 .type6_r .type6_r_ct ul li {
+                        background: url('/images/icon_list.gif') no-repeat 0 11px transparent;
+                        border-bottom: 1px dashed #ccc;
+                        padding: 6px 0px 7px 15px;
+                    }
+
+                        .layout2col .col_left .news_box_type6 .type6_r .type6_r_ct ul li:last-child {
+                            border-bottom: none;
+                        }
+</style>
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-defaul" style="margin-bottom:0;box-shadow: none;border-color: none; background-color: transparent; border: none;">
+            <div class="panel-heading" style="background: none; padding: 0; border: 0;">
+                <h3 class="panel-title">
+                    <button type="button" class="btn btn-info ribbon">TIN TỨC SỰ KIỆN</button>
+                </h3>
+            </div>
+
+            <div class="panel-body" style="padding-bottom: 0;">
+
+                <div class="panel with-nav-tabs panel-success" style="margin-bottom:0;">
+                    <div class="panel-heading">
+                            <ul class="nav nav-tabs" id="tab-week-schedule">
+                                <li class="active"><a href="#tinnoibo" data-toggle="tab">Tin nội bộ</a></li>
+                                <li><a href="#tinnganhdien" data-toggle="tab">Tin ngành điện</a></li>
+                            </ul>
+                    </div>
+                    <div class="panel-body">
+                        <div class="tab-content">
+                            <div class="news_top_ct tab-pane fade in active" id="tinnoibo">
+                                    <div class="ct_left">
+                                    <div class="news_item">
+                                        <a class="photo" href="~/chitiettin/@tinnoiboList.ElementAt(0).id">
+                                            <div class="crop">
+                                                <img width="400" src="~/Images/bantin/@tinnoiboList.ElementAt(0).image" >
+                                            </div>
+                                        </a>
+                                        <div class="text">
+                                            <h4>
+                                                <a href="~/chitiettin/@tinnoiboList.ElementAt(0).id">@tinnoiboList.ElementAt(0).title</a>
+                                            </h4>
+                                            <p>@tinnoiboList.ElementAt(0).description</p>
+                                        </div>
+                                    </div>
+
+                                    </div>
+                                    <div class="ct_right">
+                                    <ul class="news_lst">
+                                    @{
+                                        tinnoiboList = tinnoiboList.Skip(1);
+                                        foreach (var row in tinnoiboList)
+                                        {
+                                            <li>
+                                                <a href="~/chitiettin/@row.id">@row.title</a>
+                                                @if (insertedID > 0 && insertedID == row.id) { 
+                                                    <img src="~/Images/icon_hot_1.gif" />
+                                                }
+                                            </li>
+                                        }  
+                                    }
+                                    </ul>
+
+                                </div>
+                                    <div class="clrb"></div>
+                            </div>
+
+                            <div class="news_top_ct tab-pane fade" id="tinnganhdien">
+                                 <div class="ct_left">
+                                    <div class="news_item">
+                                        <a class="photo" href="~/chitiettin/@tinnganhdienList.ElementAt(0).id/tinnganhdien">
+                                            <div class="crop">
+                                                <img width="400" src="~/Images/bantin/@tinnganhdienList.ElementAt(0).image" >
+                                            </div>
+                                        </a>
+                                        <div class="text">
+                                            <h4>
+                                                <a href="~/chitiettin/@tinnganhdienList.ElementAt(0).id/tinnganhdien">@tinnganhdienList.ElementAt(0).title</a>
+                                            </h4>
+                                            <p>@tinnganhdienList.ElementAt(0).description</p>
+                                        </div>
+                                    </div>
+
+                                    </div>
+                                    <div class="ct_right">
+                                    <ul class="news_lst">
+                                   @{
+                                       tinnganhdienList = tinnganhdienList.Skip(1);
+                                       foreach (var row in tinnganhdienList)
+                                        {
+                                            <li><a href="~/chitiettin/@row.id/tinnganhdien">@row.title</a></li>
+                                        }  
+                                    }
+                                    </ul>
+
+                                </div>
+                                    <div class="clrb"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $("#tinnoibo").tab("show");
+    });
+</script>

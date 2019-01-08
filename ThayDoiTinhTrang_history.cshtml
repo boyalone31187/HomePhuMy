@@ -1,0 +1,61 @@
+﻿@{
+    Layout = "~/_SiteLayoutGencoNoSlider.cshtml";
+    var db = Database.Open("PM_ANNINH");
+    var listDepartment = Functions.getListDepartment();
+    
+    //get get MS_PB where user belong to
+    if(!WebSecurity.IsAuthenticated){
+        Response.Write("<h3><span class = 'label label-danger'>* Bạn cần phải đăng nhập để sử dụng chức năng này</span></h3>");
+        Response.End();
+    }
+
+    var listEmployee = Functions.getListUserByDepartment(Functions.getDepartmentID(WebSecurity.CurrentUserId));
+    int i = 1;
+    
+}
+<link rel="stylesheet" href="~/CSS/InOut.css" />
+<style>
+    form#frm-search-employee, .col-export {
+        display: none;
+    }
+    
+</style>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>STT</th>
+		    <th>Mã thẻ</th>		
+		    <th>Họ và tên</th>
+		    <th>Lý do</th>
+            <th>Thêm Mới</th>
+            <th>Chỉnh sửa</th>
+	    </tr>
+    </thead>
+    <tbody id="response-data">
+        @foreach (var row in listEmployee)
+        {
+            <tr>
+                <td>@i</td>
+		        <td>@row.MSTHE</td>		
+		        <td>@row.TENCN</td>
+		        <td>@row.GHICHU</td>
+                <td style="vertical-align: middle; text-align: center;"> 
+                    <a style="padding: 3px 5px 7px 5px;" href="/ThayDoiTinhTrang_Edit/@row.MSTHE" class="btn btn-primary btn-xs"><span class="glyphicon glyphicon-plus"></span></a>
+                                         
+                </td>
+                <td style="vertical-align: middle; text-align: center;"> 
+                    <a style="padding: 3px 5px 7px 5px;" href="/ThayDoiTinhTrang_Edit/@row.MSTHE" class="btn btn-primary btn-xs"><span class="glyphicon glyphicon-pencil"></span></a>
+                                         
+                </td>
+	        </tr>
+            i++;
+        }
+                                        
+    </tbody>
+</table>
+<script>
+    $(document).ready(function () {
+
+        $('#action').val('tdtt');
+    })
+</script>

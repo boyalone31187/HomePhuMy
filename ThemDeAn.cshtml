@@ -1,0 +1,161 @@
+﻿@using Microsoft.Web.Helpers;
+<style>
+    .file-upload-buttons input {
+            display: inline-block;
+            padding: 6px 12px;
+            margin-bottom: 0;
+            font-size: 14px;
+            font-weight: bold;
+            line-height: 1.42857143;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            -ms-touch-action: manipulation;
+            touch-action: manipulation;
+            cursor: pointer;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            background-image: none;
+            border: 1px solid transparent;
+            border-radius: 4px;
+
+            color: #fff;
+            background-color: #d9534f;
+            border-color: #d43f3a;
+
+            float: right;
+    }
+</style>
+@{
+    if (!Roles.IsUserInRole("post_dean") && !Roles.IsUserInRole("post_dean"))
+    {
+        Response.Redirect("~/");
+    }
+    Layout = "~/_ScheduleLayout.cshtml";
+    Page.Title = "De An";
+    var db = Database.Open("HOME_PHUMY");
+    string title = "";
+    string description = "";
+    string btnTitle = "Thêm Đề Án";
+    string id = "";
+    string content = "";
+    var fileName = "";
+    if (IsPost)
+    {
+        string query = "";
+        id = Request["id"];
+        title = Request["title"];
+        description = Request["description"];
+        content = Request.Unvalidated("content");
+
+        var fileSavePath = "";
+        var uploadedFile = Request.Files[0];
+        if(uploadedFile.ContentLength > 0){
+            fileName = Path.GetFileName(uploadedFile.FileName);
+            fileSavePath = Server.MapPath("~/UploadedFiles/DeAn/" +
+              fileName);
+            uploadedFile.SaveAs(fileSavePath);
+        }
+        
+        
+        if (id == "")
+        {
+            query = @"INSERT INTO DeAn(title,description,content,fileName,createdTime) VALUES(@0,@1,@2,@3,@4)";
+            db.Execute(query, title, description, content, fileName, DateTime.Now.ToString());
+           
+        }
+        else
+        {
+            if(string.IsNullOrEmpty(fileName)){
+                query = "UPDATE DeAn SET title=@0, description=@1, content=@2 WHERE id = @3";
+                db.Execute(query, title, description, content, id);
+            }else{
+                query = "UPDATE DeAn SET title=@0, description=@1, content=@2, fileName=@3 WHERE id = @4";
+                db.Execute(query, title, description, content, fileName, id);
+            }
+
+            btnTitle = "Cập nhật";
+            
+        }
+        Response.Redirect("~/DeAn");
+    }
+    else
+    {
+        if(UrlData[0] != "") // EDIT VIEW
+        {
+            btnTitle = "Cập nhật";
+            id = UrlData[0];
+            var rs = db.Query("SELECT * FROM DeAn WHERE id = " + id);
+            title = rs.ElementAt(0).title;
+            description = rs.ElementAt(0).description;
+            content = rs.ElementAt(0).content;
+        }
+
+    }
+}
+<script src="~/ckeditor/ckeditor.js"></script>
+<script src="~/CKFinderScripts/ckfinder.js"></script>
+<link href="~/CSS/RegisterSchedule.css" rel="stylesheet" />
+<div class="container">
+
+    <h1 class="thick-heading">
+        ||Thêm Đề Án||
+    </h1>
+
+    <!-- First Featurette -->
+    <div id="about">
+        <!------------------------code---------------start---------------->
+        <div class="row">
+            <form role="form" method="post"  enctype="multipart/form-data">
+                <div class="col-lg-10 col-lg-offset-1 bg-frm-register-schedule">
+
+                    <div class="form-group">
+                        <label>Tiêu đề</label>
+                        <input class="form-control" name="title" value="@title">
+                    </div>
+
+                    <div>
+                        <label for="description">Mô tả</label>
+                        <textarea rows="5" cols="80" name="description" class="form-control" rows="2">@description</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <br />
+                        <label>Nội Dung</label>
+                        <textarea id="editor1" rows="10" cols="80" name="content" class="form-control" rows="2" required>@content</textarea>
+                    </div>
+                    <script>
+                        var editor = CKEDITOR.replace('editor1');
+                        CKFinder.setupCKEditor(editor);
+                    </script>
+
+                     <div class="form-group">
+                        <label>Upload File</label>
+                        @FileUpload.GetHtml(
+                            initialNumberOfFiles:1,
+                            allowMoreFilesToBeAdded:false,
+                            includeFormTag:true,
+                            uploadText:btnTitle)
+                        @if (IsPost) {
+                            <span>File uploaded!</span><br/>
+                        }
+                        
+                    </div>
+                    <input type="hidden" name="id" value="@id" />
+                </div>
+            </form>
+
+        </div>
+
+
+        <!----Code------end----------------------------------->
+
+    </div>
+</div>
+
+
+
+
+</div>

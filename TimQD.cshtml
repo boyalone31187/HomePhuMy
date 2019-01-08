@@ -1,0 +1,122 @@
+﻿@{
+    Layout = "~/_Schedulelayout.cshtml";
+    var db = Database.Open("EOFFICE_PHUMY");
+    Page.Title = "TimQD";
+    string selectCommand = @"SELECT sokyhieu,trichyeu,d.linkfile,ngayvb,cngayvb, mapb_st, nguoiky,idvb,TEN_PHONG
+                            FROM vbdi_vanbandi v 
+                            inner join vbdi_dinhkem d on v.idvb = d.mavb 
+                            LEFT JOIN PHONG_BAN ON PHONG_BAN.MA_BAN = mapb_st 
+                            WHERE idloai = 'IS' ";
+    if (IsPost && Request["search"].Trim() != "")
+    {
+        string search = Request["search"];
+        selectCommand += " AND(sokyhieu LIKE '%"+search+"%' OR trichyeu LIKE N'%"+search+"%' OR cngayvb LIKE '%"+search+"%' OR nguoiky LIKE N'%"+search+"%' OR TEN_PHONG LIKE N'%"+search+"%')";                                  
+    }
+    selectCommand += " ORDER BY ngayvb DESC";
+    var vanbanList = db.Query(selectCommand);
+    var grid = new WebGrid(vanbanList, canPage: true, rowsPerPage: 20);
+}
+<style>
+    .container {
+        padding: 0;
+    }
+
+    table tr th {
+        background-color: inherit;
+        height: 30px;
+        font-weight: bold;
+    }
+  
+    table.table-content tr th:nth-child(2) {
+        width: 120px;
+    }
+
+    table.table-content tr th:nth-child(4) {
+        width: 100px;
+    }
+    table.table-content tr th:nth-child(5) {
+        width: 155px;
+    }
+    table.table-content tr th:nth-child(6) {
+        width: 155px;
+    }
+    table.table-content tr th {
+        text-align: center;
+        background-color: #FFFFCC;
+        vertical-align: middle;
+       
+    }
+
+    table.table-content tr th a{
+        color: #222222 !important;
+         font-size: 12px !important;
+    }
+    table.table-content tr td {
+        padding:5px 5px 2px 5px;
+        vertical-align: middle;
+        text-align: center;
+    }
+    table.table-content tr td:nth-child(3) {
+        line-height: 18px;
+        text-align: left !important;
+    }
+    .grid-row {
+        background-color: #FFF;
+    }
+</style>
+<script language="javascript">
+    function openwin(stt) {
+        window.open("ViewFile.cshtml?stt=" + stt, "xxxx", "toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=no,resizable=yes,copyhistory=no,width=500,height=300,top=" + (screen.height - 300) / 2 + ",left=" + (screen.width - 500) / 2);
+    }
+</script>
+
+<div class="box recently container">
+    <div class="category-head" style="padding-left: 0px">
+        <h2 class="subtitle">
+            <img id="btChitiet" src="../Images/main-menu.png" border="1" style="padding-top: 0px" width="16">&nbsp;<strong>TÌM KIẾM VĂN BẢN QUẢN LÝ NỘI BỘ TPC <i>PHU MY</i></strong></h2>
+    </div>
+    <ol class="grid-row">
+        <div id="tabstt" class="ui-tabs ui-widget ui-widget-content ui-corner-all">
+            <div id="tabs-tnb" align="center">
+                <div align="left" width="99%">
+                    <table id="ctsanxuatKTSX" cellpadding="2px" cellspacing="0" width="100%">
+                        <tbody>
+                            <tr>
+                                <td colspan="9" class="noidung" height="30">
+                                    <form id="form3" name="form3" method="post">
+                                        <span class="timkiem">Tìm kiếm:</span>&nbsp;
+							  <input name="search" type="text" class="style92" id="search" onfocus="value=''" value="@Request["search"]" size="40" style="background-color: #FFFFCC">&nbsp;<input name="cmdSubmit" type="submit" value=" Xem " align="middle">
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="9" class="noidungr" height="30" style="padding-right: 30px"></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                     @grid.GetHtml(
+                                        tableStyle: "table-content",
+                                        columns:
+                                            grid.Columns(
+                                                grid.Column(header: "STT", format: item => item.WebGrid.Rows.IndexOf(item) + 1),
+                                                grid.Column(columnName: "sokyhieu", header: "Mã TL", format: @<text>@item.sokyhieu</text>),
+                                                grid.Column(columnName: "trichyeu", header: "Tiêu đề", format: @<text>@item.trichyeu</text>),
+                                                grid.Column(columnName: "cngayvb", header: "Ngày ban hành", format: @<text>@item.cngayvb</text>),
+                                                grid.Column(columnName: "nguoiky", header: "Người ký", format: @<text>@item.nguoiky</text>),
+                                                grid.Column(columnName: "TEN_PHONG", header: "Đơn vị soạn thảo", format: @<text>@item.TEN_PHONG</text>),
+                                                grid.Column(columnName: "", header: "Xem", format: @<text><a href="javascript:openwin(@item.idvb);" title="Xem nội dung"> <img src="Images/taiphanmem.gif" border="0" width="20" height="20">&nbsp;</a></text>)
+                                           )
+                                    )
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                   
+                </div>
+                <!-- END LEFT -->
+            </div>
+            <!-- end tab 1 -->
+        </div>
+    </ol>
+</div>

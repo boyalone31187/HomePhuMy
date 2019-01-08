@@ -1,0 +1,62 @@
+﻿@{
+    if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+    {
+        var db = Database.Open("HOME_PHUMY");
+        
+       
+        var current_time = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        var dayOfWeek = DateTime.Now.DayOfWeek;
+        var dayOfMonday = DateTime.Now.Date;
+        var dayOfSunday = DateTime.Now.AddDays(6);
+        
+        if (dayOfWeek == System.DayOfWeek.Tuesday)
+        {
+            dayOfMonday = DateTime.Now.AddDays(-1);
+            dayOfSunday = DateTime.Now.AddDays(5);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Wednesday)
+        {
+            dayOfMonday = DateTime.Now.AddDays(-2);
+            dayOfSunday = DateTime.Now.AddDays(4);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Thursday)
+        {
+            dayOfMonday = DateTime.Now.AddDays(-3);
+            dayOfSunday = DateTime.Now.AddDays(3);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Friday)
+        {
+            dayOfMonday = DateTime.Now.AddDays(-4);
+            dayOfSunday = DateTime.Now.AddDays(2);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Saturday)
+        {
+            dayOfMonday = DateTime.Now.AddDays(-5);
+            dayOfSunday = DateTime.Now.AddDays(1);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Sunday)
+        {
+            dayOfMonday = DateTime.Now.AddDays(-6);
+            dayOfSunday = DateTime.Now;
+        }
+
+
+        string selectCommand = "SELECT TOP 1 * FROM TransferWeekJobHistory WHERE transferDay >= '" + dayOfMonday.ToString("yyyy-MM-dd 00:00:00") + "' AND transferDay < '" + dayOfSunday.ToString("yyyy-MM-dd") + "' ORDER BY id DESC";
+        if (db.Query(selectCommand).Count() > 0)
+        {
+            AppState["transferMessage"] = "Bạn đã thực hiện việc chuyển đổi công việc tuần rồi";
+            Response.Redirect("~/ManageWeekJob.cshtml");
+        }
+
+        string previousSunday = dayOfMonday.AddDays(-8).ToString("yyyy-MM-dd");
+        string insertCommand = @"INSERT INTO CongViecTuan(TinhTrang,NhomCongViec,SoDen,NgayCongVan,DonViGui,SoKyHieu,NoiDung,DonViNhan,DonViGiaiQuyet,NgayGiaoCongVan,ThoiHan,KetQua,NgayTao,NguoiDangKy)
+                            SELECT TinhTrang,NhomCongViec,SoDen,NgayCongVan,DonViGui,SoKyHieu,NoiDung,DonViNhan,DonViGiaiQuyet,NgayGiaoCongVan,ThoiHan,KetQua,'" + current_time + "',NguoiDangKy FROM CongViecTuan WHERE TinhTrang=N'Đang giải quyết' AND NgayTao < '" + dayOfMonday.ToString("yyyy-MM-dd") + "' AND NgayTao > '"+ previousSunday + "'";
+        db.Query(insertCommand);
+        
+        //WRITE TRANSFER LOG
+        insertCommand = @"INSERT INTO TransferWeekJobHistory(TransferDay) VALUES('"+DateTime.Now+"')";
+        db.Query(insertCommand);
+        
+    }
+    Response.Redirect("~/ManageWeekJob.cshtml");
+}

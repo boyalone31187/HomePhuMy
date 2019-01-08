@@ -1,0 +1,119 @@
+﻿@{
+    if (!Roles.IsUserInRole("admin") && !Roles.IsUserInRole("booked"))
+    {
+        Response.Redirect("~/");
+    }
+    
+        Layout = "~/_ScheduleLayout.cshtml";
+        Page.title = "Upload Salary";
+        var db = Database.Open("HOME_PHUMY");
+        string ky_luong = "";
+        string thang = DateTime.Now.Month.ToString();
+        string nam = DateTime.Now.Year.ToString();
+        string notification = "";
+        if (IsPost)
+        {
+            AntiForgery.Validate();
+            var fileName = "";
+            var uploadedFile = Request.Files[0];
+            if (uploadedFile.ContentLength > 0)
+            {
+                fileName = Path.GetFileName(uploadedFile.FileName);
+                var fileSavePath = Server.MapPath("~/UploadedFiles/" +
+                  fileName);
+                uploadedFile.SaveAs(fileSavePath);
+                ky_luong = Request.Form["ky_luong"];
+                thang = Request.Form["thang"];
+                nam = Request.Form["nam"];
+
+                Functions.importExcelToSQL(fileName,ky_luong,thang,nam);
+                notification = "Upload bảng lương thành công!";
+            }
+            else{
+                notification = "Upload bảng lương thất bại!";
+            }
+           
+        }
+
+    }
+<style>
+    .frm-upload-salary .form-group{
+        margin-right: 20px;
+    }
+
+    .frm-upload-salary select{
+        width: 85px !important;
+    }
+</style>
+<link href="~/CSS/RegisterSchedule.css" rel="stylesheet" />
+<div class="container">
+
+    <h1 class="thick-heading">
+        ||Upload Bảng Lương||
+    </h1>
+
+    <!-- First Featurette -->
+    <div id="about">
+        <!------------------------code---------------start---------------->
+        <div class="row">
+            <form role="form" method="post"  enctype="multipart/form-data" class="form-inline frm-upload-salary">
+                @AntiForgery.GetHtml()
+                <div class="col-lg-10 col-lg-offset-1 bg-frm-register-schedule">
+                   
+                    <div class="form-group">
+                        <label>Lương kỳ</label>
+                        <select name="ky_luong" class="form-control">
+                            <option @(ky_luong == "1" ? "selected" : "")  value="1">1</option>
+                            <option @(ky_luong == "2" ? "selected" : "") value="2">2</option>
+                        </select>
+                    </div>
+
+                     <div class="form-group">
+                        <label>Tháng</label>
+                        <select name="thang" class="form-control">
+                            @{
+                                for(int i = 1; i <= 12; i++){
+                                    <option @(thang == i.ToString() ? "selected" : "")  value="@i">@i</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                     <div class="form-group">
+                        <label>Năm</label>
+                        <select name="nam" class="form-control">
+                            <option value="@nam">@nam</option>
+                            <option value="@(Convert.ToInt32(nam) - 1)">@(Convert.ToInt32(nam) - 1)</option>
+                        </select>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label>Upload file</label>
+                        <input type="file" name="file" /><br />
+                        
+                    </div>
+
+                    <input type="submit" name="submit" id="submit" value="Upload" class="btn btn-danger pull-right">
+
+                    @if (notification != "")
+                    {
+                        <br />
+                    <div class="form-group">
+                        <span class = "label label-danger" style="font-size:14px;">@notification</span>
+                    </div>
+                    }
+
+                </div>
+            </form>
+
+        </div>
+
+
+        <!----Code------end----------------------------------->
+
+    </div>
+</div>
+
+
+

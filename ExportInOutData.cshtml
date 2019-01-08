@@ -1,0 +1,254 @@
+﻿@{
+    Layout = null;
+    var db = Database.Open("PM_ANNINH");
+    var listDepartment = Functions.getList("Department");
+
+    string ms_pb = "8";
+    string giovao = DateTime.Now.ToString("yyyy-MM-dd");
+    string action = UrlData[0];
+    string title = "";
+    if(!String.IsNullOrEmpty(UrlData[1])){
+        ms_pb = UrlData[1];
+    }
+    if (!String.IsNullOrEmpty(UrlData[2]))
+    {
+        giovao = UrlData[2];
+    }
+    string selectCommand = "";
+    if(action == "vaora"){
+        title = "DANH SÁCH CBCNV QUÉT THẺ VÀO RA CỔNG";
+
+        //lay tat ca nhan vien phu my
+        selectCommand = @"SELECT  CONGNHAN.MSTHE, CONGNHAN.TENCN, 
+		                    FileChamCong_PM_Luu.giovao, FileChamCong_PM_Luu.giora,FileChamCong_PM_Luu.sogio,
+		                    PhongBan.MS_PB
+                            FROM dbo.PhongBan 
+                            INNER JOIN dbo.CONGNHAN ON dbo.PhongBan.MS_PB = dbo.CONGNHAN.MS_PB 
+                            INNER JOIN dbo.FileChamCong_PM_Luu ON dbo.CONGNHAN.MSTHE = dbo.FileChamCong_PM_Luu.msthe
+                            WHERE  CONVERT(VARCHAR(25), giovao, 126) LIKE '" + giovao + "%' ";
+
+        //lay theo phong ban
+        if (ms_pb != "0"){
+            selectCommand += " AND PhongBan.MS_PB = " + ms_pb;
+        }
+        selectCommand += " ORDER BY giovao ASC, giora ASC";
+
+    }else if(action == "dtvs"){
+        title = "DANH SÁCH CBCNV ĐI TRỄ - VỀ SỚM";
+        string startTime = giovao + " 07:35:00";
+        string endTime = giovao + " 17:00:00";
+        string tinhtrang = UrlData[3];
+
+        selectCommand = @"SELECT  CONGNHAN.MSTHE, CONGNHAN.TENCN, 
+		                    FileChamCong_PM_Luu.giovao, FileChamCong_PM_Luu.giora,FileChamCong_PM_Luu.sogio,
+		                    PhongBan.MS_PB
+                            FROM dbo.PhongBan 
+                            INNER JOIN dbo.CONGNHAN ON dbo.PhongBan.MS_PB = dbo.CONGNHAN.MS_PB AND dbo.CONGNHAN.TT = '0'
+                            INNER JOIN dbo.FileChamCong_PM_Luu ON dbo.CONGNHAN.MSTHE = dbo.FileChamCong_PM_Luu.msthe
+                            WHERE CONGNHAN.MSTHE NOT IN (SELECT MSCN from CongNhan_KDL where PB = " + ms_pb + " AND CONVERT(VARCHAR(25), NGAY, 126) LIKE '" + giovao +
+                            "%') AND PhongBan.LoaiSX = '1'";
+        if (ms_pb != "0")
+        {
+            selectCommand += " AND PhongBan.MS_PB =" + ms_pb;
+        }
+        if (String.IsNullOrEmpty(tinhtrang))
+        {
+            selectCommand += @" AND CONVERT(VARCHAR(25), giovao, 126) LIKE '" + giovao + "%' AND ( giovao > '" + startTime + "' OR giora < '" + endTime + "')";
+
+        }
+        else if (tinhtrang == "late")
+        {
+            title = "DANH SÁCH CBCNV ĐI TRỄ";
+            selectCommand += @" AND CONVERT(VARCHAR(25), giovao, 126) LIKE '" + giovao + "%' AND giovao > '" + startTime + "'";
+        }
+        else if (tinhtrang == "soon")
+        {
+            title = "DANH SÁCH CBCNV VỀ SỚM";
+            selectCommand += @" AND CONVERT(VARCHAR(25), giovao, 126) LIKE '" + giovao + "%' AND giora < '" + endTime + "'";
+        }
+        selectCommand += " ORDER BY FileChamCong_PM_Luu.giovao ASC,FileChamCong_PM_Luu.giora ASC";
+    }else if(action == "kqt"){
+        title = "DANH SÁCH CBCNV KHÔNG QUÉT THẺ";
+        selectCommand = @"SELECT CONGNHAN.MSTHE, CONGNHAN.TENCN, CONGNHAN.MS_PB, CongNhan_KDL.GHICHU
+                            FROM CONGNHAN
+                            JOIN CongNhan_KDL ON CongNhan_KDL.MSCN = CONGNHAN.MSTHE AND CongNhan_KDL.NGAY = '" + giovao +
+                           "' WHERE CONGNHAN.tt<>'1' AND MSTHE NOT IN (SELECT MSTHE FROM FileChamcong_PM_Luu WHERE CONVERT(VARCHAR(10), giovao, 126) LIKE '" + giovao +
+                           "%')";
+        if (ms_pb != "0")
+        {
+            selectCommand += " AND CONGNHAN.MS_PB =" + ms_pb;
+        }
+    }
+    var listEmployee = db.Query(selectCommand);
+    int i = 1;
+
+    Response.AddHeader("Content-disposition", "attachment; filename="+action+".xls");
+    Response.ContentType = "application/octet-stream";
+
+
+}
+<table border="1" cellpadding="0" cellspacing="0" width="100%">
+    <thead>
+            <tr align="center" bgcolor="#cccccc" height="35">
+                <th colspan="6" align="center"><font face="Times New Roman" size="3">@title</font></th>
+            </tr>
+    </thead>
+    <tbody>
+        <tr align="center">
+            <td colspan="6">Ngày  @DateTime.ParseExact(giovao, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture).ToString("dd/MM/yyyy")</td>
+        </tr>
+    </tbody>
+</table>
+@if (action == "vaora" && ms_pb == "0") {
+    var allDepartment = Functions.getAllDepartment();
+
+    <table border="1" cellpadding="0" cellspacing="0" width="100%">
+        <thead>
+             <tr align="center" bgcolor="#cccccc" height="35">
+                <th width="50" align="center"><font face="Times New Roman" size="3">STT</font></th>
+                <th width="70" align="center"><font face="Times New Roman" size="3">Mã thẻ</font></th>
+                <th width="200" align="center"><font face="Times New Roman" size="3">Họ và tên</font></th>
+                <th width="140" align="center"><font face="Times New Roman" size="3">Thời gian vào</font></th>
+                <th width="140" align="center"><font face="Times New Roman" size="3">Thời gian ra</font></th>
+                <th width="150" align="center"><font face="Times New Roman" size="3">Thời gian làm việc</font></th>
+            </tr>
+        </thead>
+       <tbody>
+       @foreach (var d in allDepartment)
+        {
+            i = 1;
+            <tr style="text-transform:uppercase">
+                <td colspan="6"><strong>@d.TenPhongBan</strong></td>
+            </tr>
+            foreach (var row in listEmployee)
+            {
+                if (d.ms_pb == row.MS_PB)
+                {
+
+                    <tr>
+                        <td>@i</td>
+		                <td>@row.MSTHE</td>		
+		                <td>@row.TENCN</td>
+		                <td>@(row.giovao != null ? row.giovao.ToString("dd/MM/yyyy HH:mm") : "")</td>
+		                <td>@(row.giora != null ? row.giora.ToString("dd/MM/yyyy HH:mm") : "")</td>
+		                <td>@row.sogio</td>
+	                </tr>
+                    i++;
+                }
+
+
+            }
+        }
+    </tbody>
+</table>
+}
+else if (action == "vaora" || action == "dtvs")
+{
+    <table border="1" cellpadding="0" cellspacing="0" width="100%">
+    <thead>
+         <tr align="center" bgcolor="#cccccc" height="35">
+            <th width="50" align="center"><font face="Times New Roman" size="3">STT</font></th>
+            <th width="70" align="center"><font face="Times New Roman" size="3">Mã thẻ</font></th>
+            <th width="200" align="center"><font face="Times New Roman" size="3">Họ và tên</font></th>
+            <th width="140" align="center"><font face="Times New Roman" size="3">Thời gian vào</font></th>
+            <th width="140" align="center"><font face="Times New Roman" size="3">Thời gian ra</font></th>
+            <th width="150" align="center"><font face="Times New Roman" size="3">Thời gian làm việc</font></th>
+        </tr>
+    </thead>
+   <tbody>
+   @if (ms_pb == "0")
+   {
+       foreach (var d in listDepartment)
+       {
+           i = 1;
+            <tr style="text-transform:uppercase">
+                <td colspan="6"><strong>@d.name</strong></td>
+            </tr>
+           foreach (var row in listEmployee)
+           {
+               if (d.ms_pb == Convert.ToInt16(row.MS_PB))
+               {
+
+                <tr>
+                    <td>@i</td>
+                    <td>@row.MSTHE</td>
+                    <td>@row.TENCN</td>
+                    <td>@(row.giovao != null ? row.giovao.ToString("dd/MM/yyyy HH:mm") : "")</td>
+                    <td>@(row.giora != null ? row.giora.ToString("dd/MM/yyyy HH:mm") : "")</td>
+                    <td>@row.sogio</td>
+                </tr>
+                   i++;
+               }
+
+
+           }
+       }
+   }
+   else
+   {
+       foreach (var row in listEmployee)
+       {
+            <tr>
+                <td style="padding: 1px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@i</font></td>
+                <td style="padding: 1px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@row.MSTHE</font></td>
+                <td style="padding: 1px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@row.TENCN</font></td>
+                <td style="padding: 1px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@(row.giovao != null ? row.giovao.ToString("dd/MM/yyyy HH:mm") : "")</font></td>
+                <td style="padding: 1px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@(row.giora != null ? row.giora.ToString("dd/MM/yyyy HH:mm") : "")</font></td>
+                <td style="padding: 1px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@row.sogio</font></td>
+            </tr>
+            i++;
+        }
+   }
+   
+       </tbody>
+</table>
+}else if(action == "kqt"){
+<table border="1" cellpadding="0" cellspacing="0" width="100%">
+    <thead>
+         <tr align="center" bgcolor="#cccccc" height="35">
+            <th width="50" align="center"><font face="Times New Roman" size="3">STT</font></th>
+            <th width="70" align="center"><font face="Times New Roman" size="3">Mã thẻ</font></th>
+            <th width="200" align="center"><font face="Times New Roman" size="3">Họ và tên</font></th>
+            <th width="140" align="center"><font face="Times New Roman" size="3">Lý do</font></th>
+        </tr>
+    </thead>
+   <tbody>
+    @if (ms_pb == "0")
+    {
+        foreach (var d in listDepartment)
+        {
+            i = 1;
+            <tr style="text-transform:uppercase">
+                <td colspan="4"><strong>@d.name</strong></td>
+            </tr>
+            foreach (var row in listEmployee)
+            {
+                if (d.ms_pb == Convert.ToInt16(row.MS_PB))
+                {
+                    <tr>
+                        <td style="padding: 1px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@i</font></td>
+                        <td style="padding: 1px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@row.MSTHE</font></td>
+                        <td style="padding: 1px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@row.TENCN</font></td>
+                        <td style="padding: 1px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@row.GHICHU</font></td>
+                    </tr>
+                    i++;
+                }
+            }
+        }
+    }
+    else
+    {
+        foreach (var row in listEmployee)
+        {
+        <tr>
+            <td style="padding: 1px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@i</font></td>
+            <td style="padding: 1px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@row.MSTHE</font></td>
+            <td style="padding: 1px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@row.TENCN</font></td>
+            <td style="padding: 1px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@row.GHICHU</font></td>
+        </tr>
+            i++;
+        }
+    }
+    </tbody>
+</table>
+}

@@ -1,0 +1,1015 @@
+﻿@{
+    Page.Title = "Lich Tuan";
+    var db = Database.Open("HOME_PHUMY");
+    string query = "SELECT * FROM MeetingSchedule WHERE pheduyet = 1 ";
+    //CALCULATE FIRST DAY OF WEEK AND LAST DAY OF WEEK
+    DateTime firstDay = new DateTime();
+    DateTime lastDay = new DateTime();
+    var dayOfWeek = DateTime.Now.DayOfWeek;
+    string strPrevFirstDay = "";
+    string strPrevLastDay = "";
+    string strNextFirstDay = "";
+    string strNextLastDay = "";
+    string fromDate = "";
+    string toDate = "";
+    string className = "";
+    //WHEN USER CLICK LINK : PREVIOUS OR NEXT, GET FIRST DAY AND LAST DAY
+    if (!string.IsNullOrEmpty(UrlData[0]) && !string.IsNullOrEmpty(UrlData[1]))
+    {
+        fromDate = DateTime.ParseExact(UrlData[0], "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture).ToString("dd/MM/yyyy");
+        toDate = DateTime.ParseExact(UrlData[1], "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture).ToString("dd/MM/yyyy");
+
+
+        //GET RECORDS BY FROM DATE TO DATE
+        query += " AND thoigian >='" + UrlData[0] + "' AND thoigian <'" + UrlData[1] + "'";
+
+        string[] firstDayParamArray = UrlData[0].Split(new char[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
+        DateTime firstDayParam = new DateTime(Convert.ToInt32(firstDayParamArray[0]), Convert.ToInt32(firstDayParamArray[1]), Convert.ToInt32(firstDayParamArray[2]));
+
+        string[] lastDayParamArray = UrlData[1].Split(new char[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
+        DateTime lastDayParam = new DateTime(Convert.ToInt32(lastDayParamArray[0]), Convert.ToInt32(lastDayParamArray[1]), Convert.ToInt32(lastDayParamArray[2]));
+        if (UrlData[2] == "prev")
+        {
+            strPrevFirstDay = firstDayParam.AddDays(-7).ToString("yyyy-MM-dd");
+            strPrevLastDay = firstDayParam.AddDays(-1).ToString("yyyy-MM-dd");
+
+            strNextFirstDay = lastDayParam.AddDays(1).ToString("yyyy-MM-dd");
+            strNextLastDay = lastDayParam.AddDays(7).ToString("yyyy-MM-dd");
+        }
+        else if (UrlData[2] == "next")
+        {
+            strNextFirstDay = lastDayParam.AddDays(1).ToString("yyyy-MM-dd");
+            strNextLastDay = lastDayParam.AddDays(7).ToString("yyyy-MM-dd");
+
+            strPrevFirstDay = firstDayParam.AddDays(-7).ToString("yyyy-MM-dd");
+            strPrevLastDay = firstDayParam.AddDays(-1).ToString("yyyy-MM-dd");
+
+        }
+
+    }
+    else
+    { //GET TO CURRENT TIME
+
+        if (dayOfWeek == System.DayOfWeek.Monday)
+        {
+            firstDay = DateTime.Now;
+            lastDay = DateTime.Now.AddDays(6);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Tuesday)
+        {
+            firstDay = DateTime.Now.AddDays(-1);
+            lastDay = DateTime.Now.AddDays(5);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Wednesday)
+        {
+            firstDay = DateTime.Now.AddDays(-2);
+            lastDay = DateTime.Now.AddDays(4);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Thursday)
+        {
+            firstDay = DateTime.Now.AddDays(-3);
+            lastDay = DateTime.Now.AddDays(3);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Friday)
+        {
+            firstDay = DateTime.Now.AddDays(-4);
+            lastDay = DateTime.Now.AddDays(2);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Saturday)
+        {
+            firstDay = DateTime.Now.AddDays(-5);
+            lastDay = DateTime.Now.AddDays(1);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Sunday)
+        {
+            firstDay = DateTime.Now.AddDays(-6);
+            lastDay = DateTime.Now;
+        }
+        strPrevFirstDay = firstDay.AddDays(-7).ToString("yyyy-MM-dd");
+        strPrevLastDay = firstDay.AddDays(-1).ToString("yyyy-MM-dd");
+
+        strNextFirstDay = lastDay.AddDays(1).ToString("yyyy-MM-dd");
+        strNextLastDay = lastDay.AddDays(7).ToString("yyyy-MM-dd");
+
+        fromDate = firstDay.ToString("dd/MM/yyyy");
+        toDate = lastDay.ToString("dd/MM/yyyy");
+
+        //DEFAULT QUERY
+        //query += @" AND thoigian >= dateadd(day, 2-datepart(dw, getdate()), CONVERT(date,getdate())) and thoigian < dateadd(day, 7-datepart(dw, getdate()), CONVERT(date,getdate()))";
+        query += " AND thoigian >='" + firstDay.ToString("yyyy-MM-dd") + "' AND thoigian <'" + lastDay.ToString("yyyy-MM-dd 23:59") + "'";
+    }
+
+
+
+
+
+    var rs = db.Query(query);
+
+
+
+    <!--MONDAY-->
+    var monSchedule = from c in rs
+                      orderby c.thoigian
+                      where c.thu == "Thứ hai"
+                      where c.loai == "Công tác tuần"
+                      select c;
+
+    int numberMondayMeeting = monSchedule.Count();
+    var firstMondayMeeting = numberMondayMeeting > 0 ? monSchedule.ElementAt(0) : null;
+    <!--TUESDAY-->
+    var tueSchedule = from c in rs
+                      orderby c.thoigian
+                      where c.thu == "Thứ ba"
+                      where c.loai == "Công tác tuần"
+                      select c;
+    int numberTuesdayMeeting = tueSchedule.Count();
+    var firstTuesdayMeeting = numberTuesdayMeeting > 0 ? tueSchedule.ElementAt(0) : null;
+    
+    <!--WEDNESDAY-->
+    var wedSchedule = from c in rs
+                      orderby c.thoigian
+                      where c.thu == "Thứ tư"
+                      where c.loai == "Công tác tuần"
+                      select c;
+    int numberWednesdayMeeting = wedSchedule.Count();
+    var firstWednesdayMeeting = numberWednesdayMeeting > 0 ? wedSchedule.ElementAt(0) : null;
+    
+    <!--THURSDAY-->
+    var thurSchedule = from c in rs
+                       orderby c.thoigian
+                       where c.thu == "Thứ năm"
+                       where c.loai == "Công tác tuần"
+                       select c;
+    int numberThursdayMeeting = thurSchedule.Count();
+    var firstThursdayMeeting = numberThursdayMeeting > 0 ? thurSchedule.ElementAt(0) : null;
+    
+    <!--FRIDAY-->
+    var friSchedule = from c in rs
+                      orderby c.thoigian
+                      where c.thu == "Thứ sáu"
+                      where c.loai == "Công tác tuần"
+                      select c;
+    int numberFridayMeeting = friSchedule.Count();
+    var firstFridayMeeting = numberFridayMeeting > 0 ? friSchedule.ElementAt(0) : null;
+
+    <!--SATURDAY-->
+    var satSchedule = from c in rs
+                      orderby c.thoigian
+                      where c.thu == "Thứ bảy"
+                      where c.loai == "Công tác tuần"
+                      select c;
+    int numberSaturdayMeeting = satSchedule.Count();
+    var firstSaturdayMeeting = numberSaturdayMeeting > 0 ? satSchedule.ElementAt(0) : null;
+
+
+     <!--SUNDAY-->
+    var sunSchedule = from c in rs
+                      orderby c.thoigian
+                      where c.thu == "Chủ nhật"
+                      where c.loai == "Công tác tuần"
+                      select c;
+    int numberSundayMeeting = sunSchedule.Count();
+    var firstSundayMeeting = numberSundayMeeting > 0 ? sunSchedule.ElementAt(0) : null;
+
+    <!--LICH CONG TAC KHAC-->
+
+    <!--MONDAY-->
+    var monSchedule2 = from c in rs
+                       orderby c.thoigian
+                       where c.thu == "Thứ hai"
+                       where c.loai == "Công tác khác"
+                       select c;
+
+    int numberMondayMeeting2 = monSchedule2.Count();
+    var firstMondayMeeting2 = numberMondayMeeting2 > 0 ? monSchedule2.ElementAt(0) : null;
+    <!--TUESDAY-->
+    var tueSchedule2 = from c in rs
+                       orderby c.thoigian
+                       where c.thu == "Thứ ba"
+                       where c.loai == "Công tác khác"
+                       select c;
+    int numberTuesdayMeeting2 = tueSchedule2.Count();
+    var firstTuesdayMeeting2 = numberTuesdayMeeting2 > 0 ? tueSchedule2.ElementAt(0) : null;
+    
+    <!--WEDNESDAY-->
+    var wedSchedule2 = from c in rs
+                       orderby c.thoigian
+                       where c.thu == "Thứ tư"
+                       where c.loai == "Công tác khác"
+                       select c;
+    int numberWednesdayMeeting2 = wedSchedule2.Count();
+    var firstWednesdayMeeting2 = numberWednesdayMeeting2 > 0 ? wedSchedule2.ElementAt(0) : null;
+    
+    <!--THURSDAY-->
+    var thurSchedule2 = from c in rs
+                        orderby c.thoigian
+                        where c.thu == "Thứ năm"
+                        where c.loai == "Công tác khác"
+                        select c;
+    int numberThursdayMeeting2 = thurSchedule2.Count();
+    var firstThursdayMeeting2 = numberThursdayMeeting2 > 0 ? thurSchedule2.ElementAt(0) : null;
+    
+    <!--FRIDAY-->
+    var friSchedule2 = from c in rs
+                       orderby c.thoigian
+                       where c.thu == "Thứ sáu"
+                       where c.loai == "Công tác khác"
+                       select c;
+    int numberFridayMeeting2 = friSchedule2.Count();
+    var firstFridayMeeting2 = numberFridayMeeting2 > 0 ? friSchedule2.ElementAt(0) : null;
+
+    <!--SATURDAY-->
+    var satSchedule2 = from c in rs
+                       orderby c.thoigian
+                       where c.thu == "Thứ bảy"
+                       where c.loai == "Công tác khác"
+                       select c;
+    int numberSaturdayMeeting2 = satSchedule2.Count();
+    var firstSaturdayMeeting2 = numberSaturdayMeeting2 > 0 ? satSchedule2.ElementAt(0) : null;
+
+
+    <!--SUNDAY-->
+    var sunSchedule2 = from c in rs
+                       orderby c.thoigian
+                       where c.thu == "Chủ nhật"
+                       where c.loai == "Công tác khác"
+                       select c;
+    int numberSundayMeeting2 = sunSchedule2.Count();
+    var firstSundayMeeting2 = numberSundayMeeting2 > 0 ? sunSchedule2.ElementAt(0) : null;
+
+    <!--TRONG TAM CONG TAC TUAN-->
+    var listTarget = from c in rs
+                     where c.loai == "Trọng tâm"
+                     select c;
+   
+}
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Lich Tuan</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" href="~/CSS/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="~/CSS/RibbonButton.css" media="all">
+    <link rel="stylesheet" type="text/css" href="~/CSS/Schedule.css" media="all">
+    <script src="~/Scripts/jquery.min.js"></script>
+    <style>
+       
+        table {
+            font-size: 12px;
+        }
+        table tr th {
+            background-color: #2196F3;
+            color: #fff;
+            font-weight: bold;
+        }
+        table tr td {
+            color: black;
+        }
+        .border-bottom {
+            border-bottom: 2px solid black;
+        }
+
+        tr    
+        { 
+          page-break-inside:avoid; 
+          page-break-after:avoid;
+        }
+        td {
+            page-break-inside: auto;
+        }
+    </style>
+</head>
+<body>
+
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <!--TABLE LICH CONG TAC TUAN-->
+            <table class="table table-bordered schedule">
+                <caption class="text-center">
+                    <div class="row">
+                        <div class="col-md-4 text-left"><img src="~/Images/logo_phumy.png" alt="EVNGENCO 3"></div>
+                        <div class="col-md-4 pt-30" >
+                            <button type="button" class="btn btn-danger ribbon"><strong>LỊCH CÔNG TÁC TUẦN</strong></button>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-2"></div>
+                        <div class="col-md-2 text-right"><a class="no-print" style="font-size:14px;" title="Tuần Trước" href="~/Schedule/@strPrevFirstDay/@strPrevLastDay/prev"><span class="glyphicon glyphicon-backward"></span></a></div>
+                        <div class="col-md-4"><span class = "label label-warning" style="font-size: 13px;">Từ ngày @fromDate đến ngày @toDate</span></div>
+                        <div class="col-md-2 text-left"><a class="no-print" style="font-size:14px;" title="Tuần Tới" href="~/Schedule/@strNextFirstDay/@strNextLastDay/next"><span class="glyphicon glyphicon-forward"></span></a></div>
+                    </div>
+                </caption>
+                <thead>
+                    <tr>
+                        <th>Thứ/ Ngày</th>
+                        <th>T.Gian</th>
+                        <th>Nội dung</th>
+                        <th>Thành phần</th>
+                        <th>Chuẩn bị</th>
+                        <th>Địa điểm</th>
+                        <th>Chủ trì</th>
+                        <th>Tình trạng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!--MONDAY-->
+                    @{
+                        string[] arrMondayMeetingTime;
+                        if (numberMondayMeeting == 1)
+                        {
+                            arrMondayMeetingTime = Functions.splitString(firstMondayMeeting.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr class="border-bottom @(firstMondayMeeting.trangthai == "Bổ sung" ? "bg-danger" : "")">
+                                <td>@firstMondayMeeting.thu @arrMondayMeetingTime[0]</td>
+
+                                <td>@arrMondayMeetingTime[1]</td>
+                                <td>@firstMondayMeeting.noidung</td>
+                                <td>@firstMondayMeeting.thanhphan</td>
+                                <td>@firstMondayMeeting.chuanbi</td>
+                                <td>@firstMondayMeeting.diadiem</td>
+                                <td>@firstMondayMeeting.chutri</td>
+                                <td>@firstMondayMeeting.trangthai</td>
+                            </tr>
+                        }
+                        else if (numberMondayMeeting > 1)
+                        {
+                            foreach (var fschedule in monSchedule)
+                            {
+                                arrMondayMeetingTime = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                <tr class="@(fschedule == monSchedule.Last() ? "border-bottom" : "")  ">
+                                    @if (fschedule == monSchedule.First())
+                                    {
+                                        <td style="border-bottom: 2px solid black;" rowspan="@numberMondayMeeting" >@fschedule.thu @arrMondayMeetingTime[0]</td>
+                                    }
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@arrMondayMeetingTime[1]</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.noidung</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.thanhphan</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.chuanbi</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.diadiem</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.chutri</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.trangthai</td>
+                                </tr>
+                            }
+                        }
+            
+                    }
+
+                    <!--TUESDAY-->
+                    @{
+                        string[] arrTuesdayMeetingTime;
+                        if (numberTuesdayMeeting == 1)
+                        {
+                            arrTuesdayMeetingTime = Functions.splitString(firstTuesdayMeeting.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr class="border-bottom  @(firstTuesdayMeeting.trangthai == "Bổ sung" ? "bg-danger" : "")">
+                                <td>@firstTuesdayMeeting.thu @arrTuesdayMeetingTime[0]</td>
+                                <td>@arrTuesdayMeetingTime[1]</td>
+                                <td>@firstTuesdayMeeting.noidung</td>
+                                <td>@firstTuesdayMeeting.thanhphan</td>
+                                <td>@firstTuesdayMeeting.chuanbi</td>
+                                <td>@firstTuesdayMeeting.diadiem</td>
+                                <td>@firstTuesdayMeeting.chutri</td>
+                                <td>@firstTuesdayMeeting.trangthai</td>
+                            </tr>
+                        }
+                        else if (numberTuesdayMeeting > 1)
+                        {
+                            foreach (var fschedule in tueSchedule)
+                            {
+                                arrTuesdayMeetingTime = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                <tr class="@(fschedule == tueSchedule.Last() ? "border-bottom" : "")  ">
+                                    @if (fschedule == tueSchedule.First())
+                                    {
+                                        <td style="border-bottom: 2px solid black;" rowspan="@numberTuesdayMeeting" >@fschedule.thu @arrTuesdayMeetingTime[0]</td>
+                                    }
+
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@arrTuesdayMeetingTime[1]</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.noidung</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.thanhphan</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.chuanbi</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.diadiem</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.chutri</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.trangthai</td>
+                                </tr>
+                            }
+                        }
+                    }
+
+
+                    <!--WEDNESDAY-->
+                    @{
+                        string[] arrWednesdayMeetingTime;
+                        if (numberWednesdayMeeting == 1)
+                        {
+                            arrWednesdayMeetingTime = Functions.splitString(firstWednesdayMeeting.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                        <tr class="border-bottom  @(firstWednesdayMeeting.trangthai == "Bổ sung" ? "bg-danger" : "")">
+                            <td>@firstWednesdayMeeting.thu @arrWednesdayMeetingTime[0]</td>
+                            <td>@arrWednesdayMeetingTime[1]</td>
+                            <td>@firstWednesdayMeeting.noidung</td>
+                            <td>@firstWednesdayMeeting.thanhphan</td>
+                            <td>@firstWednesdayMeeting.chuanbi</td>
+                            <td>@firstWednesdayMeeting.diadiem</td>
+                            <td>@firstWednesdayMeeting.chutri</td>
+                            <td>@firstWednesdayMeeting.trangthai</td>
+                        </tr>
+                        }
+                        else if (numberWednesdayMeeting > 1)
+                        {
+
+                            foreach (var fschedule in wedSchedule)
+                            {
+                                arrWednesdayMeetingTime = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                        <tr class="@(fschedule == wedSchedule.Last() ? "border-bottom" : "")">
+                            @if (fschedule == wedSchedule.First())
+                            {
+                                <td style="border-bottom: 2px solid black;" rowspan="@numberWednesdayMeeting" >@fschedule.thu @arrWednesdayMeetingTime[0]</td>
+                            }
+                            <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@arrWednesdayMeetingTime[1]</td>
+                            <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.noidung</td>
+                            <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.thanhphan</td>
+                            <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.chuanbi</td>
+                            <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.diadiem</td>
+                            <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.chutri</td>
+                            <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.trangthai</td>
+                        </tr>
+                            }
+                        }
+            
+            
+                    }
+
+
+                    <!--THURSDAY-->
+                    @{
+                        string[] arrThursdayMeetingTime;
+                        if (numberThursdayMeeting == 1)
+                        {
+                            arrThursdayMeetingTime = Functions.splitString(firstThursdayMeeting.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                        <tr class="border-bottom @(firstThursdayMeeting.trangthai == "Bổ sung" ? "bg-danger" : "")">
+                            <td>@firstThursdayMeeting.thu @arrThursdayMeetingTime[0]</td>
+                            <td>@arrThursdayMeetingTime[1]</td>
+                            <td>@firstThursdayMeeting.noidung</td>
+                            <td>@firstThursdayMeeting.thanhphan</td>
+                            <td>@firstThursdayMeeting.chuanbi</td>
+                            <td>@firstThursdayMeeting.diadiem</td>
+                            <td>@firstThursdayMeeting.chutri</td>
+                            <td>@firstThursdayMeeting.trangthai</td>
+                        </tr>
+                        }
+                        else if (numberThursdayMeeting > 1)
+                        {
+                            foreach (var fschedule in thurSchedule)
+                            {
+                                arrThursdayMeetingTime = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                        <tr class="@(fschedule == thurSchedule.Last() ? "border-bottom" : "")">
+                            @if (fschedule == thurSchedule.First())
+                            {
+                                <td style="border-bottom: 2px solid black;" rowspan="@numberThursdayMeeting" >@fschedule.thu @arrThursdayMeetingTime[0]</td>
+                            }
+                            <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@arrThursdayMeetingTime[1]</td>
+                            <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.noidung</td>
+                            <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.thanhphan</td>
+                            <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.chuanbi</td>
+                            <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.diadiem</td>
+                            <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.chutri</td>
+                            <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.trangthai</td>
+                        </tr>
+                            }
+
+                        }
+                    }
+
+
+                    <!--FRIDAY-->
+                    @{
+                        string[] arrFridayMeetingTime;
+                        if (numberFridayMeeting == 1)
+                        {
+                            arrFridayMeetingTime = Functions.splitString(firstFridayMeeting.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                        <tr class="  @(firstFridayMeeting.trangthai == "Bổ sung" ? "bg-danger" : "") border-bottom">
+                            <td>@firstFridayMeeting.thu @arrFridayMeetingTime[0]</td>
+
+                            <td>@arrFridayMeetingTime[1]</td>
+                            <td>@firstFridayMeeting.noidung</td>
+                            <td>@firstFridayMeeting.thanhphan</td>
+                            <td>@firstFridayMeeting.chuanbi</td>
+                            <td>@firstFridayMeeting.diadiem</td>
+                            <td>@firstFridayMeeting.chutri</td>
+                            <td>@firstFridayMeeting.trangthai</td>
+                        </tr>
+                        }
+                        else if (numberFridayMeeting > 1)
+                        {
+
+                            foreach (var fschedule in friSchedule)
+                            {
+                                arrFridayMeetingTime = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                        <tr class="@(fschedule == friSchedule.Last() ? "border-bottom" : "")">
+                            @if (fschedule == friSchedule.First())
+                            {
+                                <td style="border-bottom: 2px solid black;" rowspan="@numberFridayMeeting" >@fschedule.thu @arrFridayMeetingTime[0]</td>
+                            }
+                            <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@arrFridayMeetingTime[1]</td>
+                            <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.noidung</td>
+                            <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.thanhphan</td>
+                            <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.chuanbi</td>
+                            <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.diadiem</td>
+                            <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.chutri</td>
+                            <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.trangthai</td>
+                        </tr>
+                            }
+
+                        }
+                    }
+
+
+                    <!--SATURDAY-->
+                    @{
+                        string[] arrSaturdayMeetingTime;
+                        if (numberSaturdayMeeting == 1)
+                        {
+                            arrSaturdayMeetingTime = Functions.splitString(firstSaturdayMeeting.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr class=" @(firstSaturdayMeeting.trangthai == "Bổ sung" ? "bg-danger" : "") border-bottom">
+                                <td>@firstSaturdayMeeting.thu @arrSaturdayMeetingTime[0]</td>
+
+                                <td>@arrSaturdayMeetingTime[1]</td>
+                                <td>@firstSaturdayMeeting.noidung</td>
+                                <td>@firstSaturdayMeeting.thanhphan</td>
+                                <td>@firstSaturdayMeeting.chuanbi</td>
+                                <td>@firstSaturdayMeeting.diadiem</td>
+                                <td>@firstSaturdayMeeting.chutri</td>
+                                <td>@firstSaturdayMeeting.trangthai</td>
+                            </tr>
+                        }
+                        else if (numberSaturdayMeeting > 1)
+                        {
+
+                            foreach (var fschedule in satSchedule)
+                            {
+                                arrSaturdayMeetingTime = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                <tr class="@(fschedule == satSchedule.Last() ? "border-bottom" : "")">
+                                    @if (fschedule == satSchedule.First())
+                                    {
+                                        <td style="border-bottom: 2px solid black;" rowspan="@numberSaturdayMeeting">@fschedule.thu @arrSaturdayMeetingTime[0]</td>
+                                    }
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@arrSaturdayMeetingTime[1]</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.noidung</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.thanhphan</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.chuanbi</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.diadiem</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.chutri</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.trangthai</td>
+                                </tr>
+                            }
+
+                        }
+                    }
+
+                    <!--SUNDAY-->
+                    @{
+                        string[] arrSundayMeetingTime;
+                        if (numberSundayMeeting == 1)
+                        {
+                            arrSundayMeetingTime = Functions.splitString(firstSundayMeeting.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr class=" @(firstSundayMeeting.trangthai == "Bổ sung" ? "bg-danger" : "") border-bottom">
+                                <td>@firstSundayMeeting.thu @arrSundayMeetingTime[0]</td>
+
+                                <td>@arrSundayMeetingTime[1]</td>
+                                <td>@firstSundayMeeting.noidung</td>
+                                <td>@firstSundayMeeting.thanhphan</td>
+                                <td>@firstSundayMeeting.chuanbi</td>
+                                <td>@firstSundayMeeting.diadiem</td>
+                                <td>@firstSundayMeeting.chutri</td>
+                                <td>@firstSundayMeeting.trangthai</td>
+                            </tr>
+                        }
+                        else if (numberSundayMeeting > 1)
+                        {
+
+                            foreach (var fschedule in sunSchedule)
+                            {
+                                arrSundayMeetingTime = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                <tr class="@(fschedule == sunSchedule.Last() ? "border-bottom" : "")">
+                                    @if (fschedule == sunSchedule.First())
+                                    {
+                                        <td style="border-bottom: 2px solid black;" rowspan="@numberSundayMeeting">@fschedule.thu @arrSundayMeetingTime[0]</td>
+                                    }
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@arrSundayMeetingTime[1]</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.noidung</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.thanhphan</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.chuanbi</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.diadiem</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.chutri</td>
+                                    <td class="@(fschedule.trangthai == "Bổ sung" ? "bg-danger" : "")">@fschedule.trangthai</td>
+                                </tr>
+                            }
+
+                        }
+                    }
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <!--TABLE LICH CONG TAC KHAC-->
+            <table class="table table-bordered schedule">
+                <caption class="text-center">
+                     <div class="row">
+                        <div class="col-md-4 col-md-offset-4">
+                            <button type="button" class="btn btn-danger ribbon"><strong>LỊCH CÔNG TÁC KHÁC</strong></button>
+                        </div>
+                    </div>
+                </caption>
+                <thead>
+                    <tr>
+                        <th>Thứ/ Ngày</th>
+                        <th>T.Gian</th>
+                        <th>Nội dung</th>
+                        <th>Thành phần</th>
+                        <th>Chuẩn bị</th>
+                        <th>Địa điểm</th>
+                        <th>Chủ trì</th>
+                        <th>Tình trạng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!--MONDAY-->
+                    @{
+                        string[] arrMondayMeetingTime2;
+                        if (numberMondayMeeting2 == 1)
+                        {
+                            arrMondayMeetingTime2 = Functions.splitString(firstMondayMeeting2.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr class="border-bottom @(firstMondayMeeting.trangthai == "Bổ sung" ? "bg-danger" : "")">
+                                <td>@firstMondayMeeting2.thu @arrMondayMeetingTime2[0]</td>
+                                <td>@arrMondayMeetingTime2[1]</td>
+                                <td>@firstMondayMeeting2.noidung</td>
+                                <td>@firstMondayMeeting2.thanhphan</td>
+                                <td>@firstMondayMeeting2.chuanbi</td>
+                                <td>@firstMondayMeeting2.diadiem</td>
+                                <td>@firstMondayMeeting2.chutri</td>
+                                <td>@firstMondayMeeting2.trangthai</td>
+                            </tr>
+                        }
+                        else if (numberMondayMeeting2 > 1)
+                        {
+                            foreach (var fschedule in monSchedule2)
+                            {
+                                className = "";
+                                if (fschedule.trangthai == "Bổ sung")
+                                {
+                                    className = "bg-danger";
+                                }
+                                arrMondayMeetingTime2 = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                <tr class="@(fschedule == monSchedule2.Last() ? "border-bottom" : "")">
+                                    @if (fschedule == monSchedule2.First())
+                                    {
+                                        <td style="border-bottom: 2px solid black;" rowspan="@numberMondayMeeting2" >@fschedule.thu @arrMondayMeetingTime2[0]</td>
+                                    }
+                                    <td class="@className">@arrMondayMeetingTime2[1]</td>
+                                    <td class="@className">@fschedule.noidung</td>
+                                    <td class="@className">@fschedule.thanhphan</td>
+                                    <td class="@className">@fschedule.chuanbi</td>
+                                    <td class="@className">@fschedule.diadiem</td>
+                                    <td class="@className">@fschedule.chutri</td>
+                                    <td class="@className">@fschedule.trangthai</td>
+                                </tr>   
+                            }
+
+                        }
+                    }
+
+                    <!--TUESDAY-->
+                    @{
+                        string[] arrTuesdayMeetingTime2;
+                        if (numberTuesdayMeeting2 == 1)
+                        {
+                            arrTuesdayMeetingTime2 = Functions.splitString(firstTuesdayMeeting2.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr class="border-bottom @(firstTuesdayMeeting2.trangthai == "Bổ sung" ? "bg-danger" : "")">
+                                <td>@firstTuesdayMeeting2.thu @arrTuesdayMeetingTime2[0]</td>
+                                <td>@arrTuesdayMeetingTime2[1]</td>
+                                <td>@firstTuesdayMeeting2.noidung</td>
+                                <td>@firstTuesdayMeeting2.thanhphan</td>
+                                <td>@firstTuesdayMeeting2.chuanbi</td>
+                                <td>@firstTuesdayMeeting2.diadiem</td>
+                                <td>@firstTuesdayMeeting2.chutri</td>
+                                <td>@firstTuesdayMeeting2.trangthai</td>
+                            </tr>
+                        }
+                        else if (numberTuesdayMeeting2 > 1)
+                        {
+                            foreach (var fschedule in tueSchedule2)
+                            {
+                                className = "";
+                                if (fschedule.trangthai == "Bổ sung")
+                                {
+                                    className = "bg-danger";
+                                }
+                                arrTuesdayMeetingTime2 = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                <tr class="@(fschedule == tueSchedule2.Last() ? "border-bottom" : "")">
+                                    @if (fschedule == tueSchedule2.First())
+                                    {
+                                        <td style="border-bottom: 2px solid black;" rowspan="@numberTuesdayMeeting2" >@fschedule.thu @arrTuesdayMeetingTime2[0]</td>
+                                    }
+                                    <td class="@className">@arrTuesdayMeetingTime2[1]</td>
+                                    <td class="@className">@fschedule.noidung</td>
+                                    <td class="@className">@fschedule.thanhphan</td>
+                                    <td class="@className">@fschedule.chuanbi</td>
+                                    <td class="@className">@fschedule.diadiem</td>
+                                    <td class="@className">@fschedule.chutri</td>
+                                    <td class="@className">@fschedule.trangthai</td>
+                                </tr>
+                            }
+                        }
+            
+            
+                    }
+
+
+                    <!--WEDNESDAY-->
+                    @{
+                        string[] arrWednesdayMeetingTime2;
+                        if (numberWednesdayMeeting2 == 1)
+                        {
+                            arrWednesdayMeetingTime2 = Functions.splitString(firstWednesdayMeeting2.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr class="border-bottom @(firstWednesdayMeeting2.trangthai == "Bổ sung" ? "bg-danger" : "")">
+                                <td>@firstWednesdayMeeting2.thu @arrWednesdayMeetingTime2[0]</td>
+                                <td>@arrWednesdayMeetingTime2[1]</td>
+                                <td>@firstWednesdayMeeting2.noidung</td>
+                                <td>@firstWednesdayMeeting2.thanhphan</td>
+                                <td>@firstWednesdayMeeting2.chuanbi</td>
+                                <td>@firstWednesdayMeeting2.diadiem</td>
+                                <td>@firstWednesdayMeeting2.chutri</td>
+                                <td>@firstWednesdayMeeting2.trangthai</td>
+                            </tr>
+                        }
+                        else if (numberWednesdayMeeting2 > 1)
+                        {
+                            foreach (var fschedule in wedSchedule2)
+                            {
+                                className = "";
+                                if (fschedule.trangthai == "Bổ sung")
+                                {
+                                    className = "bg-danger";
+                                }
+                                arrWednesdayMeetingTime2 = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                <tr class="@(fschedule == wedSchedule2.Last() ? "border-bottom" : "")">
+                                    @if (fschedule == wedSchedule2.First())
+                                    {
+                                        <td style="border-bottom: 2px solid black;" rowspan="@numberWednesdayMeeting2" >@fschedule.thu @arrWednesdayMeetingTime2[0]</td>
+                                    }
+                                    <td class="@className">@arrWednesdayMeetingTime2[1]</td>
+                                    <td class="@className">@fschedule.noidung</td>
+                                    <td class="@className">@fschedule.thanhphan</td>
+                                    <td class="@className">@fschedule.chuanbi</td>
+                                    <td class="@className">@fschedule.diadiem</td>
+                                    <td class="@className">@fschedule.chutri</td>
+                                    <td class="@className">@fschedule.trangthai</td>
+                                </tr>
+                            }
+
+                        }
+                    }
+                    <!--THURSDAY-->
+                    @{
+                        string[] arrThursdayMeetingTime2;
+                        if (numberThursdayMeeting2 == 1)
+                        {
+                            arrThursdayMeetingTime2 = Functions.splitString(firstThursdayMeeting2.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr class="border-bottom @(firstThursdayMeeting2.trangthai == "Bổ sung" ? "bg-danger" : "")">
+                                <td>@firstThursdayMeeting2.thu @arrThursdayMeetingTime2[0]</td>
+                                <td>@arrThursdayMeetingTime2[1]</td>
+                                <td>@firstThursdayMeeting2.noidung</td>
+                                <td>@firstThursdayMeeting2.thanhphan</td>
+                                <td>@firstThursdayMeeting2.chuanbi</td>
+                                <td>@firstThursdayMeeting2.diadiem</td>
+                                <td>@firstThursdayMeeting2.chutri</td>
+                                <td>@firstThursdayMeeting2.trangthai</td>
+
+                            </tr>
+                        }
+                        else if (numberThursdayMeeting2 > 1)
+                        {
+                            foreach (var fschedule in thurSchedule2)
+                            {
+                                arrThursdayMeetingTime2 = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                className = "";
+                                if (fschedule.trangthai == "Bổ sung")
+                                {
+                                    className = "bg-danger";
+                                }
+                                <tr class="@(fschedule == thurSchedule2.Last() ? "border-bottom" : "")">
+                                    @if (fschedule == thurSchedule2.First())
+                                    {
+                                        <td style="border-bottom: 2px solid black;" rowspan="@numberThursdayMeeting2" >@fschedule.thu @arrThursdayMeetingTime2[0]</td>
+                                    }
+                                    <td class="@className">@arrThursdayMeetingTime2[1]</td>
+                                    <td class="@className">@fschedule.noidung</td>
+                                    <td class="@className">@fschedule.thanhphan</td>
+                                    <td class="@className">@fschedule.chuanbi</td>
+                                    <td class="@className">@fschedule.diadiem</td>
+                                    <td class="@className">@fschedule.chutri</td>
+                                    <td class="@className">@fschedule.trangthai</td>
+                                </tr>
+                            }
+
+                        }
+                    }
+
+
+                    <!--FRIDAY-->
+                    @{
+                        string[] arrFridayMeetingTime2;
+                        if (numberFridayMeeting2 == 1)
+                        {
+                            arrFridayMeetingTime2 = Functions.splitString(firstFridayMeeting2.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr class="border-bottom @(firstFridayMeeting2.trangthai == "Bổ sung" ? "bg-danger" : "")">
+                                <td>@firstFridayMeeting2.thu @arrFridayMeetingTime2[0]</td>
+                                <td>@arrFridayMeetingTime2[1]</td>
+                                <td>@firstFridayMeeting2.noidung</td>
+                                <td>@firstFridayMeeting2.thanhphan</td>
+                                <td>@firstFridayMeeting2.chuanbi</td>
+                                <td>@firstFridayMeeting2.diadiem</td>
+                                <td>@firstFridayMeeting2.chutri</td>
+                                <td>@firstFridayMeeting2.trangthai</td>
+                            </tr>
+                        }
+                        else if (numberFridayMeeting2 > 1)
+                        {
+                            foreach (var fschedule in friSchedule2)
+                            {
+                                className = "";
+                                if (fschedule.trangthai == "Bổ sung")
+                                {
+                                    className = "bg-danger";
+                                }
+                                arrFridayMeetingTime2 = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                <tr class="@(fschedule == friSchedule2.Last() ? "border-bottom" : "")">
+                                    @if (fschedule == friSchedule2.First())
+                                    {
+                                        <td style="border-bottom: 2px solid black;" style="border-bottom: 2px solid black;" rowspan="@numberFridayMeeting2" >@fschedule.thu @arrFridayMeetingTime2[0]</td>
+                                    }
+                                    <td class="@className">@arrFridayMeetingTime2[1]</td>
+                                    <td class="@className">@fschedule.noidung</td>
+                                    <td class="@className">@fschedule.thanhphan</td>
+                                    <td class="@className">@fschedule.chuanbi</td>
+                                    <td class="@className">@fschedule.diadiem</td>
+                                    <td class="@className">@fschedule.chutri</td>
+                                    <td class="@className">@fschedule.trangthai</td>
+                                </tr>
+                            }
+
+                        }
+                    }
+
+                    <!--SATURDAY-->
+                    @{
+                        string[] arrSaturdayMeetingTime2;
+                        if (numberSaturdayMeeting2 == 1)
+                        {
+                            arrSaturdayMeetingTime2 = Functions.splitString(firstSaturdayMeeting2.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr class="border-bottom">
+                                <td>@firstSaturdayMeeting2.thu @arrSaturdayMeetingTime2[0]</td>
+                                <td>@arrSaturdayMeetingTime2[1]</td>
+                                <td>@firstSaturdayMeeting2.noidung</td>
+                                <td>@firstSaturdayMeeting2.thanhphan</td>
+                                <td>@firstSaturdayMeeting2.chuanbi</td>
+                                <td>@firstSaturdayMeeting2.diadiem</td>
+                                <td>@firstSaturdayMeeting2.chutri</td>
+                                <td>@firstSaturdayMeeting2.trangthai</td>
+                            </tr>
+                        }
+                        else if (numberSaturdayMeeting2 > 1)
+                        {
+                            foreach (var fschedule in satSchedule2)
+                            {
+                                arrSaturdayMeetingTime2 = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                <tr class="@(fschedule == satSchedule2.Last() ? "border-bottom" : "")">
+                                    @if (fschedule == satSchedule2.First())
+                                    {
+                                        <td style="border-bottom: 2px solid black;" style="border-bottom: 2px solid black;" rowspan="@numberSaturdayMeeting2">@fschedule.thu @arrSaturdayMeetingTime2[0]</td>
+                                    }
+                                    <td>@arrSaturdayMeetingTime2[1]</td>
+                                    <td>@fschedule.noidung</td>
+                                    <td>@fschedule.thanhphan</td>
+                                    <td>@fschedule.chuanbi</td>
+                                    <td>@fschedule.diadiem</td>
+                                    <td>@fschedule.chutri</td>
+                                    <td>@fschedule.trangthai</td>
+                                </tr>
+                            }
+
+                        }
+                    }
+
+
+                    <!--SUNDAY-->
+                    @{
+                        string[] arrSundayMeetingTime2;
+                        if (numberSundayMeeting2 == 1)
+                        {
+                            arrSundayMeetingTime2 = Functions.splitString(firstSundayMeeting2.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr class="border-bottom">
+                                <td>@firstSundayMeeting2.thu @arrSundayMeetingTime2[0]</td>
+                                <td>@arrSundayMeetingTime2[1]</td>
+                                <td>@firstSundayMeeting2.noidung</td>
+                                <td>@firstSundayMeeting2.thanhphan</td>
+                                <td>@firstSundayMeeting2.chuanbi</td>
+                                <td>@firstSundayMeeting2.diadiem</td>
+                                <td>@firstSundayMeeting2.chutri</td>
+                                <td>@firstSundayMeeting2.trangthai</td>
+                            </tr>
+                        }
+                        else if (numberSundayMeeting2 > 1)
+                        {
+                            foreach (var fschedule in sunSchedule2)
+                            {
+                                arrSundayMeetingTime2 = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                <tr class="@(fschedule == sunSchedule2.Last() ? "border-bottom" : "")">
+                                    @if (fschedule == sunSchedule2.First())
+                                    {
+                                        <td style="border-bottom: 2px solid black;" style="border-bottom: 2px solid black;" rowspan="@numberSundayMeeting2">@fschedule.thu @arrSundayMeetingTime2[0]</td>
+                                    }
+                                    <td>@arrSundayMeetingTime2[1]</td>
+                                    <td>@fschedule.noidung</td>
+                                    <td>@fschedule.thanhphan</td>
+                                    <td>@fschedule.chuanbi</td>
+                                    <td>@fschedule.diadiem</td>
+                                    <td>@fschedule.chutri</td>
+                                    <td>@fschedule.trangthai</td>
+                                </tr>
+                            }
+
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <!--TRONG TAM TUAN-->
+            <table class="table table-bordered">
+                <caption style="text-align:center;">
+                    <div class="row">
+                        <div class="col-md-4 col-md-offset-4">
+                            <button type="button" class="btn btn-danger ribbon"><strong>TRỌNG TÂM CÔNG TÁC TUẦN</strong></button>
+                        </div>
+                    </div>
+                </caption>
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Nội Dung</th>
+                    </tr>
+                    @{int i = 0;}
+                    @foreach (var row in listTarget)
+                    {
+                        i++;
+                        <tr>
+                            <td>@i</td>
+                            <td>@row.noidung</td>
+                        </tr>
+                    }
+                </thead>
+            </table>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-11 text-right">
+            <h3>GIÁM ĐỐC</h3>
+            <b style="color:black;padding-right: 23px;">(Đã duyệt)</b>
+
+        </div>
+    </div>
+</div>
+
+
+
+
+    </body>
+
+</html>
+
+
+<script>
+    function approve(me, id) {
+        $.ajax({
+            type: "POST",
+            url: "/Approve",
+            data: { id: id },
+            success: function (response) {
+                $('.modal-body').html(response);
+                $('#myModal').modal();
+                $(me).parent().html('');
+            }
+        })
+    }
+    $(document).ready(function () {
+        // Wrap each tr and td's content within a div
+        // (todo: add logic so we only do this when printing)
+        $("table tbody th, table tbody td").wrapInner("<div></div>");
+    })
+</script>

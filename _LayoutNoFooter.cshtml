@@ -1,0 +1,106 @@
+﻿<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>@Page.Title</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" type="text/css" href="~/CSS/styles.genco3.css" media="all">
+    <link rel="stylesheet" type="text/css" href="~/CSS/custom.css" media="all">
+    <link rel="stylesheet" type="text/css" href="~/Scripts/menubar/ddsmoothmenu.css">
+    <link rel="stylesheet" type="text/css" href="~/Scripts/menubar/ddsmoothmenu-v.css">
+    <link rel="stylesheet" type="text/css" href="~/CSS/RibbonButton.css" media="all">
+    <link rel="stylesheet" href="~/CSS/bootstrap.min.css">
+    <script src="~/Scripts/jquery.min.js"></script>
+    <script src="~/Scripts/bootstrap.min.js"></script>
+    <script type="text/javascript" src="~/Scripts/menubar/ddsmoothmenu.js"></script>
+    <script src="~/Scripts/moment-with-locales.js"></script>
+    <script src="~/Scripts/browser.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            //GET CURRENT TIME 
+            moment.locale('vi');
+            setInterval(function () { $('#current_time').html(moment().format('dddd D MMMM YYYY LTS')); }, 1000);
+        });
+        ddsmoothmenu.init({
+            mainmenuid: "smoothmenu1",
+            orientation: 'h',
+            classname: 'ddsmoothmenu',
+            contentsource: "markup"
+        })
+    </script>
+
+</head>
+<body>
+        <div class="page">
+            @RenderPage("_Header.cshtml")
+            <div style="height: 35px"></div>
+            @RenderBody()        
+            <div style="height: 35px"></div>
+        </div>
+        <!-- END DIV PAGE -->
+    <!-- END DIV wrapper -->
+
+
+    <!-- Modal -->
+<div class = "modal fade" id = "myModal" tabindex = "-1" role = "dialog" 
+   aria-labelledby = "myModalLabel" aria-hidden = "true">
+   
+   <div class = "modal-dialog">
+      <div class = "modal-content">
+         
+         <div class = "modal-header">
+            <button style="width:auto;" type = "button" class = "close" data-dismiss = "modal" aria-hidden = "true">
+                  &times;
+            </button>
+            
+            <h4 class = "modal-title" id = "myModalLabel">
+               Thông Báo
+            </h4>
+         </div>
+         
+         <div class = "modal-body">
+         </div>
+         
+         <div class = "modal-footer">
+            <button style="width:auto;" type = "button" class = "btn btn-danger" data-dismiss = "modal">
+               Close
+            </button>
+         </div>
+         
+      </div><!-- /.modal-content -->
+   </div><!-- /.modal-dialog -->
+  
+</div><!-- /.modal -->
+
+    <!-- Modal -->
+    <div class = "modal fade" id = "myModal" tabindex = "-1" role = "dialog" 
+   aria-labelledby = "myModalLabel" aria-hidden = "true">
+   
+   <div class = "modal-dialog">
+      <div class = "modal-content">
+         
+         <div class = "modal-header">
+            <button style="width:auto;" type = "button" class = "close" data-dismiss = "modal" aria-hidden = "true">
+                  &times;
+            </button>
+            
+            <h4 class = "modal-title" id = "myModalLabel">
+               Thông Báo
+            </h4>
+         </div>
+         
+         <div class = "modal-body">
+         </div>
+         
+         <div class = "modal-footer">
+            <button style="width:auto;" type = "button" class = "btn btn-danger" data-dismiss = "modal">
+               Close
+            </button>
+         </div>
+         
+      </div><!-- /.modal-content -->
+   </div><!-- /.modal-dialog -->
+  
+</div><!-- /.modal -->
+</body>
+
+</html>

@@ -1,0 +1,320 @@
+﻿@{
+    if (!WebSecurity.IsAuthenticated)
+    {
+        Response.Redirect("~/Default.cshtml");
+    }
+    //JUST ADMIN,VANTHU,BOOKER CAN ACESS THIS PAGE
+    if (!Roles.IsUserInRole("admin") && !Roles.IsUserInRole("vanthu") && !Roles.IsUserInRole("booked"))
+    {
+        Response.Redirect("~/Default.cshtml");
+    }
+    Layout = "~/_ScheduleLayout.cshtml";
+    Page.Title = "Dang Ky Lich Tuan";
+
+    var db = Database.Open("HOME_PHUMY");
+
+    //init variables for form-edit
+    int id = 0;
+    DateTime u_thoigian = new DateTime();
+    string thoigian = "";
+    string noidung = "";
+    string thanhphan = "";
+    string chuanbi = "";
+    string diadiem = "";
+    string chutri = "";
+    string thu = "";
+    string loai = "Công tác tuần";
+    string tinhtrang = "";
+    string owner = "";
+    int pheduyet = -1;
+    if (IsPost)
+    {
+
+        thoigian = Request["thoigian"];
+        noidung = Request["noidung"];
+        thanhphan = Request["thanhphan"];
+        chuanbi = Request["chuanbi"];
+        diadiem = Request["diadiem"];
+        chutri = Request["chutri"];
+        thu = Request["thu"];
+        loai = Request["loai"];
+        if (!string.IsNullOrEmpty(Request["tinhtrang"])){
+            tinhtrang = Request["tinhtrang"];
+        }
+        var currentDate = DateTime.Now;
+        string nguoidangky = WebSecurity.CurrentUserName;
+        string u_id = Request["id"];
+
+        //UPDATE
+        if (!string.IsNullOrEmpty(u_id) && u_id != "0")
+        {
+            string updateCommand = "";
+            if(loai == "Trọng tâm"){
+                //noidung,nguoidangky,ngaytao,loai,pheduyet
+                updateCommand = "UPDATE MeetingSchedule SET noidung=@0, ngaycapnhat=@1, nguoicapnhat=@2  WHERE id=@3";
+                db.Execute(updateCommand, noidung, currentDate, nguoidangky, u_id);
+            }else{
+                updateCommand = "UPDATE MeetingSchedule SET thoigian=@0, noidung=@1, thanhphan=@2, chuanbi=@3, diadiem=@4, chutri=@5, thu=@6, nguoicapnhat=@7, ngaycapnhat=@8, loai=@9 ,trangthai=@10  WHERE id=@11";
+                db.Execute(updateCommand, thoigian, noidung, thanhphan, chuanbi, diadiem, chutri, thu, nguoidangky, currentDate, loai, tinhtrang, u_id);
+            }
+
+
+            AppState["successMessage"] = "Cập Nhật Lịch Thành Công";
+
+
+            //SEND MAIL IF USER IS VANTHU
+            if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+            {
+                string time = DateTime.ParseExact(thoigian,"yyyy-MM-dd HH:mm:ss",System.Globalization.CultureInfo.InvariantCulture).ToString("dd/MM/yyyy HH:mm");
+                pheduyet = Convert.ToInt32(Request["pheduyet"]) ;
+                
+                if(Request["tinhtrang_status"] == "1" && pheduyet == 1)
+                {
+                    WebMail.From = "vanthu@phumytpc.genco3.vn";
+                    WebMail.Send(
+                        to: "thaobtt@phumytpc.genco3.vn,tuntc@phumytpc.genco3.vn,hoaht@phumytpc.genco3.vn, uyenntp@phumytpc.genco3.vn, phuctv@phumytpc.genco3.vn, trinhttp@phumytpc.genco3.vn,tanntt@phumytpc.genco3.vn,     binhnts@phumytpc.genco3.vn",
+                        //to: "thanhnt@phumytpc.genco3.vn",
+                        subject: "Thông Báo Thay Đổi Lịch Công Tác",
+                        body: @"<table style='width: 100%;max-width: 100%;margin-bottom: 20px;border: 1px solid #ddd;'>
+
+                                <caption style='padding-top: 8px;padding-bottom: 8px;color: #fff;text-align: left;'><h3>Lịch được thay đổi như sau</h3></caption>
+                                <tbody style='border-top: 2px solid #ddd;'>
+                                    <tr style='background-color: rgb(23, 128, 208);'>
+                                        <th style='color:#fff;padding: 8px;'>T.Gian</th>
+                                        <th style='color:#fff;padding: 8px;'>Nội dung</th>
+                                        <th style='color:#fff;padding: 8px;'>Thành phần</th>
+                                        <th style='color:#fff;padding: 8px;'>Chuẩn bị</th>
+                                        <th style='color:#fff;padding: 8px;'>Địa điểm</th>
+                                        <th style='color:#fff;padding: 8px;'>Chủ trì</th>
+                                        <th style='color:#fff;padding: 8px;'>Tình trạng</th>
+                                    </tr>
+                                    <tr>
+
+                                        <td style='border: 1px solid #ddd;padding: 8px;'>" + @thu + ' ' + @time + @"</td>
+                                        <td style='border: 1px solid #ddd;padding: 8px;'>" +@noidung+@"</td>
+                                        <td style='border: 1px solid #ddd;padding: 8px;'>" + @thanhphan + @"</td>
+                                        <td style='border: 1px solid #ddd;padding: 8px;'>" + @chuanbi + @"</td>
+                                        <td style='border: 1px solid #ddd;padding: 8px;'>" + @diadiem + @"</td>
+                                        <td style='border: 1px solid #ddd;padding: 8px;'>" + @chutri + @"</td>
+                                        <td style='border: 1px solid #ddd;padding: 8px;'>" + @tinhtrang + @"</td>
+                                    </tr>
+                                </tbody>
+                            </table>"
+                    );
+                }
+                Response.Redirect(Request.Url.AbsoluteUri);
+            }
+        }else{ //INSERT
+            if(loai == "Trọng tâm"){
+                pheduyet = 1;
+                db.Execute("INSERT INTO MeetingSchedule (thoigian,noidung,nguoidangky,ngaytao,loai,pheduyet) VALUES (@0,@1,@2,@3,@4,@5)", currentDate, noidung, nguoidangky, currentDate, loai, pheduyet);
+            }else{
+                db.Execute("INSERT INTO MeetingSchedule (thoigian,noidung,thanhphan,chuanbi,diadiem,chutri,thu,nguoidangky,ngaytao,loai,trangthai) VALUES (@0,@1,@2,@3,@4,@5,@6,@7,@8,@9,@10)", thoigian, noidung, thanhphan, chuanbi, diadiem, chutri, thu, nguoidangky, currentDate, loai, tinhtrang);
+            }
+            AppState["successMessage"] = "Thêm Lịch Thành Công";
+            Response.Redirect("~/RegisterSchedule.cshtml");
+        }
+
+    }else{ // DISPLAY VIEW
+
+        //EDIT VIEW - IF USER IS NOT OWNER OR ADMIN OF THE RECORD, CAN NOT RIGHT ACCESS
+        if (!string.IsNullOrEmpty(UrlData[0])){
+            var schedule = db.QuerySingle("SELECT * FROM MeetingSchedule WHERE id=" + UrlData[0]);
+            if (!Roles.IsUserInRole("admin") && !Roles.IsUserInRole("vanthu"))
+            {
+                string nguoidangky = schedule.nguoidangky;
+                thu = schedule.thu;
+                if(nguoidangky != WebSecurity.CurrentUserName || schedule.pheduyet == 1){
+                    Response.Redirect("~/Default.cshtml");
+                }
+            }
+            id = schedule.id;
+            if (schedule.thoigian != null){
+                u_thoigian = schedule.thoigian;
+            }
+
+            noidung = schedule.noidung;
+            thanhphan = schedule.thanhphan;
+            chuanbi = schedule.chuanbi;
+            diadiem = schedule.diadiem;
+            chutri = schedule.chutri;
+            thu = schedule.thu;
+            loai = schedule.loai;
+            tinhtrang = schedule.trangthai;
+            owner = schedule.nguoidangky;
+            pheduyet = schedule.pheduyet;
+            <script>
+                $(document).ready(function () {
+                    $("#time").jqxDateTimeInput({ value: '@u_thoigian' });
+                });
+            </script>  
+        }else{ //ADD NEW VIEW
+            //IF USER HAVE NOT RIGHT BOOK SCHEDULE, CAN NOT ACCESS ADD-NEW VIEW
+            if (!Roles.IsUserInRole("admin"))
+            {
+                if(!Roles.IsUserInRole("vanthu")){
+                    if(!Roles.IsUserInRole("booked")){
+                        Response.Redirect("~/Default.cshtml");
+                    }
+                }
+            
+            }
+        
+        }
+    }
+
+
+    }
+<link href="~/CSS/RegisterSchedule.css" rel="stylesheet" />
+<div class="container">
+
+    <h1 class="thick-heading">||Đăng Ký Lịch Tuần||
+      </h1>
+
+    <!-- First Featurette -->
+    <div id="about">
+        <!------------------------code---------------start---------------->
+            <div class="row">
+                <form role="form" method="post">
+                    <div class="col-lg-10 col-lg-offset-1 bg-frm-register-schedule">
+                        @{
+                            if (AppState["successMessage"] != null && !string.IsNullOrEmpty(AppState["successMessage"].ToString()))
+                            {
+                                 <div class="form-group">
+                                    <h4><span class = "label label-danger">* @AppState["successMessage"]</span></h4>
+                                </div>
+                                AppState["successMessage"] = "";
+                            }
+                        }
+                       
+                        <div class="form-group">
+                            <label for="InputName">Loại</label>
+                            <select class="form-control" name="loai">
+                                    @{
+                                        List<string> scheduleTypes = new List<string>() { "Công tác tuần", "Công tác khác", "Trọng tâm" };
+                                        foreach (var wd in scheduleTypes)
+                                        {
+                                            <option value="@wd" @{if (wd == loai)
+                                                      {<text>selected="selected"</text>} } >@wd</option>
+                                        }
+                                    }
+                                    
+                                </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="InputName">Thời Gian</label>
+                            <div class="input-group">
+                                <div style="float:right;" id='time' name='thoigian'></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="InputEmail">Nội Dung</label>
+                            <textarea name="noidung" class="form-control" rows="2" required>@noidung</textarea>
+                        </div>
+
+                        <div id="register-form-fields">
+                        <div class="form-group">
+                            <label for="InputEmail">Thành Phần</label>
+                            <textarea name="thanhphan" class="form-control" rows="2" >@thanhphan</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="InputMessage">Chuẩn Bị</label>
+                            <input class="form-control" name="chuanbi"  value="@chuanbi">
+                        </div>
+                        <div class="form-group">
+                            <label for="InputMessage">Địa Điểm</label>
+                            <input class="form-control" name="diadiem"  value="@diadiem">
+                        </div>
+                        <div class="form-group">
+                            <label for="InputMessage">Chủ Trì</label>
+                            <input class="form-control" name="chutri" value="@chutri">
+                        </div>
+                        @if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                        {
+                        <div class="form-group">
+                            <label for="InputName">Tình Trạng</label>
+                             <select class="form-control" name="tinhtrang" id="tinhtrang">
+                                @{
+                            List<string> status = new List<string>() { "", "Thay đổi", "Bổ sung", "Hoãn" };
+                            foreach (var wd in status)
+                            {
+                                        <option @{if (wd == tinhtrang)
+                                                  {<text>selected="selected"</text>} } >@wd</option>
+                            }
+                                }
+                                </select>
+                        </div>
+                        }
+                        </div>
+                        <input type="hidden" name="tinhtrang_status" id="tinhtrang_status" value=""/>
+                        <input type="hidden" name="pheduyet" value="@pheduyet"/>
+                        <input type="hidden" name="thu" id="thu" value="@thu"/>
+                        <input type="hidden" name="id" value="@id"/>
+                        <input type="hidden" name="owner" value="@owner"/>
+                        <input type="submit" name="submit" id="submit" value="@(id == 0 ? "Đăng Ký" : "Cập Nhật")" class="btn btn-danger pull-right">
+                    </div>
+                </form>
+
+            </div>
+
+
+            <!----Code------end----------------------------------->
+        
+    </div>
+</div>
+
+
+
+
+<!-- DATE PICKER -->
+<script type="text/javascript" src="~/Scripts/jqxcore.js"></script>
+<script type="text/javascript" src="~/Scripts/jqxdatetimeinput.js"></script>
+<script type="text/javascript" src="~/Scripts/jqxcalendar.js"></script>
+<script type="text/javascript" src="~/Scripts/globalize.js"></script>
+<link rel="stylesheet" href="~/CSS/jqx.base.css" type="text/css" />
+<script>
+    $(document).ready(function () {
+        $("#time").jqxDateTimeInput({ width: '300px', height: '25px', showTimeButton: true, formatString: 'yyyy-MM-dd HH:mm:ss' });
+        $('#time').on('valueChanged', function (event) {
+            var getDate = $('#time').jqxDateTimeInput('getDate');
+            var dayofWeek = String(getDate).slice(0, 3);
+            //console.log(dayofWeek);
+            if (dayofWeek == "Mon") {
+                $('#thu').val("Thứ hai");
+            } else if (dayofWeek == "Tue") {
+                $('#thu').val("Thứ ba");
+            } else if (dayofWeek == "Wed") {
+                $('#thu').val("Thứ tư");
+            } else if (dayofWeek == "Thu") {
+                $('#thu').val("Thứ năm");
+            } else if (dayofWeek == "Fri") {
+                $('#thu').val("Thứ sáu");
+            }
+            else if (dayofWeek == "Sat") {
+                $('#thu').val("Thứ bảy");
+            }
+            else if (dayofWeek == "Sun") {
+                $('#thu').val("Chủ nhật");
+            }
+        });
+        $('select[name=loai]').change(function () {
+            if ($(this).val() == 'Trọng tâm') {
+                $('#register-form-fields').hide();
+            } else {
+                $('#register-form-fields').show();
+            }
+            
+        });
+
+        //
+        var tinhtrang = $('#tinhtrang').val();
+        $('#tinhtrang').change(function () {
+            if (tinhtrang != $(this).val()) {
+                $('#tinhtrang_status').val('1');
+            } else {
+                $('#tinhtrang_status').val('');
+            }
+            
+        });
+    });
+</script>

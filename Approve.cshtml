@@ -1,0 +1,10 @@
+﻿@{
+    if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+    {
+        string id = Request["id"];
+        var db = Database.Open("HOME_PHUMY");
+        var updateQueryString = "UPDATE MeetingSchedule SET pheduyet=1 WHERE id=@0";
+        db.Execute(updateQueryString, id);
+        Response.Write("Phê Duyệt Thành Công");
+    }
+}

@@ -1,0 +1,143 @@
+﻿@{
+     
+    if (!Roles.IsUserInRole("admin") && !Roles.IsUserInRole("post_vhdn"))
+    {
+        AppState["message_error"] = "Bạn không có quyền để sử dụng chức năng này";
+        Response.Redirect("~/Error");
+    }
+    
+    Layout = "~/_LayoutNoFooter.cshtml";
+    Page.Title = "EditVHDN";
+
+    var db = Database.Open("HOME_PHUMY");
+    var departmentList = Functions.getDepartments();
+    //init variables for form-edit
+    string tieude = "";
+    string description = "";
+    string noidung = "";
+    string tacgia = "";
+    string editCommand = "";
+    string id = "";
+    string department = "";
+    string btnTitle = "Đăng bài";
+    if (IsPost)
+    {
+        id = Request.Form["id"];
+        department = Request.Form["department"];
+        var currentTime = DateTime.Now;
+        
+        tieude = Request["tieude"];
+        description = Request.Unvalidated("description");
+        
+        noidung = Request.Unvalidated["noidung"];
+        
+        tacgia = Request["tacgia"];
+        var currentDate = DateTime.Now;
+        string nguoidangky = WebSecurity.CurrentUserName;
+
+        //UPDATE
+        if (!string.IsNullOrEmpty(id) && id != "0")
+        {
+            editCommand = "UPDATE VanHoaDoanhNghiep SET title=@0, content=@1, author=@2, department=@3 , description=@4  WHERE id=@5";
+            db.Execute(editCommand, tieude, noidung, tacgia, department, description, id);
+            Response.Redirect("~/vhdn");
+            //AppState["successMessage"] = "Cập Nhật Thành Công";
+
+
+        }else{ //INSERT
+            editCommand = "INSERT INTO VanHoaDoanhNghiep (title,content,author,department,createdDate,createdBy,description) VALUES (@0,@1,@2,@3,@4,@5,@6)";
+            db.Execute(editCommand, tieude, noidung, tacgia,department, currentDate, nguoidangky,description);
+            //AppState["successMessage"] = "Thêm Mới Thành Công";
+            Response.Redirect("~/vhdn");
+        }
+
+    }else{ // DISPLAY VIEW
+
+        //EDIT VIEW - IF USER IS NOT OWNER OR ADMIN OF THE RECORD, CAN NOT RIGHT ACCESS
+        if (!string.IsNullOrEmpty(UrlData[0])){
+            var detail = db.QuerySingle("SELECT * FROM VanHoaDoanhNghiep WHERE id=" + UrlData[0]);
+            id = detail.id.ToString();
+
+            noidung = detail.content;
+            tieude = detail.title;
+            tacgia = detail.author;
+            department = detail.department;
+            description = detail.description;
+            btnTitle = "Cập nhật";
+        }
+    }
+
+
+    }
+<link href="~/CSS/RegisterSchedule.css" rel="stylesheet" />
+<script src="~/ckeditor/ckeditor.js"></script>
+<script src="~/CKFinderScripts/ckfinder.js"></script>
+<div class="container">
+
+    <h1 class="thick-heading">||Đăng Bài Viết Văn Hóa Doanh Nghiệp||
+      </h1>
+
+    <!-- First Featurette -->
+    <div id="about">
+        <!------------------------code---------------start---------------->
+            <div class="row">
+                <form role="form" method="post">
+                    <div class="col-lg-10 col-lg-offset-1 bg-frm-register-schedule">
+                        @{
+                            if (AppState["successMessage"] != null && !string.IsNullOrEmpty(AppState["successMessage"].ToString()))
+                            {
+                                 <div class="form-group">
+                                    <h4><span class = "label label-danger">* @AppState["successMessage"]</span></h4>
+                                </div>
+                                AppState["successMessage"] = "";
+                            }
+                        }
+                        <div class="form-group">
+                            <label for="InputEmail">Tiêu đề</label>
+                            <input type="text" name="tieude" class="form-control" value="@tieude"/>
+                        </div>
+                        <div class="form-group">
+                            <label for="InputEmail">Mô tả</label>
+                            <textarea id="description" name="description" class="form-control" rows="2" required>@description</textarea>
+                        </div>
+                        <script>
+                            var editor = CKEDITOR.replace('description');
+                            CKFinder.setupCKEditor(editor);
+                        </script>
+                        <div class="form-group">
+                            <label for="InputEmail">Nội Dung</label>
+                            <textarea id="content" name="noidung" class="form-control" rows="2" required>@noidung</textarea>
+                        </div>
+                         <script>
+                             var editor = CKEDITOR.replace('content');
+                             CKFinder.setupCKEditor(editor);
+                        </script>
+                        <div id="register-form-fields">
+                        <div class="form-group">
+                            <label for="InputEmail">Tác giả</label>
+                            <input type="text" name="tacgia" value="@tacgia" class="form-control" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="InputEmail">Phòng</label>
+                            <select class="form-control" name="department">
+                                @foreach (var row in departmentList) { 
+                                    <option @(department ==  row.name ? "selected" : "") value="@row.name">@row.name</option>
+                                }
+                                
+                            </select>
+                        </div>
+
+                        <input type="submit" name="submit" id="submit" value="@btnTitle" class="btn btn-danger pull-right">
+                        <input type="hidden" name="id" value="@id" />
+                    </div>
+                </form>
+
+            </div>
+
+
+            <!----Code------end----------------------------------->
+        
+    </div>
+</div>
+

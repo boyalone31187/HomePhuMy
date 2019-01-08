@@ -1,0 +1,70 @@
+﻿@using System.Web.Script.Serialization;
+@{
+    var db = Database.Open("PM_ANNINH");
+    int ms_pb = Functions.getDepartmentID(WebSecurity.CurrentUserId);
+    var listDepartment = Functions.getListDepartment();
+    string selectCommand = @"SELECT  CONGNHAN.MSTHE, CONGNHAN.TENCN,
+		                    FileChamCong_PM_Luu.giovao, FileChamCong_PM_Luu.giora,FileChamCong_PM_Luu.sogio,
+		                    PhongBan.MS_PB
+                            FROM dbo.PhongBan
+                            INNER JOIN dbo.CONGNHAN ON dbo.PhongBan.MS_PB = dbo.CONGNHAN.MS_PB
+                            INNER JOIN dbo.FileChamCong_PM_Luu ON dbo.CONGNHAN.MSTHE = dbo.FileChamCong_PM_Luu.msthe
+                            WHERE PhongBan.LoaiSX = '1' AND PhongBan.MS_PB = " + ms_pb + " AND giovao >= convert(varchar(10), getdate(),120) ORDER BY giovao ASC, giora ASC";
+    var listEmployee = db.Query(selectCommand);
+    int i = 1;
+    var listG3Department = Functions.getListG3Department();
+
+
+    if (Roles.IsUserInRole("admin") || Roles.IsUserInRole("see_all_in_out"))
+    {
+        string json = Json.Encode(listG3Department);
+        <script>
+        $(document).ready(function () {
+            var obj = @Html.Raw(json) ;
+            $("#ms_pb option[value=47]").show();
+            $.each(obj, function(index, value){
+                var ms_pb = value.MS_PB;
+                $("#ms_pb option[value="+ms_pb+"]").show();
+
+            })
+        });
+        </script>
+    }
+}
+<style>
+    #row-tinhtrang {
+        display: none;
+    }
+</style>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>STT</th>
+		    <th>Mã thẻ</th>		
+		    <th>Họ và tên</th>
+		    <th>Thời gian vào</th>
+		    <th>Thời gian ra</th>
+		    <th>Thời gian làm việc</th>
+	    </tr>
+    </thead>
+    <tbody id="response-data">
+        @foreach (var row in listEmployee)
+        {
+            <tr>
+                <td>@i</td>
+		        <td>@row.MSTHE</td>		
+		        <td>@row.TENCN</td>
+		        <td> @(row.giovao != null ? row.giovao.ToString("dd/MM/yyyy HH:mm") : "")</td>
+		        <td>@(row.giora != null ? row.giora.ToString("dd/MM/yyyy HH:mm") : "")</td>
+		        <td>@row.sogio</td>
+	        </tr>
+            i++;
+        }
+                                        
+    </tbody>
+</table>
+<script>
+    $(document).ready(function () {
+        $('#action').val('vaora');
+    })
+</script>

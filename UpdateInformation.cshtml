@@ -1,0 +1,41 @@
+﻿@{
+    Layout = "~/_SiteLayoutGencoNoSlider.cshtml";
+    Page.Title = "Quan Ly Vao Ra";
+    var db = Database.Open("PM_ANNINH");
+    var listDepartment = db.Query("SELECT * FROM PhongBan WHERE LOAISX = '1'");
+    if(IsPost){
+        string MSTHE = Request["MSTHE"];
+        string MSTHEMOI = Request["MSTHEMOI"];
+        string MS_PB = Request["MS_PB"];
+
+        string updateCommand = "UPDATE CONGNHAN SET MSTHE = @0, MSCN = @1, MS_PB =  @2 WHERE MSTHE = @3";
+        db.Execute(updateCommand, MSTHEMOI, MSTHEMOI, MS_PB, MSTHE);
+        <script>
+            alert('CẬP NHẬT THÀNH CÔNG');
+            window.location = "UpdateInformation.cshtml";
+        </script>
+    }
+}
+<br />
+<form role = "form" method="post">
+
+   <div class = "form-group">
+      <label for = "name">MÃ SỐ THẺ CŨ</label>
+      <input type = "text" class = "form-control" name = "MSTHE" placeholder = "MÃ SỐ THẺ CŨ">
+   </div>
+   <div class = "form-group">
+      <label for = "name">MÃ SỐ THẺ MỚI</label>
+      <input type = "text" class = "form-control" name = "MSTHEMOI" placeholder = "MÃ SỐ THẺ MỚI">
+   </div>
+   <div class = "form-group">
+      <label for = "inputfile">CHỌN PHÒNG BAN</label>
+      <select class = "form-control" name="MS_PB">
+          @foreach (var row in listDepartment) { 
+            <option value="@row.MS_PB">@row.TenPhongBan</option>
+          }
+          
+      </select>
+   </div>
+   
+   <button type = "submit" class = "btn btn-primary">Cập Nhật</button>
+</form>

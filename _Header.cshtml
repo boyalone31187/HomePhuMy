@@ -1,0 +1,162 @@
+﻿@{
+    string fullname = "Chưa đăng nhập";
+    string departmentID = "";
+    //GET FULLNAME BY USERID
+    if (WebSecurity.IsAuthenticated)
+    {
+        int userID = WebSecurity.CurrentUserId;
+        var db = Database.Open("StarterSite");
+        var user = db.QuerySingle("SELECT FullName,Department FROM UserProfile WHERE UserId = @0", userID);
+        if (user != null)
+        {
+            fullname = user.FullName;
+            departmentID = user.Department; 
+        }
+    }
+    
+    //If having news has just registerd, show hot icon in 7 days
+    //WebCache.Remove("showHotIcon");
+    decimal showHotIcon = 0;
+    if(WebCache.Get("showHotIcon") != null){
+        showHotIcon = WebCache.Get("showHotIcon");
+    }
+}
+<div class="header-container">
+    <div class="header" style="z-index: -9999;">
+        <h1 class="logo">
+            <img src="~/Images/bannergenco.PNG" alt="EVNGENCO 3"></h1>
+
+    </div>
+    <div class="quick-access">
+        <div class="shop-access">
+            <ul class="links" style="color: blue; float: left; padding-left: 159px;">
+                <li class="firsttimer"><span style="text-transform: capitalize;" id="current_time"></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <img src="~/Images/login.jpg" width="16" height="16">&nbsp;Đăng nhập: @fullname</li>
+            </ul>
+            <ul class="links2">
+                <li><a href="https://mail.phumytpc.genco3.vn" target="_blank" title="Webmail" class="top-link-wishlist">Web mail</a></li>
+                @if (WebSecurity.IsAuthenticated)
+                { 
+                    if(Roles.IsUserInRole("admin") || Roles.IsUserInRole("booked")){
+                    <li><a href="~/AssignRight" title="Quản trị phân quyền hệ thống" class="top-link-checkout">Hệ thống</a></li>
+                
+                    <li><a href="~/Account/Register" title="Log In">Đăng ký</a></li>
+                    }
+                }
+
+                @if (WebSecurity.IsAuthenticated)
+                { 
+                    <li class="last">
+                        <text>
+                        <form id="logoutForm" action="~/Account/Logout?ReturnUrl=/Account/Login" method="post">
+                            @AntiForgery.GetHtml()
+                            <a href="javascript:document.getElementById('logoutForm').submit()">Thoát</a>
+                        </form>
+                    </text>
+                    </li>
+                }
+                else
+                {
+                    <li><a href="~/Account/Login">Đăng nhập</a></li>
+                }
+
+            </ul>
+
+        </div>
+    </div>
+    <!-- END DIV header -->
+</div>
+
+<div align="center">
+    <div class="menubar-block" style="width: 1010px">
+
+
+        <div class="menubar-bg" style="width: 1010px">
+            <div class="container_16" style="width: 1010px">
+                <div class="grid_13" style="width: 1010px" align="center">
+                    <div id="smoothmenu1" class="ddsmoothmenu">
+                        <ul>
+                            <li class="selected"><a href="~/Default" title="Trang chủ" class="icon_home">
+                                <img class="is_img_menubar onLaw2-icon1 onLaw1-Home" src="~/Images/home.png" alt="Trang chủ" style="padding-top: 5px"></a></li>
+                            <li style="width: 100px; z-index: 100;">
+                                <a href="#">Giới thiệu<span class="downarrowclass">&nbsp;</span></a><ul style="display: none; top: 35px; box-shadow: rgb(170, 170, 170) 5px 5px 5px; visibility: visible;">
+                                    <li><a href="#">Tổng quan</a></li>
+                                    <li><a href="#">Sơ đồ tổ chức</a></li>
+                                    <li><a href="#">Lĩnh vực hoạt động</a></li>
+                                </ul>
+                            </li>
+                            <li style="z-index: 99;"><a href="#" class="">Lịch tuần<span class="downarrowclass">&nbsp;</span></a>
+                                <ul style="top: 35px; box-shadow: rgb(170, 170, 170) 5px 5px 5px; visibility: visible; left: 0px; width: 260px; display: none;">
+                                    <li><a href="~/ManageSchedule">Đăng ký lịch </a></li>
+                                    <li><a target="_blank" href="~/Schedule">Xem lịch công tác tuần</a></li>
+                                </ul>
+                            </li>
+                            <li style="z-index: 98;">
+                                <a href="~/ManageWeekJob" class="">Công việc tuần<span class="downarrowclass">&nbsp;</span></a>
+                                @if(departmentID == "5")
+                                {
+                                    <ul style="top: 35px; box-shadow: rgb(170, 170, 170) 5px 5px 5px; visibility: visible; left: 0px; width: 260px; display: none;">
+                                        <li><a href="~/ManageWeekJobKHVT">Phòng Kế Hoạch Vật Tư</a></li>
+                                    </ul>
+                                }
+                                @if(departmentID == "6")
+                                {
+                                    <ul style="top: 35px; box-shadow: rgb(170, 170, 170) 5px 5px 5px; visibility: visible; left: 0px; width: 260px; display: none;">
+                                        <li><a href="~/ManageWeekJobKTAT">Phòng Kỹ Thuật và An Toàn</a></li>
+                                    </ul>
+                                }
+                            </li>
+
+                            <li style="z-index: 97;"><a href="#" class="">Tiêu chuẩn ISO<span class="downarrowclass">&nbsp;</span></a><ul style="top: 35px; box-shadow: rgb(170, 170, 170) 5px 5px 5px; visibility: visible; left: 0px; width: 260px; display: none;">
+                                 <li><a href="~/ISO27001" target="_blank">ISO 27001 Công ty Nhiệt điện Phú Mỹ</a></li>
+                                <li><a href="http://home.genco3.com/TieuchuanISO/TC_Genco3.asp" target="_blank">Tiêu chuẩn ISO Tổng Công ty Phát điện 3</a></li>
+                                <li><a href="http://home.genco3.com/TieuchuanISO/TC_Bocongthuong.asp">Tiêu chuẩn Bộ Công thương ban hành</a></li>
+                                <li><a href="http://home.genco3.com/TieuchuanISO/TC_TCVN.asp">Tiêu chuẩn Việt nam (TCVN)</a></li>
+                            </ul>
+                            </li>
+                            <li style="z-index: 96;"><a href="#">Văn bản pháp quy<span class="downarrowclass">&nbsp;</span></a><ul style="display: none; top: 35px; box-shadow: rgb(170, 170, 170) 5px 5px 5px; visibility: visible;">
+                                <li><a href="~/VanBanNoiBo">Văn bản quản lý nội bộ  Công ty</a></li>
+                                <li><a href="~/phapche">Văn bản Luật - Pháp chế  Công ty</a></li>
+                                <li><a href="http://phapche.evn.com.vn/Pages/Search.aspx?scope=1" target="_blank">Văn bản Tập đoàn</a></li>
+                            </ul>
+                            </li>
+                            <li style="z-index: 95;">
+                                @if (showHotIcon == 0)
+                                {
+                                    <a href="#">Tin tức - Sự kiện <span class="downarrowclass">&nbsp;</span></a>
+                                }
+                                else { 
+                                <a href="#">Tin tức <img src="~/Images/icon_hot_1.gif" /> <span class="downarrowclass">&nbsp;</span></a>
+                                }
+                                
+                                <ul style="display: none; top: 35px; box-shadow: rgb(170, 170, 170) 5px 5px 5px; visibility: visible;">
+                                <li><a href="~/tinnoibo">Bản tin nội bộ</a></li>
+                                <li><a href="~/tinnganhdien">Bản tin ngành điện</a></li>
+                                @if (Roles.IsUserInRole("post"))
+                                {
+                                    <li><a href="~/dangtin">Đăng tin</a></li>
+                                }
+                                
+                            </ul>
+                            </li>
+                            <li style="z-index: 94;"><a href="#">Danh bạ<span class="downarrowclass">&nbsp;</span></a><ul style="display: none; top: 35px; box-shadow: rgb(170, 170, 170) 5px 5px 5px; visibility: visible;">
+                                <li><a href="~/DanhBa">Cơ quan Công ty</a></li>
+                                <li><a href="http://home.genco3.com/home.aspx?site=main&page=danh-ba&mobile=0&companyid=505ed5b2-387d-4993-8184-d802c6056bf0&usid=e2484e43-c55d-4e75-b8d3-fed5e1385b7c" target="_blank">Các đơn vị</a></li>
+                                <li><a href="http://home.evn.com.vn/tin-tuc/Pages/chi-tiet-tin.aspx?nid=486" target="_blank">Cơ quan Tập đoàn</a></li>
+                                <li><a href="http://home.genco3.com/home.aspx?site=main&page=danh-ba&mobile=0&companyid=head&usid=e2484e43-c55d-4e75-b8d3-fed5e1385b7c" target="_blank">Cơ quan Tổng Công Ty</a></li>
+                            </ul>
+                            </li>
+                            <li style="z-index: 93;"><a href="#">Thông báo<span class="downarrowclass">&nbsp;</span></a><ul style="display: none; top: 35px; box-shadow: rgb(170, 170, 170) 5px 5px 5px; visibility: visible;">
+                                <li><a href="#">Thông báo  Công ty</a></li>
+                                <li><a href="#">Kết luận giao ban  Công ty</a></li>
+                                <li><a href="#">Kết luận giao ban KT-SX</a></li>
+                            </ul>
+                            </li>
+                        </ul>
+                        <br style="clear: left">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

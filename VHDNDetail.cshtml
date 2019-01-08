@@ -1,0 +1,86 @@
+﻿@{
+    Layout = "~/_SiteLayoutGencoNoSlider.cshtml";
+    Page.Title = "VHDNDetail";
+    var db = Database.Open("HOME_PHUMY");
+    int id = Convert.ToInt32(UrlData[0]) ;
+
+    string selectCommand = "SELECT * FROM VanHoaDoanhNghiep ORDER BY CreatedDate DESC";
+    var result = db.Query(selectCommand);
+    
+
+    var rs = from news in result
+             where news.id == id
+             select news;
+
+    var others = (from news in result
+                  where news.id != id
+                  select news).Take(10);       
+                   
+}
+<link rel="stylesheet" href="~/CSS/InOut.css" />
+<link rel="stylesheet" href="~/CSS/tinoibo.css" />
+<style>
+
+</style>
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <div class="row">
+                    <div class="col-md-12" style="padding-left:2px;padding-right:0;">
+                        <span class="glyphicon glyphicon-credit-card"></span>
+                        <div class="title"> <a href='~/vhdn'>BÀI VIẾT DỰ THI VHDN</a> » @rs.ElementAt(0).title</div>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <div class="panel-body" id="panel-body">
+                <div class="detail_page">
+                    <div class="detail_top">
+                       <div class="row">
+                           <div class="col-md-4 pull-right"><b>Họ tên:</b> @rs.ElementAt(0).author</div>
+                        </div>
+                        <div class="row">
+                           <div class="col-md-4 pull-right"><b>Đơn vị công tác:</b> @rs.ElementAt(0).department</div>
+                        </div>
+                         <div class="row">
+                           <div class="col-md-12 text-center"><h4>@rs.ElementAt(0).title</h4></div>
+                        </div>
+
+                    </div>
+
+                    <div class="detail_content text-center" >
+                            @Html.Raw( @rs.ElementAt(0).content)
+
+                    </div>
+
+                    <br style="clear:both">
+
+                    <div style="width: 100%" class="news_box">
+                        <div class="detail_page">
+                            <h5 class="forum_name">Các bài viết khác</h5>
+                            <ul class="icon-list">
+                                @foreach(var row in others)
+                                {
+                                <li>
+                                    <a href="~/vhdndetail/@row.id">
+                                        @row.title
+                                        <span><i>- (@row.createdDate)</i></span>
+                                    </a>
+                                </li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+
+</div>
+

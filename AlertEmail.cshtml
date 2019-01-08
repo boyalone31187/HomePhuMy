@@ -1,0 +1,110 @@
+﻿@{
+    
+    var database = Database.Open("CONTRACT_MANAGEMENT");
+    //Response.Write(DateTime.Now.Day); Response.End();
+
+    //cảnh báo khi còn 15 ngày nữa là hết hạn thư bảo lãnh
+    string query = "SELECT TenHopDong,SoHD,NgayHetHieuLuc,NVPhuTrach FROM Contract WHERE NgayHetHieuLuc > GETDATE() AND  DATEDIFF(day, GETDATE() ,NgayHetHieuLuc) < 15 ";
+    var contracts = database.Query(query);
+    string soHD = "";
+    string tenHD = "";
+    string ngayHetHieuLuc = "";
+    string ngayQuyDinhGiaoHang = "";
+    string NVPhuTrach = "thanhnt@phumytpc.genco3.vn";
+    string tinhTrang = "";
+    string html = "";
+
+    if (contracts.Count() > 0)
+    {
+        html = @"<table style='width: 100%;max-width: 100%;margin-bottom: 20px;border: 1px solid #ddd;'>
+
+                                <caption style='padding-top: 8px;padding-bottom: 8px;color: #fff;text-align: left;'><h3>Danh sách các HĐ sắp hết hạn thư bão lãnh</h3></caption>
+                                <tbody style='border-top: 2px solid #ddd;'>
+                                    <tr style='background-color: rgb(23, 128, 208);'>
+                                        <th style='color:#fff;padding: 8px;'>Số HĐ</th>
+                                        <th style='color:#fff;padding: 8px;'>Tên HĐ</th>
+                                        <th style='color:#fff;padding: 8px;'>Ngày hết hiệu lực</th>
+                                    </tr>";
+        WebMail.UserName = "ADMIN";
+        WebMail.From = "thanhnt@phumytpc.genco3.vn";
+        foreach (var row in contracts)
+        {
+            soHD = row["SoHD"];
+            tenHD = row["TenHopDong"];
+            ngayHetHieuLuc = row["NgayHetHieuLuc"].ToString("dd/MM/yyyy");
+            if (row["NVPhuTrach"] != "thanhnt@phumytpc.genco3.vn")
+            {
+                NVPhuTrach += "," + row["NVPhuTrach"];
+            }
+
+            html += @"<tr>
+
+                                        <td style='border: 1px solid #ddd;padding: 8px;'>" + @soHD + @"</td>
+                                        <td style='border: 1px solid #ddd;padding: 8px;'>" + @tenHD + @"</td>
+                                        <td style='border: 1px solid #ddd;padding: 8px;'>" + @ngayHetHieuLuc + @"</td>
+                                    </tr>";
+        }
+
+        html += "</tbody> </table>";
+    }
+    NVPhuTrach = "thanhnt@phumytpc.genco3.vn";
+    WebMail.Send(
+                to: NVPhuTrach,
+                subject: "BẢO ĐẢM THHĐ HẾT HẠN",
+                body: html
+    );
+
+    /* Gửi Mail cảnh báo các TH sau: 
+     * còn 5 ngày nữa là giao hàng
+     * đến ngày giao hàng
+     * sau 10 ngày tính từ ngay giao hàng
+     */
+    query = @"SELECT N'Còn 5 ngày nữa giao hàng' as 'TinhTrang', TenHopDong,SoHD,NgayQuyDinhGiaoHang,NVPhuTrach                  FROM Contract 
+                WHERE  DATEDIFF(day , NgayQuyDinhGiaoHang,  GETDATE()) = 5
+                UNION
+                SELECT  N'Đến ngày giao hàng' as 'TinhTrang', TenHopDong,SoHD,NgayQuyDinhGiaoHang,NVPhuTrach FROM Contract WHERE CONVERT(date,NgayQuyDinhGiaoHang) =  CONVERT(DATE,getdate())
+                UNION
+                SELECT  N'Đã giao hàng được 10 ngày' as 'TinhTrang',TenHopDong,SoHD,NgayQuyDinhGiaoHang,NVPhuTrach FROM Contract WHERE  DATEDIFF(day ,  GETDATE(),  NgayQuyDinhGiaoHang) = 10";
+    contracts = database.Query(query);
+    if (contracts.Count() > 0)
+    {
+        html = @"<table style='width: 100%;max-width: 100%;margin-bottom: 20px;border: 1px solid #ddd;'>
+                    <tbody style='border-top: 2px solid #ddd;'>
+                        <tr style='background-color: rgb(23, 128, 208);'>
+                            <th style='color:#fff;padding: 8px;'>Số HĐ</th>
+                            <th style='color:#fff;padding: 8px;'>Tên HĐ</th>
+                            <th style='color:#fff;padding: 8px;'>Ngày giao hàng</th>
+                            <th style='color:#fff;padding: 8px;'>Tình trạng</th>
+                        </tr>";
+        WebMail.UserName = "ADMIN";
+        WebMail.From = "thanhnt@phumytpc.genco3.vn";
+        foreach (var row in contracts)
+        {
+            soHD = row["SoHD"];
+            tenHD = row["TenHopDong"];
+            ngayQuyDinhGiaoHang = row["NgayQuyDinhGiaoHang"].ToString("dd/MM/yyyy");
+            tinhTrang = row["TinhTrang"];
+            if (row["NVPhuTrach"] != "thanhnt@phumytpc.genco3.vn")
+            {
+                NVPhuTrach += "," + row["NVPhuTrach"];
+            }
+
+            html += @"<tr>
+                        <td style='border: 1px solid #ddd;padding: 8px;'>" + @soHD + @"</td>
+                        <td style='border: 1px solid #ddd;padding: 8px;'>" + @tenHD + @"</td>
+                        <td style='border: 1px solid #ddd;padding: 8px;'>" + @ngayQuyDinhGiaoHang + @"</td>
+                        <td style='border: 1px solid #ddd;padding: 8px;'>" + tinhTrang + @"</td>
+                    </tr>";
+        }
+
+        html += "</tbody> </table>";
+    }
+    NVPhuTrach = "thanhnt@phumytpc.genco3.vn";
+    WebMail.Send(
+               to: NVPhuTrach,
+               subject: "Vv GIAO HÀNG CỦA NHÀ THẦU",
+               body: html
+   );
+
+    WebCache.Set("CONTRACT_MANAGEMENT_MAIL_ALERT", DateTime.Now.Day, 60 * 24);
+}

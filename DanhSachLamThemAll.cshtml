@@ -1,0 +1,181 @@
+﻿@{
+    if (!Roles.IsUserInRole("see_all_ot") && !Roles.IsUserInRole("admin"))
+    {
+        Response.Redirect("~/Account/Login?returnUrl=" + Request.Url.LocalPath);
+    }
+    Layout = "~/_SiteLayoutGencoNoSlider.cshtml";
+    Page.Title = "Danh Sach Lam Them";
+    var db = Database.Open("HOME_PHUMY");
+    int userId = WebSecurity.CurrentUserId;
+    int departmentId = Functions.getDepartmentID(userId);
+
+
+
+
+    DateTime firstDay = new DateTime();
+    DateTime lastDay = new DateTime();
+    var dayOfWeek = DateTime.Now.DayOfWeek;
+    if (dayOfWeek == System.DayOfWeek.Monday)
+    {
+        firstDay = DateTime.Now;
+        lastDay = DateTime.Now.AddDays(6);
+    }
+    else if (dayOfWeek == System.DayOfWeek.Tuesday)
+    {
+        firstDay = DateTime.Now.AddDays(-1);
+        lastDay = DateTime.Now.AddDays(5);
+    }
+    else if (dayOfWeek == System.DayOfWeek.Wednesday)
+    {
+        firstDay = DateTime.Now.AddDays(-2);
+        lastDay = DateTime.Now.AddDays(4);
+    }
+    else if (dayOfWeek == System.DayOfWeek.Thursday)
+    {
+        firstDay = DateTime.Now.AddDays(-3);
+        lastDay = DateTime.Now.AddDays(3);
+    }
+    else if (dayOfWeek == System.DayOfWeek.Friday)
+    {
+        firstDay = DateTime.Now.AddDays(-4);
+        lastDay = DateTime.Now.AddDays(2);
+    }
+    else if (dayOfWeek == System.DayOfWeek.Saturday)
+    {
+        firstDay = DateTime.Now.AddDays(-5);
+        lastDay = DateTime.Now.AddDays(1);
+    }
+    else if (dayOfWeek == System.DayOfWeek.Sunday)
+    {
+        firstDay = DateTime.Now.AddDays(-6);
+        lastDay = DateTime.Now;
+    }
+
+    //GET LIST DEPARTMENT
+    var listDepartment = Functions.getList("Department");
+    
+    string selectCommand = "SELECT * FROM WorkOverTime WHERE createdTime >= '" + firstDay.ToString("yyyy-MM-dd") + "' AND createdTime <= '" + lastDay.ToString("yyyy-MM-dd 23:59:00") + "'";
+    if(Roles.IsUserInRole("admin")){
+    }
+    else if (Roles.IsUserInRole("vanthu") /*|| Roles.IsUserInRole("admin")*/)
+    {
+        selectCommand += " AND status = N'Đã duyệt'";
+    }else{
+        selectCommand += " AND departmentId = " + departmentId;
+    }
+    var rs = db.Query(selectCommand);
+    int i = 1;
+
+}
+<style>
+    table tr th {
+        background-color: #2196F3;
+        color: #fff;
+        font-weight: bold;
+    }
+    .btn-xs {
+        padding-top: 4px;
+        padding-bottom: 4px;
+    }
+    tr.solved td {
+        font-weight: bolder;
+    }
+</style>
+    <div class="row">
+        <div class="col-md-12">
+                <table class="table table-bordered">
+                    <caption class="text-center">
+                        <h4><button type="button" class="btn btn-danger ribbon" style="text-align:center; width:56%;">DANH SÁCH LÀM THÊM THỨ 7 (@lastDay.AddDays(-1).ToString("dd/MM")), CHỦ NHẬT (@lastDay.ToString("dd/MM"))</button></h4>
+                        <div class="row">
+                            <div class="col-md-4 pull-right text-right">
+                                <div style="padding-top: 10px;">
+                                    <img width="24" height="22" src="~/Images/file-xls-excel-icon.png" />
+                                    <a href="~/ExportListOverTime/@firstDay.ToString("yyyy-MM-dd")/@lastDay.ToString("yyyy-MM-dd")"><strong>Xuất Excel</strong></a>
+                                </div>
+                            </div>
+                        </div>
+                    </caption>
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Họ và tên</th>
+                            <th>Thời gian</th>
+                            <th>Tình trạng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var d in listDepartment)
+                        {
+                            <tr class="bg-info" style="text-transform:uppercase">
+                                <td colspan="4"><strong>@d.name</strong></td>
+                            </tr>
+                            foreach (var row in rs)
+                            {
+                                if (row.departmentId == d.ms_pb)
+                                {
+                                    string workTime = "";
+                                    if (row.sat == "1")
+                                    {
+                                        workTime += "- Thứ 7 (" + row.hours1 + " tiếng) </br>";
+                                    }
+                                    if (row.sun == "1")
+                                    {
+                                        workTime += "- Chủ nhật (" + row.hours2 + " tiếng)";
+                                    }
+                                    <tr>
+                                        <td>@i</td>
+                                        <td>@row.tencn</td>
+                                        <td>@Html.Raw(workTime) </td>
+                                        <td>@row.status</td>
+                                    </tr>
+                                    i++;
+                                }
+
+                            }
+                        }
+                    </tbody>
+                </table>
+            
+        </div>
+    </div>
+
+
+
+
+
+
+<script>
+    function deleteWeekJob(me, id) {
+        
+        $.ajax({
+            type: "POST",
+            url: "/DeleteWeekJob.cshtml",
+            data: { id: id },
+            success: function (response) {
+                $(me).closest('tr').remove();
+            }
+        })
+    }
+
+    $(document).ready(function () {
+        $('a.toogleLock').click(function () {
+            var status = $(this).attr('status');
+            var me = $(this);
+            $.ajax({
+                type: "POST",
+                url: "/LockUpdateWeekJob.cshtml",
+                data: { status: status },
+                success: function (response) {
+                    if (status == "1") {
+                        me.html("Khóa cập nhật");
+                        me.attr('status', 0);
+
+                    } else {
+                        me.html("Mở khóa");
+                        me.attr('status', 1);
+                    }
+                }
+            })
+        });
+    });
+</script>

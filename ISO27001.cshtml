@@ -1,0 +1,129 @@
+﻿@{
+    Layout = "~/_SiteLayoutGencoNoSlider.cshtml";
+    Page.Title = "Van Ban Noi Bo";
+    var db = Database.Open("EOFFICE_PHUMY");
+    var departmentList = db.Query("SELECT * FROM PHONG_BAN WHERE PB_ID > 4");
+
+    string selectCommand = @"SELECT sokyhieu,trichyeu,d.linkfile,ngayvb,cngayvb, mapb_st, nguoiky,idvb 
+                            FROM vbdi_vanbandi v 
+                            inner join vbdi_dinhkem d on v.idvb = d.mavb WHERE idloai = 'IS' 
+                            order by ngayvb desc";
+    var vanbanList = db.Query(selectCommand);
+
+
+
+}
+<script language="javascript">
+    function openwin(stt) {
+        window.open("ViewFile.cshtml?stt=" + stt, "xxxx", "toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=no,resizable=yes,copyhistory=no,width=500,height=300,top=" + (screen.height - 300) / 2 + ",left=" + (screen.width - 500) / 2);
+    }
+</script>
+<style type="text/css">
+    #tabstt {
+        border: 1px solid #aaaaaa;
+        color: #222222;
+        border-radius: 4px;
+        padding: 3px;
+    }
+</style>
+<div class="col-main">
+
+    <div class="box recently">
+        <div class="category-head" style="padding-left: 0px">
+            <h2 class="subtitle">
+                <img id="btChitiet" src="../Images/main-menu.png" border="1" style="padding-top: 0px" width="16"><strong>  ISO 270001</strong></h2>
+        </div>
+        <ol class="grid-row">
+            <div id="tabstt">
+                <div align="left">
+
+                    @* BAT DAU *@
+                    <a data-toggle="collapse" data-target="#PMDetail_1" class="" aria-expanded="true">
+                        <img id="btChitiet" src="Images/icon2.gif" border="0" width="18" height="18" style="padding-top: 0px" alt="Chọn xem chi tiết">
+                        <strong>1. Sổ tay và phụ lục</strong>
+                    </a>
+
+
+                    <div id="PMDetail_1" style="padding-left: 20px;" class="collapse in" aria-expanded="true">
+
+
+                        <a href="" data-toggle="collapse" data-target="#Detail1_1">
+                            <img src="Images/arrow.gif" border="0" width="20" height="20" style="padding-top: 0px" alt="Chọn xem chi tiết">
+                            Viết sổ tay
+                        </a>
+                        <br>
+
+                        
+                        <a data-toggle="collapse" data-target="#Detail1_1">
+                            <img src="Images/arrow.gif" border="0" width="20" height="20" style="padding-top: 0px" alt="Chọn xem chi tiết">
+                            Viết sổ tay
+                        </a>
+                        <br>
+
+                        
+                        <a data-toggle="collapse" data-target="#Detail1_1">
+                            <img src="Images/arrow.gif" border="0" width="20" height="20" style="padding-top: 0px" alt="Chọn xem chi tiết">
+                            Viết sổ tay
+                        </a>
+                        <br>
+                        
+                        <a data-toggle="collapse" data-target="#Detail1_1">
+                            <img src="Images/arrow.gif" border="0" width="20" height="20" style="padding-top: 0px" alt="Chọn xem chi tiết">
+                            Viết sổ tay
+                        </a>
+                        <br>
+                    </div>
+                    <br>
+
+                     @* KET THUC *@
+
+
+                      @* START *@
+                    <a data-toggle="collapse" data-target="#PMDetail_1" class="" aria-expanded="true">
+                        <img id="btChitiet" src="Images/icon2.gif" border="0" width="18" height="18" style="padding-top: 0px" alt="Chọn xem chi tiết">
+                        <strong>1. Sổ tay và phụ lục</strong>
+                    </a>
+
+
+                    <div id="PMDetail_1" style="padding-left: 20px;" class="collapse in" aria-expanded="true">
+
+                        <a data-toggle="collapse" data-target="#Detail1_1">
+                            <img src="Images/arrow.gif" border="0" width="20" height="20" style="padding-top: 0px" alt="Chọn xem chi tiết">
+                            Viết sổ tay
+                        </a>
+                        <br>
+                    </div>
+                    <br>
+
+                     @* END *@
+
+
+                      @* START *@
+                    <a data-toggle="collapse" data-target="#PMDetail_1" class="" aria-expanded="true">
+                        <img id="btChitiet" src="Images/icon2.gif" border="0" width="18" height="18" style="padding-top: 0px" alt="Chọn xem chi tiết">
+                        <strong>1. Sổ tay và phụ lục</strong>
+                    </a>
+
+
+                    <div id="PMDetail_1" style="padding-left: 20px;" class="collapse in" aria-expanded="true">
+
+                        <a data-toggle="collapse" data-target="#Detail1_1">
+                            <img src="Images/arrow.gif" border="0" width="20" height="20" style="padding-top: 0px" alt="Chọn xem chi tiết">
+                            Viết sổ tay
+                        </a>
+                        <br>
+                    </div>
+                    <br>
+
+                     @* END *@
+
+                </div>
+
+
+            </div>
+
+        </ol>
+
+
+    </div>
+</div>

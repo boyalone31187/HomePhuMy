@@ -1,0 +1,91 @@
+﻿@{
+    Layout = "~/_SiteLayoutGencoNoSlider.cshtml";
+    Page.Title = "De An";
+    var db = Database.Open("HOME_PHUMY");
+    var rs = db.Query("SELECT * FROM DeAn ORDER BY createdTime DESC");
+
+    //paging
+
+    int rowsPerPage = 10;
+    int currentPageIndex = 1;
+    if (!string.IsNullOrEmpty(UrlData[0]))
+    {
+        currentPageIndex = Convert.ToInt32(UrlData[0]);
+    }
+    int skip = (currentPageIndex - 1) * rowsPerPage;
+    int count = rs.Count();
+    rs = rs.Skip(skip).Take(rowsPerPage);
+}
+<link rel="stylesheet" href="~/CSS/InOut.css" />
+<link rel="stylesheet" href="~/CSS/tinoibo.css" />
+
+<style>
+    .category_news_list ul li {
+        display: block;
+    }
+
+    .category_news_list ul li .text {
+        width: 100%;
+        float: right;
+        padding-left: 10px;
+    }
+</style>
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <div class="row">
+                    <div class="col-md-8" style="padding-left:2px;padding-right:0;">
+                        <span class="glyphicon glyphicon-credit-card"></span>
+                        <div class="title">ĐỀ ÁN TỔNG THỂ SẮP XẾP, TÁI CƠ CẤU DOANH NGHIỆP THUỘC EVN »</div>
+                    </div>
+                    @if(Roles.IsUserInRole("admin") || Roles.IsUserInRole("post_dean")){
+                     <div class="col-md-4" style="padding-left:2px;padding-right:0;">
+                      
+                        <div class="title pull-right"><a href="~/ThemDeAn"><< THÊM ĐỀ ÁN >></a></div>
+                    </div>
+                    }
+                </div>
+
+
+            </div>
+
+            <div class="panel-body" id="panel-body">
+                <div class="category_news_list">
+                    <ul>
+                        @foreach ( var row in rs)
+                        {
+                        <li>
+                            <div class="text">
+                                <h5>
+                                    @if (string.IsNullOrEmpty(row.filename))
+                                    {
+                                    <a href="~/chitietdean/@row.id">@row.title</a> 
+                                    }else{
+                                        <a href="~/UploadedFiles/DeAn/@row.filename">@row.title</a> 
+                                    }
+                                    
+                                    @if (Roles.IsUserInRole("post_dean") || Roles.IsUserInRole("admin"))
+                                    {
+                                        <a class="btn btn-xs btn-primary" style="color:white; padding:1px;" href="~/themdean/@row.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                    }
+                                    
+                                </h5>
+                                <span class="time">@row.createdTime</span>
+                                <p>@row.description</p>
+                            </div>
+                            
+                            <div class="clrb">
+                            </div>
+                        </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+</div>
+@Html.Raw( Functions.paging(count,rowsPerPage,currentPageIndex, "/tinnoibo/"));

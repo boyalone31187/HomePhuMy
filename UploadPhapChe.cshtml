@@ -1,0 +1,98 @@
+﻿@{
+    if (WebSecurity.CurrentUserId != 95 && WebSecurity.CurrentUserId != 96 && WebSecurity.CurrentUserId != 5)
+    {
+        Response.Redirect("~/");
+    }
+        Layout = "~/_ScheduleLayout.cshtml";
+        Page.Title = "Upload Van Ban Phap Che";
+        var db = Database.Open("HOME_PHUMY");
+        string title = "";
+        string date = "";
+        string parentID = "";
+        string notification = "";
+        if (IsPost)
+        {
+            var fileName = "";
+            var uploadedFile = Request.Files[0];
+            if (uploadedFile.ContentLength > 0)
+            {
+                fileName = Path.GetFileName(uploadedFile.FileName);
+                var fileSavePath = Server.MapPath("~/UploadedFiles/" +
+                  fileName);
+                uploadedFile.SaveAs(fileSavePath);
+            }
+
+            title = Request.Form["title"];
+            date = DateTime.ParseExact(Request["date"], "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture).ToString("yyyy-MM-dd");
+            parentID = Request.Form["parentID"];
+
+            string query = @"INSERT INTO PhapChe(title,date,parentID,filename) VALUES(@0,@1,@2,@3)";
+            db.Execute(query, title, date, parentID, fileName);
+            notification = "Upload văn bản pháp chế thành công!";
+        }
+
+    }
+<link href="~/CSS/RegisterSchedule.css" rel="stylesheet" />
+<div class="container">
+
+    <h1 class="thick-heading">
+        ||Upload Văn Bản Luật Pháp Chế Công Ty||
+    </h1>
+
+    <!-- First Featurette -->
+    <div id="about">
+        <!------------------------code---------------start---------------->
+        <div class="row">
+            <form role="form" method="post"  enctype="multipart/form-data">
+                <div class="col-lg-10 col-lg-offset-1 bg-frm-register-schedule">
+                    @if (notification != "")
+                    {
+                    <div class="form-group">
+                        <span class = "label label-danger" style="font-size:14px;">@notification</span>
+                    </div>
+                    }
+                    <div class="form-group">
+                        <label>Loại văn bản</label>
+                        <select name="parentID" class="form-control">
+                            <option @(parentID == "1" ? "selected" : "")  value="1">Hoạt động Pháp chế</option>
+                            <option @(parentID == "2" ? "selected" : "") value="2">Hoạt động phổ biến Pháp luật Công ty </option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tiêu đề</label>
+                        <input class="form-control" name="title" value="@title">
+                    </div>
+                      <div class="form-group">
+                        <label>Ngày ban hành</label>
+                        <div id='date' name='date'></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Upload file</label>
+                        <input type="file" name="file" /><br />
+                        
+                    </div>
+
+                    <input type="submit" name="submit" id="submit" value="Upload" class="btn btn-danger pull-right">
+                </div>
+            </form>
+
+        </div>
+
+
+        <!----Code------end----------------------------------->
+
+    </div>
+</div>
+
+
+<!-- DATE PICKER -->
+<script type="text/javascript" src="~/Scripts/jqxcore.js"></script>
+<script type="text/javascript" src="~/Scripts/jqxdatetimeinput.js"></script>
+<script type="text/javascript" src="~/Scripts/jqxcalendar.js"></script>
+<script type="text/javascript" src="~/Scripts/globalize.js"></script>
+<link rel="stylesheet" href="~/CSS/jqx.base.css" type="text/css" />
+ <script>
+    $(document).ready(function () {
+        $("#date").jqxDateTimeInput({ width: '300px', height: '25px', formatString: 'dd/MM/yyyy' });
+    });
+</script>  

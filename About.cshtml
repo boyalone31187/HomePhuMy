@@ -1,0 +1,42 @@
+﻿@{
+    Layout = "~/_SiteLayout.cshtml";
+    Page.Title = "About";
+    // Send email 
+    WebMail.Send(
+        to: "thanhnt@genco3.evn.vn", 
+        subject: "Test Mail", 
+        body: "Change Meeting Schedule",
+        cc: "tanntt@genco3.evn.vn; dongpd@genco3.evn.vn; thaodtm@genco3.evn.vn; trandtl@genco3.evn.vn; cucltk@genco3.evn.vn; oanhdt@genco3.evn.vn; hoanth@genco3.evn.vn; haivtt@genco3.evn.vn; uyenntp@genco3.evn.vn; binhnts@genco3.evn.vn; duongpta@genco3.evn.vn; thucpt@genco3.evn.vn; duyentt@genco3.evn.vn; trinhttp@genco3.evn.vn; phuctv@genco3.evn.vn; dungvp@genco3.evn.vn; lanbth@genco3.evn.vn;"
+    ); 
+}
+
+<hgroup class="title">
+    <h1>@Page.Title.</h1>
+    <h2>Your app description page.</h2>
+</hgroup>
+
+<article>
+    <p>
+        Use this area to provide additional information.
+    </p>
+
+    <p>
+        Use this area to provide additional information.
+    </p>
+
+    <p>
+        Use this area to provide additional information.
+    </p>
+</article>
+
+<aside>
+    <h3>Aside Title</h3>
+    <p>
+        Use this area to provide additional information.
+    </p>
+    <ul>
+        <li><a href="~/">Home</a></li>
+        <li><a href="~/About">About</a></li>
+        <li><a href="~/Contact">Contact</a></li>
+    </ul>
+</aside>

@@ -1,0 +1,492 @@
+﻿@{
+    
+    var db_homephumy = Database.Open("HOME_PHUMY");
+    var db_QLKT_SXD = Database.Open("QLKT_SXD");
+    
+    DateTime date = DateTime.Now.AddDays(-1);
+    var year = date.Year;
+    /*if (WebCache.Get("dsx") == null)
+    {
+
+        string dsx_query = @"SELECT * FROM (SELECT TOP 1 * FROM BCN_PHUMY WHERE MADV = 4 ORDER BY NGAY DESC) F
+                        UNION 
+                        SELECT * FROM (SELECT TOP 1 * FROM BCN_PHUMY WHERE MADV = 5 ORDER BY NGAY DESC) S
+                        UNION 
+                        SELECT * FROM (SELECT TOP 1 * FROM BCN_PHUMY WHERE MADV = 6 ORDER BY NGAY DESC) T
+                        ORDER BY MADV ASC";
+        dsx = db.Query(dsx_query);
+    }
+    else
+    {
+        dsx = WebCache.Get("dsx");
+    }*/
+    string selectCommand = @"SELECT PLANTID, SUM(EMF) as total, SUM(EMF_K) as EMF_K_Total, SUM(EMF_DO) as EMF_DO_Total, SUM(EMF_DH) as EMF_DH_Total
+                    FROM BSX_VH_PLANT_DAY  
+                    WHERE (PLANTID='P03001' or PLANTID='P03002' or PLANTID='P03003') 
+                    and DAY >= '" + year + "-01-01' GROUP BY PLANTID";
+
+    var rs = db_QLKT_SXD.Query(selectCommand);
+
+    decimal total_predict_P = 16851300000;
+
+    decimal P_PM1_lknam = rs.ElementAt(0).total * 1000;
+    decimal P_PM2_1_lknam = rs.ElementAt(1).total * 1000;
+    decimal P_PM4_lknam = rs.ElementAt(2).total * 1000;
+    var unfinished = total_predict_P - (P_PM1_lknam + P_PM4_lknam + P_PM2_1_lknam);
+
+    //GET LIST MENU BY USER
+    var userDB = Database.Open("StarterSite");
+    var listMenu = userDB.Query(@"SELECT * FROM [Function]
+                            JOIN User_Function ON User_Function.FunctionId = [Function].id AND User_Function.UserId =" + WebSecurity.CurrentUserId +
+                            " WHERE [Function].Status = 1");
+
+
+    //BIEU DO SAN LUONG DIEN TINH TU NGAY THANH LAP NHA MAY
+    decimal TongSLDPM1TuLucThanhLap; //Tong SLD PM1
+    decimal TongSLDPM21TuLucThanhLap; //Tong SLD PM2
+    decimal TongSLDPM4TuLucThanhLap; //Tong SLD PM4
+
+    if (WebCache.Get("TongSLDPM1TuLucThanhLap") == null)
+    {
+        selectCommand = "SELECT TOP 1 * FROM TongSanLuongDien ORDER BY date DESC";
+        var tsld = db_homephumy.QuerySingle(selectCommand);
+        TongSLDPM1TuLucThanhLap = tsld.PM1;
+        TongSLDPM21TuLucThanhLap = tsld.PM2;
+        TongSLDPM4TuLucThanhLap = tsld.PM4;
+    }
+    else
+    {
+        TongSLDPM1TuLucThanhLap = WebCache.Get("TongSLDPM1TuLucThanhLap");
+        TongSLDPM21TuLucThanhLap = WebCache.Get("TongSLDPM21TuLucThanhLap");
+        TongSLDPM4TuLucThanhLap = WebCache.Get("TongSLDPM4TuLucThanhLap");
+    }
+
+    //chuyen doi ra ty kwh
+    TongSLDPM1TuLucThanhLap = TongSLDPM1TuLucThanhLap / 1000000;
+    TongSLDPM21TuLucThanhLap = TongSLDPM21TuLucThanhLap / 1000000;
+    TongSLDPM4TuLucThanhLap = TongSLDPM4TuLucThanhLap / 1000000;
+    var total = TongSLDPM1TuLucThanhLap + TongSLDPM21TuLucThanhLap + TongSLDPM4TuLucThanhLap;
+
+    
+}
+<link rel="stylesheet" type="text/css" href="~/CSS/sidebar.css" />
+<style>
+    #container svg {
+        /*padding-top: 70px;*/
+    }
+
+    #container2 g.highcharts-legend-item:last-child text {
+        /*fill: #000000 !important;*/
+    }
+</style>
+<script>
+    $(document).ready(function () {
+        $('#container').highcharts({
+            navigation: {
+                buttonOptions: {
+                    enabled: false
+                }
+            },
+            credits: {
+                enabled: false
+            },
+            chart: {
+                plotBackgroundColor: null,
+                plotBorderWidth: null,
+                plotShadow: false,
+                type: 'pie',
+                margin: [-110, 0, 0, 0]
+                //spacingTop: -250
+            },
+            title: {
+                text: ''
+            },
+            tooltip: {
+                pointFormat: '{series.name}: <b>{point.y:,.0f}kWh</b>'
+            },
+            legend: {
+                floating: true,
+                borderColor: "#909090",
+                borderRadius: 2,
+                borderWidth: 1,
+                //x: 0,
+                //y: -150
+            },
+            plotOptions: {
+                pie: {
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    dataLabels: {
+                        enabled: false
+                    },
+                    showInLegend: true,
+                    colors:["orange","green","blue","red"]
+                }
+            },
+            series: [{
+                name: 'Sản lượng',
+                colorByPoint: true,
+                data: [
+                        {
+                            name: 'Phú Mỹ 1: @string.Format("{0:n0}", P_PM1_lknam) kWh',
+                            y: @P_PM1_lknam
+                        }, 
+                        {
+                            name: 'Phú Mỹ 4: @string.Format("{0:n0}", P_PM4_lknam) kWh',
+                            y: @P_PM4_lknam
+                        }, 
+                        {
+                            name: 'Phú Mỹ 2.1: @string.Format("{0:n0}", P_PM2_1_lknam) kWh',
+                            y: @P_PM2_1_lknam
+                        }, 
+                        {
+                            name: 'Chưa thực hiện @string.Format("{0:n0}", unfinished) ',
+                            y: @unfinished
+                        }
+                    ]
+                    }]
+        });
+
+        //BIEU DO SAN LUONG DIEN TINH TU LUC THANH LAP NHA MAY
+        Highcharts.chart('container2', {
+            navigation: {
+                buttonOptions: {
+                    enabled: false
+                }
+            },
+            credits: {
+                enabled: false
+            },
+            tooltip: { enabled: false },
+            chart: {
+                type: 'column'
+            },
+            title: {
+                text: 'tỷ kWh',
+                align: "left",
+                style:{
+                    "fontSize": "13px",
+                    "font-family": "Helvetica"
+                }
+            },
+            xAxis: {
+                type: 'category',
+                labels: {
+                    rotation: 0
+                }
+            },
+            yAxis: {
+                title: {
+                    text: ''
+                }
+
+            },
+            legend: {
+                enabled: false
+            },
+            plotOptions: {
+                column:{
+                    colors:["red","orange","blue","green"],
+                },
+                
+                series: {
+                    borderWidth: 0,
+                    dataLabels: {
+                        enabled: true,
+                        format: '{point.y:.2f}',
+                        allowOverlap: true
+                    },
+
+                }
+            },
+
+         
+            series: [{
+                colorByPoint: true,
+                data: [{
+                    name: 'Tổng',
+                    y: @total
+                }, {
+                    name: 'PM1',
+                    y: @TongSLDPM1TuLucThanhLap
+                }, {
+                    name: 'PM2',
+                    y: @TongSLDPM21TuLucThanhLap
+                }, {
+                    name: 'PM4',
+                    y: @TongSLDPM4TuLucThanhLap
+                }]
+            }]
+        });
+    });
+</script>
+
+<div id="sidebar">
+    <div class="block">
+        <h2>BIỂU ĐỒ SẢN LƯỢNG ĐIỆN</h2>
+        <div id="container" style="min-width: 100px; height: 300px; max-width: 210px; margin: 0 auto"></div>
+    </div>
+    <div class="block">
+        <h2>SLĐ TỪ KHI LẮP ĐẶT</h2>
+        <div id="container2" style="min-width: 100px; height: 300px; max-width: 210px; margin: 0 auto"></div>
+    </div>
+
+        <div style="position: relative; /*top: -150px*/">
+        <div class="block">
+            <h2>MENU CHỨC NĂNG</h2>
+
+            <table id="function-menu" cellpadding="2px" cellspacing="0" style="table-layout: fixed; width: 100%; background: url(/Images/bgleft.png)">
+                <!-- Power Complex -->
+
+
+
+
+                <tbody>
+                   @* @foreach(var row in listMenu){
+                        
+                     <tr class="border-bottom">
+                        <td width="25"><img src="http://home.genco3.com/Images/next.png" border="0"></td>
+                        <td style="padding-left: 3px"><a href="@row.Href">@row.name</a></td>
+                    </tr>
+                    
+                    }*@
+                   
+
+                    <tr class="border-bottom">
+                        <td width="25">
+                            <img src="~/Images/next.png" border="0"></td>
+                        <td style="padding-left: 3px"><a href="http://eoffice.phumytpc.com/AutoLogin.aspx?tendn=@WebSecurity.CurrentUserName" target="_blank">Trang E-Office</a></td>
+                    </tr>
+
+                     <tr class="border-bottom">
+                        <td width="25">
+                            <img src="~/Images/next.png" border="0"></td>
+                        <td style="padding-left: 3px"><a href="http://eoffice30.phumytpc.com/" target="_blank">Trang E-Office 3.0</a></td>
+                    </tr>
+
+                     <tr class="border-bottom">
+                        <td width="25">
+                            <img src="~/Images/next.png" border="0"></td>
+                        <td style="padding-left: 3px"><a target="_blank" href="http://10.144.32.11:8080/qlkt/tmsLogin.jsf" target="_blank">Phần mềm QLKT nguồn điện PMIS</a></td>
+                    </tr>
+
+                     <tr class="border-bottom">
+                        <td width="25">
+                            <img src="~/Images/next.png" border="0"></td>
+                        <td style="padding-left: 3px"><a target="_blank" href="http://nkvh.phumytpc.com" target="_blank">Nhật ký vận hành</a></td>
+                    </tr>
+
+                    <tr class="border-bottom">
+                        <td width="25">
+                            <img src="~/Images/next.png" border="0"></td>
+                        <td style="padding-left: 3px"><a target="_blank" href="http://powercomplex.genco3.com/Index.aspx">Power Complex</a></td>
+                    </tr>
+
+                    <tr class="border-bottom">
+                        <td width="25">
+                            <img src="~/Images/next.png" border="0"></td>
+                        <td style="padding-left: 3px"><a href="~/danhsachlamthem" target="_self">Đăng ký làm thêm thứ 7, chủ nhật</a></td>
+                    </tr>
+
+
+                    <tr>
+                        <td colspan="2" height="1" bgcolor="#CCCCCC"></td>
+                    </tr>
+
+                      <tr class="border-bottom">
+                        <td width="25">
+                            <img src="~/Images/next.png" border="0"></td>
+                        <td style="padding-left: 3px"><a href="~/inoutinformation">Thông tin vào ra cổng</a></td>
+                    </tr>
+
+                     <tr>
+                        <td colspan="2" height="1" bgcolor="#CCCCCC"></td>
+                    </tr>
+                    @if (WebSecurity.CurrentUserId == 95 || WebSecurity.CurrentUserId == 96 || WebSecurity.CurrentUserId == 5)
+                    {
+                        
+                      <tr class="border-bottom">
+                        <td width="25">
+                            <img src="~/Images/next.png" border="0"></td>
+                        <td style="padding-left: 3px"><a href="~/uploadphapche">Upload văn bản luật - pháp chế</a></td>
+                    </tr>
+                    }
+                    <tr>
+                        <td colspan="2" height="1" bgcolor="#CCCCCC"></td>
+                    </tr>
+
+                    @if (Roles.IsUserInRole("admin") || WebSecurity.CurrentUserId == 52)
+                    {
+                        
+                      <tr class="border-bottom">
+                        <td width="25">
+                            <img src="~/Images/next.png" border="0"></td>
+                        <td style="padding-left: 3px"><a target="_blank" href="~/uploadsalarytable">Upload bảng lương</a></td>
+                    </tr>
+                    }
+                    <tr>
+                        <td colspan="2" height="1" bgcolor="#CCCCCC"></td>
+                    </tr>
+
+                    <tr class="border-bottom">
+                        <td width="25">
+                            <img src="~/Images/next.png" border="0"></td>
+                        <td style="padding-left: 3px"><a href="~/salarytable">Xem bảng lương</a></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" height="1" bgcolor="#CCCCCC"></td>
+                    </tr>
+
+                    <tr class="border-bottom">
+                        <td width="25">
+                            <img src="~/Images/next.png" border="0"></td>
+                        <td style="padding-left: 3px"><a href="~/vhdn">Văn hóa doanh nghiệp</a></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" height="1" bgcolor="#CCCCCC"></td>
+                    </tr>
+
+                    @if (Roles.IsUserInRole("post_vhdn") || Roles.IsUserInRole("admin"))
+                    {
+                     <tr class="border-bottom">
+                        <td width="25">
+                            <img src="~/Images/next.png" border="0"></td>
+                        <td style="padding-left: 3px"><a href="~/vhdnedit">Đăng bài văn hóa doanh nghiệp</a></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" height="1" bgcolor="#CCCCCC"></td>
+                    </tr>
+                        
+                    <tr class="border-bottom">
+                        <td width="25">
+                            <img src="~/Images/next.png" border="0"></td>
+                        <td style="padding-left: 3px"><a href="~/uploadvbpb">Upload văn bản phổ biến</a></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" height="1" bgcolor="#CCCCCC"></td>
+                    </tr>
+                    }
+
+                    @if (Roles.IsUserInRole("manage_gallery") || Roles.IsUserInRole("admin"))
+                    {
+    
+                    <tr class="border-bottom">
+                        <td width="25">
+                            <img src="~/Images/next.png" border="0"></td>
+                        <td style="padding-left: 3px"><a href="~/ManageGallery">Quản lý thư viện hình ảnh</a></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" height="1" bgcolor="#CCCCCC"></td>
+                    </tr>
+                    }
+
+                    <tr height="41">
+                        <td class="noidungl" colspan="2"><a href="~/dean">
+                            <img src="~/Images/BannertaicocauA3.jpg" border="0"style="width:220px; height:150px;"></a></td>
+                    </tr>
+
+                    <tr height="41">
+                        <td class="noidungl" colspan="2"><a href="http://maximo.eps.genco3.vn:9080/maximo" target="_blank">
+                            <img  src="~/Images/maximo.jpg" border="0" width="220" height="150"></a></td>
+                    </tr>
+
+
+                    <tr>
+                        <td colspan="2" height="1" bgcolor="#CCCCCC"></td>
+                    </tr>
+                    <!--hrms-->
+                    <tr>
+                        <td colspan="2" height="1" bgcolor="#CCCCCC"></td>
+                    </tr>
+                    <tr height="41">
+                        
+                        <td class="noidungl" colspan="2"><a href="http://hrms.genco3.com" target="_blank">
+                            <img src="~/Images/website-HRMS.png" border="0" width="220" height="150"></a></td>
+                    </tr>
+                    <!--end hrms-->
+                    
+
+                    <tr>
+                        <td colspan="2" height="1" bgcolor="#CCCCCC"></td>
+                    </tr>
+                    <tr height="41">
+                        <td class="noidungl" colspan="2"><a href="http://10.144.32.11:8080/qlkt/tmsLogin.jsf" target="_blank">
+                            <img src="~/Images/pmis.png" border="0" width="220" height="150"></a></td>
+                    </tr>
+                 
+                     <tr>
+                        <td colspan="2" height="1" bgcolor="#CCCCCC"></td>
+                    </tr>
+                    <tr height="41">
+                        <td class="noidungl" colspan="2"><a href="http://home.genco3.com/home.aspx?site=main&page=xem-bai-viet&id=676d3695-e077-4656-bf53-da487a564a97" target="_blank">
+                            <img src="~/Images/tuyentruyengiadien.jpg" border="0" width="220" height="150"></a></td>
+                    </tr>
+                 
+                     <tr>
+                        <td colspan="2" height="1" bgcolor="#CCCCCC"></td>
+                    </tr>
+                    <tr height="41">
+                        <td class="noidungl" colspan="2"><a href="http://home.evn.com.vn/tin-tuc/Pages/chi-tiet-tin.aspx?nid=1770&q=evnnews-moi-nhat" target="_blank">
+                            <img src="~/Images/evn_news.jpg" border="0" width="220" height="150"></a></td>
+                    </tr>
+                 
+                     <tr>
+                        <td colspan="2" height="1" bgcolor="#CCCCCC"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="block">
+            <h2>ỨNG DỤNG</h2>
+            <table id="application" cellpadding="2px" cellspacing="0" width="220px" style="border: thin">
+                <tbody>
+                    <tr height="25">
+                        <td class="noidung" width="20">
+                            <img src="~/Images/icon14.png" border="0" width="16" height="16"></td>
+                        <td style="padding-left: 3px" class="noidungl" width="200"><a href="http://ctkh.phumytpc.com" target="_blank">Công tác - Kế hoạch</a></td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+        <div class="block">
+
+            <h2>LIÊN KẾT WEBSITE</h2>
+            <form name="form2" style="margin-left: 7px;">
+                <select multiple="multiple" name="menu1" style="padding-left: 5px; padding-top: 3px;" class="Mota_DetailLink" onchange="JavaScript:MM_jumpMenu('parent',this,1)">
+                    <option value="#">Website ...</option>
+                    <option value="http://www.evn.com.vn">Website Tập đoàn</option>
+                    <option value="http://home.evn.com.vn">Website nội bộ Tập đoàn</option>
+                    <option value="http://icon.com.vn">WebSite Thông tin ngành điện</option>
+                    <option value="http://tietkiemnangluong.vn">WebSite tiết kiệm năng lượng</option>
+                    <option value="http://www.evnit.vn">Website Trung tâm CNTT</option>
+                    <option value="http://btp.com.vn">Công ty CP Nhiệt điện Bà Rịa</option>
+                    <option value="http://www.nbtpc.com.vn/">Công ty CP N.điện Ninh Bình</option>
+                    <option value="http://www.thacba.evn.com.vn/">Công ty CP T.điện Thác Bà</option>
+                    <option value="http://www.vshpc.evn.com.vn">CT CP TĐ Vĩnh Sơn-Sông Hinh</option>
+                    <option value="http://npc.com.vn">TCT Điện lực Miền Bắc</option>
+                    <option value="http://www.cpc.vn">TCT Điện lực Miền Trung</option>
+                    <option value="http://www.evnspc.vn/">TCT Điện lực Miền Nam</option>
+                    <option value="http://evnhanoi.vn/">TCT Điện lực TP Hà Nội</option>
+                    <option value="http://www.hcmpc.com.vn">TCT Điện lực TP HCM</option>
+                    <option value="http://www.nldc.evn.vn/">Trung tâm ĐĐ HTĐ Quốc gia</option>
+                    <option value="http://www.npt.com.vn">TCT Truyền tải Điện Quốc gia</option>
+                    <option value="http://www.pecc1.com.vn/">Công ty CP TV XD điện 1</option>
+                    <option value="http://pecc2.com">Công ty CP TV XD điện 2</option>
+                    <option value="http://www.pecc3.com.vn/">Công ty CP TV XD điện 3</option>
+                    <option value="http://www.pecc4.vn">Công ty CP TV XD điện 4</option>
+                    <option value="http://eptc.vn/">Công ty Mua bán điện</option>
+                    <option value="http://www.erav.vn">Cục Điều tiết Điện lực</option>
+                    <option selected="selected">Liên kết web ngành điện...</option>
+                </select>
+            </form>
+            <script language="JavaScript">
+                function MM_jumpMenu(targ, selObj, restore) { //v3.0
+                    var tam = selObj.options[selObj.selectedIndex].value;
+                    if (restore) selObj.selectedIndex = 0;
+                    window.open(tam)
+                }
+            </script>
+        </div>
+    </div>
+</div>

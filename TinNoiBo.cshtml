@@ -1,0 +1,73 @@
+﻿@{
+    Layout = "~/_SiteLayoutGencoNoSlider.cshtml";
+    Page.Title = "Ban Tin Noi Bo";
+    var db = Database.Open("HOME_PHUMY");
+    var rs = db.Query("SELECT * FROM BanTinNoiBo WHERE type IS NULL OR type = '' ORDER BY feature DESC,createdTime DESC,updatedTime DESC");
+
+    //paging
+
+    int rowsPerPage = 10;
+    int currentPageIndex = 1;
+    if (!string.IsNullOrEmpty(UrlData[0]))
+    {
+        currentPageIndex = Convert.ToInt32(UrlData[0]);
+    }
+    int skip = (currentPageIndex - 1) * rowsPerPage;
+    int count = rs.Count();
+    rs = rs.Skip(skip).Take(rowsPerPage);
+}
+<link rel="stylesheet" href="~/CSS/InOut.css" />
+<link rel="stylesheet" href="~/CSS/tinoibo.css" />
+<style>
+
+</style>
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <div class="row">
+                    <div class="col-md-12" style="padding-left:2px;padding-right:0;">
+                        <span class="glyphicon glyphicon-credit-card"></span>
+                        <div class="title">BẢN TIN NỘI BỘ »</div>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <div class="panel-body" id="panel-body">
+                <div class="category_news_list">
+                    <ul>
+                        @foreach ( var row in rs)
+                        {
+                        <li>
+                            <a class="photo" href="#">
+                                <img width="206" height="154" src="~/Images/bantin/@row.image">
+                            </a>
+                            <div class="text">
+                                <h5>
+                                    <a href="~/chitiettin/@row.id">@row.title</a> &nbsp;
+                                    @if (Roles.IsUserInRole("post"))
+                                    {
+                                        <a class="btn btn-xs btn-primary" style="color:white; padding:1px;" href="~/dangtin/@row.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                    }
+                                    
+                                </h5>
+                                <span class="time">@row.createdTime</span>
+                                <p>@row.description</p>
+                            </div>
+                            
+                            <div class="clrb">
+                            </div>
+                        </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+</div>
+@Html.Raw( Functions.paging(count,rowsPerPage,currentPageIndex, "/tinnoibo/"));

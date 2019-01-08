@@ -1,0 +1,109 @@
+﻿@{
+    Layout = "~/_SiteLayoutGencoNoSlider.cshtml";
+    Page.Title = "Van Ban Noi Bo";
+    var db = Database.Open("EOFFICE_PHUMY");
+    var departmentList = db.Query("SELECT * FROM PHONG_BAN WHERE PB_ID > 4");
+
+    string selectCommand = @"SELECT sokyhieu,trichyeu,d.linkfile,ngayvb,cngayvb, mapb_st, nguoiky,idvb 
+                            FROM vbdi_vanbandi v 
+                            inner join vbdi_dinhkem d on v.idvb = d.mavb WHERE idloai = 'IS' 
+                            order by ngayvb desc";
+    var vanbanList = db.Query(selectCommand);
+
+    
+                                 
+    int i = 1;
+    int j = 1;
+}
+<script language="javascript">
+    function openwin(stt){
+        window.open("ViewFile.cshtml?stt=" + stt ,"xxxx", "toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=no,resizable=yes,copyhistory=no,width=500,height=300,top="+ (screen.height - 300)/2 +",left=" + (screen.width - 500)/2);
+    }
+</script>	
+<style type="text/css">
+    #tabstt {
+        border: 1px solid #aaaaaa;
+        color: #222222;
+        border-radius: 4px;
+        padding: 3px;
+    }
+</style>
+<div class="col-main">
+    
+    <div class="box recently">
+        <div class="category-head" style="padding-left: 0px">
+            <h2 class="subtitle">
+                <img id="btChitiet" src="../Images/main-menu.png" border="1" style="padding-top: 0px" width="16">&nbsp;<strong>VĂN BẢN QUẢN LÝ NỘI BỘ TPC<i>PHU MY</i></strong></h2>
+        </div>
+        <ol class="grid-row">
+            <div id="tabstt">
+                <div align="left">
+                    <div style="float:right;"><a href="~/TimQD" target="_self"><img src="Images/Tracuu.jpg" border="0" style="padding-top: 0px" alt="">Tìm kiếm</a></div>
+                    @foreach (var row in departmentList) { 
+                        <a data-toggle="collapse" data-target="#PMDetail_@i">
+                            <img id="btChitiet" src="Images/icon2.gif" border="0" width="18" height="18" style="padding-top: 0px" alt="Chọn xem chi tiết">
+                            &nbsp;<strong>&nbsp;@i. @row.TEN_PHONG</strong>
+                        </a>
+                    
+                        var vanbanListOfDepartment = from vb in vanbanList
+                                                     where vb.mapb_st.TrimEnd() == row.MA_BAN
+                                                     select vb;                
+                                                                  
+                        <div id="PMDetail_@i" style="padding-left: 20px;" class = "collapse">
+                            
+                            @foreach (var row2 in vanbanListOfDepartment){
+                                <a data-toggle="collapse" data-target="#Detail1_@j">
+                                    <img src="Images/arrow.gif" border="0" width="20" height="20" style="padding-top: 0px" alt="Chọn xem chi tiết">
+                                    <strong>&nbsp;@row2.sokyhieu:</strong>
+                                    &nbsp;@row2.trichyeu
+                                </a>
+                                <br>
+                                <div id="Detail1_@j" style="padding-left: 25px;" class="collapse">
+                                    <table cellpadding="0" cellspacing="0" bordercolor="#CCCCCC" width="620">
+                                        <tbody>
+                                            <tr>
+                                                <td height="25" class="noidungl" width="100px"><strong>Mã tài liệu:</strong></td>
+                                                <td class="noidungl" width="400px">@row2.sokyhieu</td>
+                                                <td class="noidungl" width="100px"></td>
+                                            </tr>
+                                            <tr>
+                                                <td height="25" class="noidungl"><strong>Tiêu đề:</strong></td>
+                                                <td class="noidungj" colspan="2">@row2.trichyeu</td>
+                                            </tr>
+                                            <tr>
+                                                <td height="25" class="noidungl"><strong>Ngày ban hành:</strong></td>
+                                                <td class="noidungj">@row2.cngayvb</td>
+                                                <td class="noidungj"></td>
+                                            </tr>
+                                            <tr>
+                                                <td height="25" class="noidungl"><strong>Người ký:</strong></td>
+                                                <td class="noidungj">@row2.nguoiky</td>
+                                                <td class="noidungr"><a href="javascript:openwin(@row2.idvb);" title="Xem nội dung">
+                                                    <img src="Images/taiphanmem.gif" border="0" width="20" height="20">&nbsp;Nội dung</a></td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="3" height="1px" bgcolor="#3366FF"></td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="3" height="7px"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                j++;
+                            }
+
+                        </div>
+                        i++;
+                        <br />
+                    }
+                    
+
+                </div>
+
+            </div>
+        </ol>
+
+
+    </div>
+</div>

@@ -1,0 +1,655 @@
+﻿@{
+    Layout = "~/_ScheduleLayout.cshtml";
+    Page.Title = "CapNhatSLD";
+
+    //get get MS_PB where user belong to
+    if (!WebSecurity.IsAuthenticated)
+    {
+        AppState["message_error"] = "Bạn cần phải đăng nhập để sử dụng chức năng này";
+        Response.Redirect("~/Error");
+    }
+
+    var db = Database.Open("QLTHSL_TTD");
+    var db_homephumy = Database.Open("HOME_PHUMY");
+
+    double GT11;
+    double GT12;
+    double GT13;
+    double ST14;
+    double TotalPM1;
+
+    //SLD PM2 TRONG NAM
+    double GT21;
+    double GT22;
+    double ST23;
+    double GT24;
+    double GT25;
+    double ST26;
+    double TotalPm21;
+
+
+    //SLD PM4 TRONG NAM
+    double GT41;
+    double GT42;
+    double ST43;
+    double TotalPM4;
+
+    //SLD PM1 TINH TU NGAY THANH LAP
+    double GT11_;
+    double GT12_;
+    double GT13_;
+    double ST14_;
+    //double TotalPM1_ = GT11_ + GT12_ + GT13_ + ST14_;
+
+
+    //SLD PM2 TINH TU NGAY THANH LAP
+    double GT21_;
+    double GT22_;
+    double ST23_;
+    double GT24_;
+    double GT25_;
+    double ST26_;
+    //double TotalPm21_ = GT21_ + GT22_ + ST23_ + GT24_ + GT25_ + ST26_;
+
+
+    //SLD PM4 TINH TU NGAY THANH LAP
+    double GT41_;
+    double GT42_;
+    double ST43_;
+
+    string id;
+    string selectCommand = "SELECT TOP 1 NGAY,THANG,NAM FROM TTD_BCN_PX ORDER BY NAM DESC,THANG DESC, NGAY DESC";
+    var sld = db.QuerySingle(selectCommand);
+    id = sld.NGAY.ToString() + sld.THANG.ToString() + sld.NAM.ToString();
+
+    int currentDay = sld.NGAY;
+    int currentMonth = sld.THANG;
+    int currentYear = sld.NAM;
+    
+    //XU LY SUBMIT FORM - XEM DU LIEU THEO NGAY THANG USER SUBMIT LEN
+    if(IsPost && Request.Form["btnXem"] == "Xem"){
+        
+        string date = Request.Form["date"];
+        string[] array = date.Split(new Char[]{'/'});
+        id = Convert.ToInt32(array[0]).ToString() + Convert.ToInt32(array[1]).ToString() + Convert.ToInt32(array[2]).ToString();
+        currentDay = Convert.ToInt32(array[0]);
+        currentMonth = Convert.ToInt32(array[1]);
+        currentYear = Convert.ToInt32(array[2]);
+    }
+
+    //CAP NHAT SAN LUONG DIEN DUNG VOI SO LIEU CUA TTD
+    if (IsPost && Request.Form["btnCapNhat"] == "Cập nhật")
+    {
+        id = Request.Form["id"];
+        GT11 = Convert.ToDouble(Request.Form["GT11"]);
+        GT12 = Convert.ToDouble(Request.Form["GT12"]);
+        GT13 = Convert.ToDouble(Request.Form["GT13"]);
+        ST14 = Convert.ToDouble(Request.Form["ST14"]);
+
+
+        GT11_ = Convert.ToDouble(Request.Form["GT11_"]);
+        GT12_ = Convert.ToDouble(Request.Form["GT12_"]);
+        GT13_ = Convert.ToDouble(Request.Form["GT13_"]);
+        ST14_ = Convert.ToDouble(Request.Form["ST14_"]);
+        
+        GT21 = Convert.ToDouble(Request.Form["GT21"]);
+        GT22 = Convert.ToDouble(Request.Form["GT22"]);
+        ST23 = Convert.ToDouble(Request.Form["ST23"]);
+        GT24 = Convert.ToDouble(Request.Form["GT24"]);
+        GT25 = Convert.ToDouble(Request.Form["GT25"]);
+        ST26 = Convert.ToDouble(Request.Form["ST26"]);
+
+        GT21_ = Convert.ToDouble(Request.Form["GT21_"]);
+        GT22_ = Convert.ToDouble(Request.Form["GT22_"]);
+        ST23_ = Convert.ToDouble(Request.Form["ST23_"]);
+        GT24_ = Convert.ToDouble(Request.Form["GT24_"]);
+        GT25_ = Convert.ToDouble(Request.Form["GT25_"]);
+        ST26_ = Convert.ToDouble(Request.Form["ST26_"]);
+        
+        GT41 = Convert.ToDouble(Request.Form["GT41"]);
+        GT42 = Convert.ToDouble(Request.Form["GT42"]);
+        ST43 = Convert.ToDouble(Request.Form["ST43"]);
+
+        GT41_ = Convert.ToDouble(Request.Form["GT41_"]);
+        GT42_ = Convert.ToDouble(Request.Form["GT42_"]);
+        ST43_ = Convert.ToDouble(Request.Form["ST43_"]);
+
+        string updateCommand = String.Format(@"UPDATE [dbo].[SanLuongDien]
+                               SET [GT11] = {0}
+                                  ,[GT12] = {1}
+                                  ,[GT13] = {2}
+                                  ,[ST14] = {3}
+                                  ,[GT11_] = {4}
+                                  ,[GT12_] = {5}
+                                  ,[GT13_] = {6}
+                                  ,[ST14_] = {7}
+                                  ,[GT41] = {8}
+                                  ,[GT42] = {9}
+                                  ,[ST43] = {10}
+                                  ,[GT41_] = {11}
+                                  ,[GT42_] = {12}
+                                  ,[ST43_] = {13}
+                                  ,[GT21] = {14}
+                                  ,[GT22] = {15}
+                                  ,[ST23] = {16}
+                                  ,[GT24] = {17}
+                                  ,[GT25] = {18}
+                                  ,[ST26] = {19}
+                                  ,[GT21_] = {20}
+                                  ,[GT22_] = {21}
+                                  ,[ST23_] = {22}
+                                  ,[GT24_] = {23}
+                                  ,[GT25_] = {24}
+                                  ,[ST26_] = {25}
+                             WHERE id =  '{26}'", GT11, GT12, GT13, ST14
+                                                 , GT11_, GT12_, GT13_, ST14_
+                                                 , GT41, GT42, ST43
+                                                 , GT41_, GT42_, ST43_
+                                                 , GT21, GT22, ST23, GT24, GT25, ST26
+                                                 , GT21_, GT22_, ST23_, GT24_, GT25_, ST26_,id);
+        db_homephumy.Execute(updateCommand);
+    }
+    //XU LY LOAD DU LIEU, KIEM TRA CO DU LIEU HAY CHUA, NEU CHUA CO THI LAY DU LIEU TU TTD_BCN_PX SANG 
+    else
+    {
+
+        
+
+        //NEU CO DU LIEU ROI THI SHOW LEN , CON KHONG THI INSERT
+        selectCommand = String.Format("SELECT * FROM SanLuongDien WHERE id = '{0}'", id);
+        
+        
+        if (db_homephumy.Query(selectCommand).Count() == 0) //LAY DU LIEU TU TTD_BCN_PX SANG 
+        {
+
+            DateTime now = DateTime.Now;
+
+            //LAY SAN LUONG DIEN TRONG NAM CUA CAC TO MAY TRONG NAM
+            selectCommand = String.Format(@"SELECT SUM(tdn_sx) as 'tdn_sx', SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='11' and ((nam='{0}' and thang='{1}' and ngay<='{2}') OR (thang < {3} and nam='{4}' ))
+                                
+                                UNION
+                                SELECT SUM(tdn_sx) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='12' AND ((nam='{5}' AND thang='{6}' AND ngay<='{7}') OR (thang < {8} AND nam='{9}'))
+                                
+                                UNION
+                                SELECT SUM(tdn_sx) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='13' AND ((nam='{10}' AND thang='{11}' AND ngay<='{12}') OR (thang < {13} AND nam='{14}')  )
+
+                                UNION
+                                SELECT SUM(tdn_sx) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='14' AND ((nam='{15}' AND thang='{16}' AND ngay<='{17}') OR (thang < {18} AND nam='{19}'))
+
+                                UNION
+                                SELECT SUM(tdn_sx) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='21' AND ((nam='{20}' AND thang='{21}' AND ngay<='{22}') OR (thang < {23} AND nam='{24}'))
+
+                                UNION
+                                SELECT SUM(tdn_sx) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='22' AND ((nam='{25}' AND thang='{26}' AND ngay<='{27}') OR (thang < {28} AND nam='{29}'))
+
+                                UNION
+                                SELECT SUM(tdn_sx) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='23' AND ((nam='{30}' AND thang='{31}' AND ngay<='{32}') OR (thang < {33} AND nam='{34}') )
+
+                                UNION
+                                SELECT SUM(tdn_sx) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='24' AND ((nam='{35}' AND thang='{36}' AND ngay<='{37}') OR (thang < {38} AND nam='{39}') )
+
+                                UNION
+                                SELECT SUM(tdn_sx) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='25' AND ((nam='{40}' AND thang='{41}' AND ngay<='{42}') OR (thang < {43} AND nam='{44}'))
+
+                                UNION
+                                SELECT SUM(tdn_sx) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='26' AND ((nam='{45}' AND thang='{46}' AND ngay<='{47}') OR (thang < {48} AND nam='{49}'))
+
+
+                                UNION
+                                SELECT SUM(tdnsx_dc_kt) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='41' AND ((nam='{50}' AND thang='{51}' AND ngay<='{52}') OR (thang < {53} AND nam='{54}') )
+
+                                UNION
+                                SELECT SUM(tdnsx_dc_kt) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='42' AND ((nam='{55}' AND thang='{56}' AND ngay<='{57}') OR (thang < {58} AND nam='{59}') )
+
+                                UNION
+                                SELECT SUM(tdnsx_dc_kt) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='43' AND ((nam='{60}' AND thang='{61}' AND ngay<='{62}') OR (thang < {63} AND nam='{64}'))
+
+                                ORDER BY idtomay ASC
+                                ", currentYear, currentMonth, currentDay, currentMonth, currentYear, currentYear, currentMonth, currentDay, currentMonth, currentYear, currentYear, currentMonth, currentDay, currentMonth, currentYear, currentYear, currentMonth, currentDay, currentMonth, currentYear, currentYear, currentMonth, currentDay, currentMonth, currentYear, currentYear, currentMonth, currentDay, currentMonth, currentYear, currentYear, currentMonth, currentDay, currentMonth, currentYear, currentYear, currentMonth, currentDay, currentMonth, currentYear, currentYear, currentMonth, currentDay, currentMonth, currentYear, currentYear, currentMonth, currentDay, currentMonth, currentYear, currentYear, currentMonth, currentDay, currentMonth, currentYear, currentYear, currentMonth, currentDay, currentMonth, currentYear, currentYear, currentMonth, currentDay, currentMonth, currentYear);
+
+            var rs = db.Query(selectCommand);
+
+            //insert so lieu vao db san luong dien, dung de cap nhat lai so lieu cho dung voi TTD
+
+
+            //SLD PM1 TRONG NAM
+            GT11 = rs.ElementAt(0).tdn_sx;
+            GT12 = rs.ElementAt(1).tdn_sx;
+            GT13 = rs.ElementAt(2).tdn_sx;
+            ST14 = rs.ElementAt(3).tdn_sx;
+            TotalPM1 = GT11 + GT12 + GT13 + ST14;
+
+            //SLD PM2 TRONG NAM
+            GT21 = rs.ElementAt(4).tdn_sx;
+            GT22 = rs.ElementAt(5).tdn_sx;
+            ST23 = rs.ElementAt(6).tdn_sx;
+            GT24 = rs.ElementAt(7).tdn_sx;
+            GT25 = rs.ElementAt(8).tdn_sx;
+            ST26 = rs.ElementAt(9).tdn_sx;
+            TotalPm21 = GT21 + GT22 + ST23 + GT24 + GT25 + ST26;
+
+
+            //SLD PM4 TRONG NAM
+            GT41 = rs.ElementAt(10).tdn_sx;
+            GT42 = rs.ElementAt(11).tdn_sx;
+            ST43 = rs.ElementAt(12).tdn_sx;
+            TotalPM4 = GT41 + GT42 + ST43;
+
+
+
+
+            //LAY SAN LUONG DIEN TRONG NAM CUA CAC TO MAY TU NGAY THANH LAP, KHONG TINH NAM HIEN TAI
+            selectCommand = String.Format(@"SELECT SUM(tdn_sx) as 'tdn_sx', SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='11' AND NAM < {0}
+                                
+                                UNION
+                                SELECT SUM(tdn_sx) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='12' AND NAM < {0}
+                                
+                                UNION
+                                SELECT SUM(tdn_sx) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='13' AND NAM < {0}
+
+                                UNION
+                                SELECT SUM(tdn_sx) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='14' AND NAM < {0}
+
+                                UNION
+                                SELECT SUM(tdn_sx) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='21' AND NAM < {0}
+
+                                UNION
+                                SELECT SUM(tdn_sx) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='22' AND NAM < {0}
+
+                                UNION
+                                SELECT SUM(tdn_sx) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='23' AND NAM < {0}
+
+                                UNION
+                                SELECT SUM(tdn_sx) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='24' AND NAM < {0}
+
+                                UNION
+                                SELECT SUM(tdn_sx) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='25' AND NAM < {0}
+
+                                UNION
+                                SELECT SUM(tdn_sx) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='26' AND NAM < {0}
+
+
+                                UNION
+                                SELECT SUM(tdnsx_dc_kt) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='41' AND NAM < {0}
+
+                                UNION
+                                SELECT SUM(tdnsx_dc_kt) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='42' AND NAM < {0}
+
+                                UNION
+                                SELECT SUM(tdnsx_dc_kt) , SUM(idtomay) as 'idtomay'
+                                FROM TTD_BCN_PX 
+                                WHERE idtomay='43' AND NAM < {0}
+
+                                ORDER BY idtomay ASC
+                                ", currentYear);
+
+            var rs2 = db.Query(selectCommand);
+
+            //SLD PM1 TINH TU NGAY THANH LAP
+            GT11_ = rs2.ElementAt(0).tdn_sx + GT11 + 18933595;
+            GT12_ = rs2.ElementAt(1).tdn_sx + GT12 + 19119808;
+            GT13_ = rs2.ElementAt(2).tdn_sx + GT13 + 18857734;
+            ST14_ = rs2.ElementAt(3).tdn_sx + ST14 + 29528525;
+            double TotalPM1_ = GT11_ + GT12_ + GT13_ + ST14_;
+
+
+            //SLD PM2 TINH TU NGAY THANH LAP
+            GT21_ = rs2.ElementAt(4).tdn_sx + GT21 + 15758432;
+            GT22_ = rs2.ElementAt(5).tdn_sx + GT22 + 14548100;
+            ST23_ = rs2.ElementAt(6).tdn_sx + ST23 + 12160931.5;
+            GT24_ = rs2.ElementAt(7).tdn_sx + GT24 + 11175855;
+            GT25_ = rs2.ElementAt(8).tdn_sx + GT25 + 10871871;
+            ST26_ = rs2.ElementAt(9).tdn_sx + ST26 + 9299451;
+            //double TotalPm21_ = GT21_ + GT22_ + ST23_ + GT24_ + GT25_ + ST26_;
+
+
+            //SLD PM4 TINH TU NGAY THANH LAP
+            GT41_ = rs2.ElementAt(10).tdn_sx + GT41 + 9692284.52;
+            GT42_ = rs2.ElementAt(11).tdn_sx + GT42 + 9620389.55;
+            ST43_ = rs2.ElementAt(12).tdn_sx + ST43 + 10927890.53;
+            //double TotalPM4_ = GT41_ + GT42_ + ST43_;
+            
+            
+            
+            string insertCommand = String.Format(@"INSERT INTO [dbo].[SanLuongDien]
+           ([id],[Day],[Month],[Year],
+            [GT11],[GT12],[GT13],[ST14],
+            [GT11_],[GT12_],[GT13_],[ST14_],
+            [GT41],[GT42],[ST43],
+            [GT41_],[GT42_],[ST43_],
+            [GT21],[GT22],[ST23],[GT24],[GT25],[ST26],
+            [GT21_],[GT22_],[ST23_],[GT24_],[GT25_],[ST26_],
+            [CreatedDate])
+     VALUES
+           ('{0}',{1},{2},{3}
+           ,{4},{5},{6},{7}
+           ,{8},{9},{10},{11}
+           ,{12},{13},{14}
+           ,{15},{16},{17}
+           ,{18},{19},{20},{21},{22},{23}
+           ,{24},{25},{26},{27},{28},{29}
+           ,'{30}')
+
+    ", id, currentDay, currentMonth, currentYear
+             , GT11, GT12, GT13, ST14
+             , GT11_, GT12_, GT13_, ST14_
+             , GT41, GT42, ST43
+             , GT41_, GT42_, ST43_
+             , GT21, GT22, ST23, GT24, GT25, ST26
+             , GT21_, GT22_, ST23_, GT24_, GT25_, ST26_
+             , now
+             );
+            db_homephumy.Execute(insertCommand);
+        }else{
+            
+            selectCommand = String.Format("SELECT * FROM SanLuongDien WHERE id = '{0}'",id);
+            var sld_detail = db_homephumy.QuerySingle(selectCommand);
+            
+            //SLD PM1 TRONG NAM
+            GT11 = sld_detail.GT11;
+            GT12 = sld_detail.GT12;
+            GT13 = sld_detail.GT13;
+            ST14 = sld_detail.ST14;
+
+            //SLD PM2 TRONG NAM
+            GT21 = sld_detail.GT21;
+            GT22 = sld_detail.GT22;
+            ST23 = sld_detail.ST23;
+            GT24 = sld_detail.GT24;
+            GT25 = sld_detail.GT25;
+            ST26 = sld_detail.ST26;
+
+
+            //SLD PM4 TRONG NAM
+            GT41 = sld_detail.GT41;
+            GT42 = sld_detail.GT42;
+            ST43 = sld_detail.ST43;
+
+            //SLD PM1 TINH TU NGAY THANH LAP
+            GT11_ = sld_detail.GT11_;
+            GT12_ = sld_detail.GT12_;
+            GT13_ = sld_detail.GT13_;
+            ST14_ = sld_detail.ST14_;
+
+
+            //SLD PM2 TINH TU NGAY THANH LAP
+            GT21_ = sld_detail.GT21_;
+            GT22_ = sld_detail.GT22_;
+            ST23_ = sld_detail.ST23_;
+            GT24_ = sld_detail.GT24_;
+            GT25_ = sld_detail.GT25_;
+            ST26_ = sld_detail.ST26_;
+
+
+            //SLD PM4 TINH TU NGAY THANH LAP
+            GT41_ = sld_detail.GT41_;
+            GT42_ = sld_detail.GT42_;
+            ST43_ = sld_detail.ST43_;
+        }
+    }
+}
+<link rel="stylesheet" href="~/CSS/InOut.css" />
+<style>
+    .btn-glyphicon {
+        width: 2%;
+    }
+
+    #form-SLD input {
+        width:auto;
+        display: inline;
+    }
+</style>
+
+<div class="container" style="padding:0;">
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-info">
+                    <div class="panel-heading">
+
+                        <button class="btn btn-primary btn-xs btn-glyphicon"><span class="glyphicon glyphicon-edit"></span></button>
+                        <div class="title">CẬP NHẬT SẢN LƯỢNG ĐIỆN CÁC NHÀ MÁY»</div>
+                    </div>
+
+                    <div class="panel-body">
+                        <form class="frm-search-employee" method="post" id="searchForm" action="~/updatesld">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <div id='date' name='date'></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <input class = "btn btn-primary" type="submit" name="btnXem" value="Xem" />
+                                </div>
+                            </div>
+                        </form>
+                         <div class="row">
+                            <div class="col-md-12" id="response-data">
+                                <form class="form" id="form-SLD" action="~/updatesld" method="post">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Tổng Sản Lượng Điện Các Tổ Máy Năm @currentYear</th>
+		                                    <th>Tổng Sản Lượng Điện Các Tổ Máy Từ Khi Lắp Đặt</th>		
+	                                    </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        <tr> 
+                                           @* Tổng Sản Lượng Điện Các Tổ Máy Trong Nam *@
+                                            <td>
+                                        
+                                        @* Cac to may PM1 *@
+                                        <table class="table table-bordered">
+                                            <tr>
+                                                <td> GT11 </td> 
+                                                <td><input class="form-control" type="text" name="GT11" value="@GT11.ToString("#,##")"/>  MWh </td>
+                                            </tr>
+                                             <tr>
+                                                <td> GT12 </td> 
+                                                <td> <input class="form-control" type="text" name="GT12" value="@GT12.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                             <tr>
+                                                <td> GT13 </td> 
+                                                <td> <input class="form-control" type="text" name="GT13" value="@GT13.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                             <tr>
+                                                <td> ST14 </td> 
+                                                <td> <input class="form-control" type="text" name="ST14" value="@ST14.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                        </table>
+                                       
+
+                                        @* Cac to may PM4 *@
+                                        <table class="table table-bordered">
+                                            <tr>
+                                                <td> GT41 </td> 
+                                                <td> <input class="form-control" type="text" name="GT41" value="@GT41.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                             <tr>
+                                                <td> GT42 </td> 
+                                                <td> <input class="form-control" type="text" name="GT42" value="@GT42.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                             <tr>
+                                                <td> ST43 </td> 
+                                                <td> <input class="form-control" type="text" name="ST43" value="@ST43.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                        </table>
+                                                 
+                                        @* Cac to may PM21 *@
+                                        <table class="table table-bordered">
+                                            <tr>
+                                                <td> GT21 </td> 
+                                                <td> <input class="form-control" type="text" name="GT21" value="@GT21.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                             <tr>
+                                                <td> GT22 </td> 
+                                                <td> <input class="form-control" type="text" name="GT22" value="@GT22.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                             <tr>
+                                                <td> ST23 </td> 
+                                                <td> <input class="form-control" type="text" name="ST23" value="@ST23.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                             <tr>
+                                                <td> GT24 </td> 
+                                                <td> <input class="form-control" type="text" name="GT24" value="@GT24.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                             <tr>
+                                                <td> GT25 </td> 
+                                                <td> <input class="form-control" type="text" name="GT25" value="@GT25.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                             <tr>
+                                                <td> ST26 </td> 
+                                                <td> <input class="form-control" type="text" name="ST26" value="@ST26.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                        </table>
+                                                 
+                                        </td> 
+
+
+                                            @* Tổng Sản Lượng Điện Các Tổ Máy Tinh Tu Ngay Thanh Lap *@
+                                            <td>
+                                        
+                                        <table class="table table-bordered">
+                                            <tr>
+                                                <td> GT11 </td> 
+                                                <td> <input class="form-control" type="text" name="GT11_" value="@GT11_.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                             <tr>
+                                                <td> GT12 </td> 
+                                                <td> <input class="form-control" type="text" name="GT12_" value="@GT12_.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                             <tr>
+                                                <td> GT13 </td> 
+                                                <td> <input class="form-control" type="text" name="GT13_" value="@GT13_.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                             <tr>
+                                                <td> ST14 </td> 
+                                                <td> <input class="form-control" type="text" name="ST14_" value="@ST14_.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                        </table>
+                                           
+                                        <table class="table table-bordered">
+                                            <tr>
+                                                <td> GT41 </td> 
+                                                <td> <input class="form-control" type="text" name="GT41_" value="@GT41_.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                             <tr>
+                                                <td> GT42 </td> 
+                                                <td> <input class="form-control" type="text" name="GT42_" value="@GT42_.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                             <tr>
+                                                <td> ST43 </td> 
+                                                <td> <input class="form-control" type="text" name="ST43_" value="@ST43_.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                        </table>
+
+
+                                        <table class="table table-bordered">
+                                            <tr>
+                                                <td> GT21 </td> 
+                                                <td> <input class="form-control" type="text" name="GT21_" value="@GT21_.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                             <tr>
+                                                <td> GT22 </td> 
+                                                <td> <input class="form-control" type="text" name="GT22_" value="@GT22_.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                             <tr>
+                                                <td> ST23 </td> 
+                                                <td> <input class="form-control" type="text" name="ST23_" value="@ST23_.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                             <tr>
+                                                <td> GT24 </td> 
+                                                <td> <input class="form-control" type="text" name="GT24_" value="@GT24_.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                             <tr>
+                                                <td> GT25 </td> 
+                                                <td> <input class="form-control" type="text" name="GT25_" value="@GT25_.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                             <tr>
+                                                <td> ST26 </td> 
+                                                <td> <input class="form-control" type="text" name="ST26_" value="@ST26_.ToString("#,##")"/> MWh </td>
+                                            </tr>
+                                        </table>
+                                        </td> 
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                    
+                                <input type="hidden" name="id" value="@id"/>
+
+                                 <input class="btn btn-primary" type="submit" value="Cập nhật" name="btnCapNhat" />
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+    </div>
+
+
+</div>
+
+</div>
+<!-- DATE PICKER -->
+<script type="text/javascript" src="~/Scripts/jqxcore.js"></script>
+<script type="text/javascript" src="~/Scripts/jqxdatetimeinput.js"></script>
+<script type="text/javascript" src="~/Scripts/jqxcalendar.js"></script>
+<script type="text/javascript" src="~/Scripts/globalize.js"></script>
+<link rel="stylesheet" href="~/CSS/jqx.base.css" type="text/css" />
+<script>
+    $(document).ready(function () {
+        $("#date").jqxDateTimeInput({ value: "@currentYear, @currentMonth, @currentDay", height: '32', formatString: 'dd/MM/yyyy' });
+    })
+</script>

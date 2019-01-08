@@ -1,0 +1,8 @@
+﻿@{
+    var db = Database.Open("HOME_PHUMY");
+    int id = Convert.ToInt32(Request["id"]);
+
+    string deleteCommand = "DELETE FROM CongViecTuan_KHVT WHERE id = " + id;
+    db.Execute(deleteCommand);
+
+}

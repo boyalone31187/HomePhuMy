@@ -1,0 +1,1681 @@
+﻿@{
+    Layout = "~/_ScheduleLayout.cshtml";
+    Page.Title = "Quan Ly Lich Tuan";
+
+
+
+    var db = Database.Open("HOME_PHUMY");
+    string query = "";
+    //CALCULATE FIRST DAY OF WEEK AND LAST DAY OF WEEK
+    DateTime firstDay = new DateTime();
+    DateTime lastDay = new DateTime();
+    var dayOfWeek = DateTime.Now.DayOfWeek;
+    string strPrevFirstDay = "";
+    string strPrevLastDay = "";
+    string strNextFirstDay = "";
+    string strNextLastDay = "";
+    string fromDate = "";
+    string toDate = "";
+
+    string originalFromDate = "";
+    string originalToDate = "";
+
+    //WHEN USER CLICK LINK : PREVIOUS OR NEXT, GET FIRST DAY AND LAST DAY
+    if (!string.IsNullOrEmpty(UrlData[0]) && !string.IsNullOrEmpty(UrlData[1]))
+    {
+        originalFromDate = UrlData[0];
+        originalToDate = UrlData[1];
+        fromDate = DateTime.ParseExact(UrlData[0], "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture).ToString("dd/MM/yyyy");
+        toDate = DateTime.ParseExact(UrlData[1], "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture).ToString("dd/MM/yyyy");
+
+
+        //GET RECORDS BY FROM DATE TO DATE
+        query = @"SELECT *
+                      FROM MeetingSchedule
+                      WHERE thoigian >='" + UrlData[0] + "' AND thoigian <'" + UrlData[1] + "'";
+
+
+
+
+
+        string[] firstDayParamArray = UrlData[0].Split(new char[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
+        DateTime firstDayParam = new DateTime(Convert.ToInt32(firstDayParamArray[0]), Convert.ToInt32(firstDayParamArray[1]), Convert.ToInt32(firstDayParamArray[2]));
+
+        string[] lastDayParamArray = UrlData[1].Split(new char[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
+        DateTime lastDayParam = new DateTime(Convert.ToInt32(lastDayParamArray[0]), Convert.ToInt32(lastDayParamArray[1]), Convert.ToInt32(lastDayParamArray[2]));
+        if (UrlData[2] == "prev")
+        {
+            strPrevFirstDay = firstDayParam.AddDays(-7).ToString("yyyy-MM-dd");
+            strPrevLastDay = firstDayParam.AddDays(-1).ToString("yyyy-MM-dd");
+
+            strNextFirstDay = lastDayParam.AddDays(1).ToString("yyyy-MM-dd");
+            strNextLastDay = lastDayParam.AddDays(7).ToString("yyyy-MM-dd");
+        }
+        else if (UrlData[2] == "next")
+        {
+            strNextFirstDay = lastDayParam.AddDays(1).ToString("yyyy-MM-dd");
+            strNextLastDay = lastDayParam.AddDays(7).ToString("yyyy-MM-dd");
+
+            strPrevFirstDay = firstDayParam.AddDays(-7).ToString("yyyy-MM-dd");
+            strPrevLastDay = firstDayParam.AddDays(-1).ToString("yyyy-MM-dd");
+
+        }
+
+        if (!string.IsNullOrEmpty(UrlData[3]) && UrlData[3] == "approveAll")
+        {
+            //UPDATE ALL SCHEDULE
+            string updateCommand = "UPDATE MeetingSchedule SET pheduyet=1 WHERE thoigian >= @0 AND thoigian < @1 AND pheduyet = 0";
+            db.Execute(updateCommand, UrlData[0], UrlData[1]);
+        }
+    }
+    else
+    { //GET TO CURRENT TIME
+
+        if (dayOfWeek == System.DayOfWeek.Monday)
+        {
+            firstDay = DateTime.Now;
+            lastDay = DateTime.Now.AddDays(6);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Tuesday)
+        {
+            firstDay = DateTime.Now.AddDays(-1);
+            lastDay = DateTime.Now.AddDays(5);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Wednesday)
+        {
+            firstDay = DateTime.Now.AddDays(-2);
+            lastDay = DateTime.Now.AddDays(4);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Thursday)
+        {
+            firstDay = DateTime.Now.AddDays(-3);
+            lastDay = DateTime.Now.AddDays(3);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Friday)
+        {
+            firstDay = DateTime.Now.AddDays(-4);
+            lastDay = DateTime.Now.AddDays(2);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Saturday)
+        {
+            firstDay = DateTime.Now.AddDays(2);
+            lastDay = DateTime.Now.AddDays(1);
+        }
+        else if (dayOfWeek == System.DayOfWeek.Sunday)
+        {
+            firstDay = DateTime.Now.AddDays(1);
+            lastDay = DateTime.Now;
+        }
+        strPrevFirstDay = firstDay.AddDays(-7).ToString("yyyy-MM-dd");
+        strPrevLastDay = firstDay.AddDays(-1).ToString("yyyy-MM-dd");
+
+        strNextFirstDay = lastDay.AddDays(1).ToString("yyyy-MM-dd");
+        strNextLastDay = lastDay.AddDays(7).ToString("yyyy-MM-dd");
+
+        fromDate = firstDay.ToString("dd/MM/yyyy");
+        toDate = lastDay.ToString("dd/MM/yyyy");
+        originalFromDate = firstDay.ToString("yyyy-MM-dd");
+        originalToDate = lastDay.ToString("yyyy-MM-dd");
+        //DEFAULT QUERY
+        query = @"SELECT *
+                FROM MeetingSchedule
+                WHERE thoigian >='" + firstDay.ToString("yyyy-MM-dd") + "' AND thoigian <'" + lastDay.ToString("yyyy-MM-dd 23:59") + "'";
+    }
+
+
+
+
+
+    var rs = db.Query(query);
+    var listNotApprove = from c in rs
+                         where c.pheduyet == 0
+                         where c.loai == "Công tác tuần"
+                         select c;
+
+    <!--MONDAY-->
+    var monSchedule = from c in rs
+                      orderby c.thoigian
+                      where c.thu == "Thứ hai"
+                      where c.loai == "Công tác tuần"
+                      select c;
+
+    int numberMondayMeeting = monSchedule.Count();
+    var firstMondayMeeting = numberMondayMeeting > 0 ? monSchedule.ElementAt(0) : null;
+    <!--TUESDAY-->
+    var tueSchedule = from c in rs
+                      orderby c.thoigian
+                      where c.thu == "Thứ ba"
+                      where c.loai == "Công tác tuần"
+                      select c;
+    int numberTuesdayMeeting = tueSchedule.Count();
+    var firstTuesdayMeeting = numberTuesdayMeeting > 0 ? tueSchedule.ElementAt(0) : null;
+    
+    <!--WEDNESDAY-->
+    var wedSchedule = from c in rs
+                      orderby c.thoigian
+                      where c.thu == "Thứ tư"
+                      where c.loai == "Công tác tuần"
+                      select c;
+    int numberWednesdayMeeting = wedSchedule.Count();
+    var firstWednesdayMeeting = numberWednesdayMeeting > 0 ? wedSchedule.ElementAt(0) : null;
+    
+    <!--THURSDAY-->
+    var thurSchedule = from c in rs
+                       orderby c.thoigian
+                       where c.thu == "Thứ năm"
+                       where c.loai == "Công tác tuần"
+                       select c;
+    int numberThursdayMeeting = thurSchedule.Count();
+    var firstThursdayMeeting = numberThursdayMeeting > 0 ? thurSchedule.ElementAt(0) : null;
+    
+    <!--FRIDAY-->
+    var friSchedule = from c in rs
+                      orderby c.thoigian
+                      where c.thu == "Thứ sáu"
+                      where c.loai == "Công tác tuần"
+                      select c;
+    int numberFridayMeeting = friSchedule.Count();
+    var firstFridayMeeting = numberFridayMeeting > 0 ? friSchedule.ElementAt(0) : null;
+   
+
+
+     <!--SATURDAY-->
+    var satSchedule = from c in rs
+                      orderby c.thoigian
+                      where c.thu == "Thứ bảy"
+                      where c.loai == "Công tác tuần"
+                      select c;
+    int numberSaturdayMeeting = satSchedule.Count();
+    var firstSaturdayMeeting = numberSaturdayMeeting > 0 ? satSchedule.ElementAt(0) : null;
+
+
+     <!--SUNDAY-->
+    var sunSchedule = from c in rs
+                      orderby c.thoigian
+                      where c.thu == "Chủ nhật"
+                      where c.loai == "Công tác tuần"
+                      select c;
+    int numberSundayMeeting = sunSchedule.Count();
+    var firstSundayMeeting = numberSundayMeeting > 0 ? sunSchedule.ElementAt(0) : null;
+
+
+    <!--LICH CONG TAC KHAC-->
+    var listNotApprove2 = from c in rs
+                          where c.pheduyet == 0
+                          where c.loai == "Công tác khác"
+                          select c;
+
+    <!--MONDAY-->
+    var monSchedule2 = from c in rs
+                       orderby c.thoigian
+                       where c.thu == "Thứ hai"
+                       where c.loai == "Công tác khác"
+                       select c;
+
+    int numberMondayMeeting2 = monSchedule2.Count();
+    var firstMondayMeeting2 = numberMondayMeeting2 > 0 ? monSchedule2.ElementAt(0) : null;
+    <!--TUESDAY-->
+    var tueSchedule2 = from c in rs
+                       orderby c.thoigian
+                       where c.thu == "Thứ ba"
+                       where c.loai == "Công tác khác"
+                       select c;
+    int numberTuesdayMeeting2 = tueSchedule2.Count();
+    var firstTuesdayMeeting2 = numberTuesdayMeeting2 > 0 ? tueSchedule2.ElementAt(0) : null;
+    
+    <!--WEDNESDAY-->
+    var wedSchedule2 = from c in rs
+                       orderby c.thoigian
+                       where c.thu == "Thứ tư"
+                       where c.loai == "Công tác khác"
+                       select c;
+    int numberWednesdayMeeting2 = wedSchedule2.Count();
+    var firstWednesdayMeeting2 = numberWednesdayMeeting2 > 0 ? wedSchedule2.ElementAt(0) : null;
+    
+    <!--THURSDAY-->
+    var thurSchedule2 = from c in rs
+                        orderby c.thoigian
+                        where c.thu == "Thứ năm"
+                        where c.loai == "Công tác khác"
+                        select c;
+    int numberThursdayMeeting2 = thurSchedule2.Count();
+    var firstThursdayMeeting2 = numberThursdayMeeting2 > 0 ? thurSchedule2.ElementAt(0) : null;
+    
+    <!--FRIDAY-->
+    var friSchedule2 = from c in rs
+                       orderby c.thoigian
+                       where c.thu == "Thứ sáu"
+                       where c.loai == "Công tác khác"
+                       select c;
+    int numberFridayMeeting2 = friSchedule2.Count();
+    var firstFridayMeeting2 = numberFridayMeeting2 > 0 ? friSchedule2.ElementAt(0) : null;
+
+    <!--SATURDAY-->
+    var satSchedule2 = from c in rs
+                       orderby c.thoigian
+                       where c.thu == "Thứ bảy"
+                       where c.loai == "Công tác khác"
+                       select c;
+    int numberSaturdayMeeting2 = satSchedule2.Count();
+    var firstSaturdayMeeting2 = numberSaturdayMeeting2 > 0 ? satSchedule2.ElementAt(0) : null;
+
+
+    <!--SUNDAY-->
+    var sunSchedule2 = from c in rs
+                       orderby c.thoigian
+                       where c.thu == "Chủ nhật"
+                       where c.loai == "Công tác khác"
+                       select c;
+    int numberSundayMeeting2 = sunSchedule2.Count();
+    var firstSundayMeeting2 = numberSundayMeeting2 > 0 ? sunSchedule2.ElementAt(0) : null;
+
+
+    <!--TRONG TAM CONG TAC TUAN-->
+    if (!string.IsNullOrEmpty(UrlData[0]) && !string.IsNullOrEmpty(UrlData[1]))
+    {
+        query = @"SELECT id,noidung
+            FROM MeetingSchedule
+            WHERE loai = 'Trong tâm' AND thoigian >='" + UrlData[0] + "' AND thoigian <='" + UrlData[1] + "'";
+    }
+    else
+    {
+        query = @"SELECT id,noidung
+            FROM MeetingSchedule
+            WHERE loai = 'Trong tâm' AND thoigian >= dateadd(day, 2-datepart(dw, getdate()), CONVERT(date,getdate())) and thoigian < dateadd(day, 7-datepart(dw, getdate()), CONVERT(date,getdate())) ";
+    }
+
+    var listTarget = db.Query(query);
+  
+   
+}
+<style>
+    .btn-xs {
+        padding-top: 4px;
+        padding-bottom: 4px;
+    }
+    table tr th {
+        background-color: #2196F3;
+        color: #fff;
+        font-weight: bold;
+    }
+    .td-action-approve {
+        vertical-align: middle !important;
+    }
+</style>
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <!--TABLE LICH CONG TAC TUAN-->
+            <table class="table table-bordered">
+                <caption class="text-center">
+                    <h4><button type="button" class="btn btn-danger ribbon" style="text-align:center; width:30%;">LỊCH CÔNG TÁC TUẦN</button></h4>
+                    <div class="row">
+                        <div class="col-md-2"></div>
+                        <div class="col-md-2 text-right" ><a href="~/ManageSchedule/@strPrevFirstDay/@strPrevLastDay/prev"><span class="glyphicon glyphicon-backward"></span></a></div>
+                        <div class="col-md-4"><span class = "label label-warning" style="font-size: 13px;">Từ ngày @fromDate đến ngày @toDate</span></div>
+                        <div class="col-md-1 text-left"><a href="~/ManageSchedule/@strNextFirstDay/@strNextLastDay/next"><span class="glyphicon glyphicon-forward"></span></a></div>
+                        <div class="col-md-3 text-right">
+                        @{ 
+                            if (Roles.IsUserInRole("admin") || Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("booked"))
+                            { 
+                                <a href="~/RegisterSchedule.cshtml">Đăng ký lịch</a>
+                            } 
+                        }
+                        </div>
+                    </div>
+                </caption>
+                <thead>
+                    <tr>
+                        <th>Thứ/ Ngày</th>
+                        <th>T.Gian</th>
+                        <th>Nội dung</th>
+                        <th>Thành phần</th>
+                        <th>Chuẩn bị</th>
+                        <th>Địa điểm</th>
+                        <th>Chủ trì</th>
+                        <th>Tình trạng</th>
+                        <th>Người đăng ký</th>
+                        <!--IS ADMIN OR VANTHU-->
+                        @{
+                            if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                            {
+                            <th>Phê Duyệt</th>
+                            <th>Chỉnh sửa</th>
+                            <th>Xóa</th>
+                            }
+                            else if (Roles.IsUserInRole("booked") && listNotApprove.Count() > 0)
+                            {  <!--IS OWNER, THE PERSON WHO BOOKED SCHEDULE-->
+                    
+                                <th>Chỉnh sửa</th>
+                                <th>Xóa</th>
+                            }
+                        }
+
+                    </tr>
+                </thead>
+                <tbody>
+                    <!--MONDAY-->
+                    @{
+                        if (numberMondayMeeting > 0)
+                        {
+                            string[] arrMondayMeetingTime = Functions.splitString(firstMondayMeeting.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr>
+                            <td rowspan="@numberMondayMeeting">@firstMondayMeeting.thu @arrMondayMeetingTime[0]</td>
+
+                            <td>@arrMondayMeetingTime[1]</td>
+                            <td>@firstMondayMeeting.noidung</td>
+                            <td>@firstMondayMeeting.thanhphan</td>
+                            <td>@firstMondayMeeting.chuanbi</td>
+                            <td>@firstMondayMeeting.diadiem</td>
+                            <td>@firstMondayMeeting.chutri</td>
+                            <td>@firstMondayMeeting.trangthai</td>
+                            <td>@firstMondayMeeting.nguoidangky<br> @firstMondayMeeting.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            @{
+                            if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                            {
+                                <td class="td-action-approve">
+                                    @if (firstMondayMeeting.pheduyet == 0)
+                                    {
+                                        <a class="btn btn-primary btn-xs"  onclick="approve(this,@firstMondayMeeting.id)">
+                                            <span class="glyphicon glyphicon-ok"></span>
+                                        </a>
+                                    }
+
+                                </td>
+                                <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@firstMondayMeeting.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@firstMondayMeeting.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                            }
+                            else if (Roles.IsUserInRole("booked") && listNotApprove.Count() > 0)
+                            {
+                                <!--IS OWNER, THE PERSON who BOOK SCHEDULE-->
+                                <td style="vertical-align: middle;">
+                                @if (WebSecurity.CurrentUserName == firstMondayMeeting.nguoidangky)
+                                { 
+                                    <a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@firstMondayMeeting.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                }
+                                </td>
+                                <td style="vertical-align: middle;">
+                                    @if (WebSecurity.CurrentUserName == firstMondayMeeting.nguoidangky)
+                                    { 
+                                        <a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@firstMondayMeeting.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                    }
+                                </td>
+                            }
+                            }
+                        </tr>
+            
+                            if (numberMondayMeeting > 1)
+                            {
+                                monSchedule = monSchedule.Skip(1);
+                                foreach (var fschedule in monSchedule)
+                                {
+                                    arrMondayMeetingTime = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                    <tr>
+                                        <td>@arrMondayMeetingTime[1]</td>
+                                        <td>@fschedule.noidung</td>
+                                        <td>@fschedule.thanhphan</td>
+                                        <td>@fschedule.chuanbi</td>
+                                        <td>@fschedule.diadiem</td>
+                                        <td>@fschedule.chutri</td>
+                                        <td>@fschedule.trangthai</td>
+                                        <td>@fschedule.nguoidangky<br> @fschedule.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                        @{
+                                    if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                                    {
+                                            <td class="td-action-approve">@if (fschedule.pheduyet == 0)
+                                                                          {<a class="btn btn-primary btn-xs"  onclick="approve(this,@fschedule.id)"><span class="glyphicon glyphicon-ok"></span></a> }</td>
+                                            <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                            <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                    }
+                                    else if (Roles.IsUserInRole("booked") && listNotApprove.Count() > 0)
+                                    {
+                                            <td style="vertical-align: middle;">
+                                                @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                                {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                                                    <a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                                }
+
+                                            </td>
+                                            <td style="vertical-align: middle;">
+                                                @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                                {
+                                                    <a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                                }
+                                            </td>
+                                    }
+                                        }
+                                    </tr>
+                                }
+
+                            }
+                        }
+            
+            
+                    }
+
+                    <!--TUESDAY-->
+                    @{
+                        if (numberTuesdayMeeting > 0)
+                        {
+                            string[] arrTuesdayMeetingTime = Functions.splitString(firstTuesdayMeeting.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr>
+                            <td  rowspan="@numberTuesdayMeeting">@firstTuesdayMeeting.thu @arrTuesdayMeetingTime[0]</td>
+                            <td>@arrTuesdayMeetingTime[1]</td>
+                            <td>@firstTuesdayMeeting.noidung</td>
+                            <td>@firstTuesdayMeeting.thanhphan</td>
+                            <td>@firstTuesdayMeeting.chuanbi</td>
+                            <td>@firstTuesdayMeeting.diadiem</td>
+                            <td>@firstTuesdayMeeting.chutri</td>
+                            <td>@firstTuesdayMeeting.trangthai</td>
+                            <td>@firstTuesdayMeeting.nguoidangky<br> @firstTuesdayMeeting.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            @{
+                            if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                            {
+                                    <td class="td-action-approve">@if (firstTuesdayMeeting.pheduyet == 0)
+                                                                  {<a class="btn btn-primary btn-xs"  onclick="approve(this,@firstTuesdayMeeting.id)"><span class="glyphicon glyphicon-ok"></span></a>}</td>
+                                    <td style="vertical-align: middle;" ><a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@firstTuesdayMeeting.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@firstTuesdayMeeting.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                            }
+                            else if (Roles.IsUserInRole("booked") && listNotApprove.Count() > 0)
+                            {
+                                <td style="vertical-align: middle;">
+                                    @if (WebSecurity.CurrentUserName == firstTuesdayMeeting.nguoidangky)
+                                    {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                        <a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@firstTuesdayMeeting.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                            
+                                    }
+
+                                </td>
+                                <td style="vertical-align: middle;">
+                                    @if (WebSecurity.CurrentUserName == firstTuesdayMeeting.nguoidangky)
+                                    {
+                                    <a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@firstTuesdayMeeting.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                    }
+                                </td>
+                            }
+                            }
+                        </tr>
+            
+                            if (numberTuesdayMeeting > 1)
+                            {
+                                tueSchedule = tueSchedule.Skip(1);
+                                foreach (var fschedule in tueSchedule)
+                                {
+                                    arrTuesdayMeetingTime = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                    <tr>
+                                        <td>@arrTuesdayMeetingTime[1]</td>
+                                        <td>@fschedule.noidung</td>
+                                        <td>@fschedule.thanhphan</td>
+                                        <td>@fschedule.chuanbi</td>
+                                        <td>@fschedule.diadiem</td>
+                                        <td>@fschedule.chutri</td>
+                                        <td>@fschedule.trangthai</td>
+                                        <td>@fschedule.nguoidangky<br> @fschedule.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                    @{
+                                    if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                                    {
+                                        <td class="td-action-approve">
+                                        @if (fschedule.pheduyet == 0)
+                                        {
+                                            <a class="btn btn-primary btn-xs"  onclick="approve(this,@fschedule.id)"><span class="glyphicon glyphicon-ok"></span></a> 
+                                        }
+                                        </td>
+                                        <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                        <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                    }
+                                    else if (Roles.IsUserInRole("booked") && listNotApprove.Count() > 0)
+                                    {
+                                        <td style="vertical-align: middle;">
+                                            @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                            {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                                <a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                                
+                                            }
+                                        </td>
+                                        <td style="vertical-align: middle;">
+                                            @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                            {
+                                            <a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                            }
+                                        </td>
+                                    }
+                                    }
+                                    </tr>
+                                }
+                            }
+                        }
+            
+            
+                    }
+
+
+                    <!--WEDNESDAY-->
+                    @{
+                        if (numberWednesdayMeeting > 0)
+                        {
+                            string[] arrWednesdayMeetingTime = Functions.splitString(firstWednesdayMeeting.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr>
+                            <td  rowspan="@numberWednesdayMeeting">@firstWednesdayMeeting.thu @arrWednesdayMeetingTime[0]</td>
+
+                            <td>@arrWednesdayMeetingTime[1]</td>
+                            <td>@firstWednesdayMeeting.noidung</td>
+                            <td>@firstWednesdayMeeting.thanhphan</td>
+                            <td>@firstWednesdayMeeting.chuanbi</td>
+                            <td>@firstWednesdayMeeting.diadiem</td>
+                            <td>@firstWednesdayMeeting.chutri</td>
+                            <td>@firstWednesdayMeeting.trangthai</td>
+                            <td>@firstWednesdayMeeting.nguoidangky<br> @firstWednesdayMeeting.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            @{
+                            if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                            {
+                                <td class="td-action-approve">@if (firstWednesdayMeeting.pheduyet == 0)
+                                                              {<a class="btn btn-primary btn-xs"  onclick="approve(this,@firstWednesdayMeeting.id)"><span class="glyphicon glyphicon-ok"></span></a>}</td>
+                                <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@firstWednesdayMeeting.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@firstWednesdayMeeting.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                            }
+                            else if (Roles.IsUserInRole("booked") && listNotApprove.Count() > 0)
+                            {
+                                <td style="vertical-align: middle;">
+                                    @if (WebSecurity.CurrentUserName == firstWednesdayMeeting.nguoidangky)
+                                    {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                        <a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@firstWednesdayMeeting.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                    }
+
+                                </td>
+                                <td style="vertical-align: middle;">
+                                    @if (WebSecurity.CurrentUserName == firstWednesdayMeeting.nguoidangky)
+                                    {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                        <a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@firstWednesdayMeeting.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                    }
+
+                                </td>
+                            }
+                            }
+                        </tr>
+                            if (numberWednesdayMeeting > 1)
+                            {
+                                wedSchedule = wedSchedule.Skip(1);
+                                foreach (var fschedule in wedSchedule)
+                                {
+                                    arrWednesdayMeetingTime = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                    <tr>
+                                        <td>@arrWednesdayMeetingTime[1]</td>
+                                        <td>@fschedule.noidung</td>
+                                        <td>@fschedule.thanhphan</td>
+                                        <td>@fschedule.chuanbi</td>
+                                        <td>@fschedule.diadiem</td>
+                                        <td>@fschedule.chutri</td>
+                                        <td>@fschedule.trangthai</td>
+                                        <td>@fschedule.nguoidangky<br> @fschedule.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                        @{
+                                    if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                                    {
+                                            <td class="td-action-approve">@if (fschedule.pheduyet == 0)
+                                                                          {<a class="btn btn-primary btn-xs"  onclick="approve(this,@fschedule.id)"><span class="glyphicon glyphicon-ok"></span></a>}</td>
+                                            <td style="vertical-align: middle;" ><a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                            <td style="vertical-align: middle;" ><a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                    }
+                                    else if (Roles.IsUserInRole("booked") && listNotApprove.Count() > 0)
+                                    {
+                                            <td style="vertical-align: middle;">
+                                                @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                                {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                                <a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                                }
+
+                                            </td>
+                                            <td style="vertical-align: middle;">
+                                                @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                                {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                                <a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                                }
+
+                                            </td>
+                                    }
+                                        }
+                                    </tr>
+                                }
+
+                            }
+                        }
+            
+            
+                    }
+
+
+                    <!--THURSDAY-->
+                    @{
+                        if (numberThursdayMeeting > 0)
+                        {
+                            string[] arrThursdayMeetingTime = Functions.splitString(firstThursdayMeeting.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr>
+                            <td  rowspan="@numberThursdayMeeting">@firstThursdayMeeting.thu @arrThursdayMeetingTime[0]</td>
+
+                            <td>@arrThursdayMeetingTime[1]</td>
+                            <td>@firstThursdayMeeting.noidung</td>
+                            <td>@firstThursdayMeeting.thanhphan</td>
+                            <td>@firstThursdayMeeting.chuanbi</td>
+                            <td>@firstThursdayMeeting.diadiem</td>
+                            <td>@firstThursdayMeeting.chutri</td>
+                            <td>@firstThursdayMeeting.trangthai</td>
+                            <td>@firstThursdayMeeting.nguoidangky<br> @firstThursdayMeeting.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            @{
+                            if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                            {
+                                <td class="td-action-approve">@if (firstThursdayMeeting.pheduyet == 0)
+                                                              {<a class="btn btn-primary btn-xs"  onclick="approve(this,@firstThursdayMeeting.id)"><span class="glyphicon glyphicon-ok"></span></a>}</td>
+                                <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@firstThursdayMeeting.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@firstThursdayMeeting.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                            }
+                            else if (Roles.IsUserInRole("booked") && listNotApprove.Count() > 0)
+                            {
+                                <td style="vertical-align: middle;">
+                                    @if (WebSecurity.CurrentUserName == firstThursdayMeeting.nguoidangky)
+                                    {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                    <a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@firstThursdayMeeting.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                    }
+
+                                </td>
+                                 <td style="vertical-align: middle;">
+                                    @if (WebSecurity.CurrentUserName == firstThursdayMeeting.nguoidangky)
+                                    {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                    <a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@firstThursdayMeeting.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                    }
+
+                                </td>
+                            }
+                            }
+                        </tr>
+            
+                            if (numberThursdayMeeting > 1)
+                            {
+                                thurSchedule = thurSchedule.Skip(1);
+                                foreach (var fschedule in thurSchedule)
+                                {
+                                    arrThursdayMeetingTime = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                    <tr>
+                                        <td>@arrThursdayMeetingTime[1]</td>
+                                        <td>@fschedule.noidung</td>
+                                        <td>@fschedule.thanhphan</td>
+                                        <td>@fschedule.chuanbi</td>
+                                        <td>@fschedule.diadiem</td>
+                                        <td>@fschedule.chutri</td>
+                                        <td>@fschedule.trangthai</td>
+                                        <td>@fschedule.nguoidangky<br> @fschedule.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                        @{
+                                    if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                                    {
+                                            <td class="td-action-approve">@if (fschedule.pheduyet == 0)
+                                                                          {<a class="btn btn-primary btn-xs"  onclick="approve(this,@fschedule.id)"><span class="glyphicon glyphicon-ok"></span></a>}</td>
+                                            <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                            <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                    }
+                                    else if (Roles.IsUserInRole("booked") && listNotApprove.Count() > 0)
+                                    {
+                                        <td style="vertical-align: middle;">
+                                        @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                        {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                           <a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                        }
+
+                                        </td>
+                                    }
+                                        }
+                                    </tr>
+                                }
+
+                            }
+                        }
+                    }
+
+
+                    <!--FRIDAY-->
+                    @{
+                        if (numberFridayMeeting > 0)
+                        {
+                            string[] arrFridayMeetingTime = Functions.splitString(firstFridayMeeting.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr>
+                            <td  rowspan="@numberFridayMeeting">@firstFridayMeeting.thu @arrFridayMeetingTime[0]</td>
+
+                            <td>@arrFridayMeetingTime[1]</td>
+                            <td>@firstFridayMeeting.noidung</td>
+                            <td>@firstFridayMeeting.thanhphan</td>
+                            <td>@firstFridayMeeting.chuanbi</td>
+                            <td>@firstFridayMeeting.diadiem</td>
+                            <td>@firstFridayMeeting.chutri</td>
+                            <td>@firstFridayMeeting.trangthai</td>
+                            <td>@firstFridayMeeting.nguoidangky<br> @firstFridayMeeting.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            @{
+                            if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                            {
+                                <td class="td-action-approve">@if (firstFridayMeeting.pheduyet == 0)
+                                                              {<a class="btn btn-primary btn-xs"  onclick="approve(this,@firstFridayMeeting.id)"><span class="glyphicon glyphicon-ok"></span></a>}</td>
+                                <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@firstFridayMeeting.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@firstFridayMeeting.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                            }
+                            else if (Roles.IsUserInRole("booked") && listNotApprove.Count() > 0)
+                            {
+                                <td style="vertical-align: middle;">
+                                @if (WebSecurity.CurrentUserName == firstFridayMeeting.nguoidangky)
+                                {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                    <a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@firstFridayMeeting.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                }
+
+                                </td>
+                                <td style="vertical-align: middle;">
+                                @if (WebSecurity.CurrentUserName == firstFridayMeeting.nguoidangky)
+                                {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                    <a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@firstFridayMeeting.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                }
+
+                                </td>
+                            }
+                            }
+                        </tr>
+            
+                            if (numberFridayMeeting > 1)
+                            {
+                                friSchedule = friSchedule.Skip(1);
+                                foreach (var fschedule in friSchedule)
+                                {
+                                    arrFridayMeetingTime = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                    <tr>
+                                        <td>@arrFridayMeetingTime[1]</td>
+                                        <td>@fschedule.noidung</td>
+                                        <td>@fschedule.thanhphan</td>
+                                        <td>@fschedule.chuanbi</td>
+                                        <td>@fschedule.diadiem</td>
+                                        <td>@fschedule.chutri</td>
+                                        <td>@fschedule.trangthai</td>
+                                        <td>@fschedule.nguoidangky<br> @fschedule.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                        @{
+                                    if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                                    {
+                                            <td class="td-action-approve">@if (fschedule.pheduyet == 0)
+                                                                          {<a class="btn btn-primary btn-xs"  onclick="approve(this,@fschedule.id)"><span class="glyphicon glyphicon-ok"></span></a>}</td>
+                                            <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                            <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                    }
+                                    else if (Roles.IsUserInRole("booked") && listNotApprove.Count() > 0)
+                                    {
+                                            <td style="vertical-align: middle;">
+                                            @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                            {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                                <a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                            }
+
+                                            </td>
+                                            <td style="vertical-align: middle;">
+                                            @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                            {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                                <a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                            }
+
+                                            </td>
+                                    }
+                                        }
+                                    </tr>
+                                }
+
+                            }
+                        }
+                    }
+
+
+                    <!--SATURDAY-->
+                    @{
+                        if (numberSaturdayMeeting > 0)
+                        {
+                            string[] arrSaturdayMeetingTime = Functions.splitString(firstSaturdayMeeting.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr>
+                                <td rowspan="@numberSaturdayMeeting">@firstSaturdayMeeting.thu @arrSaturdayMeetingTime[0]</td>
+
+                                <td>@arrSaturdayMeetingTime[1]</td>
+                                <td>@firstSaturdayMeeting.noidung</td>
+                                <td>@firstSaturdayMeeting.thanhphan</td>
+                                <td>@firstSaturdayMeeting.chuanbi</td>
+                                <td>@firstSaturdayMeeting.diadiem</td>
+                                <td>@firstSaturdayMeeting.chutri</td>
+                                <td>@firstSaturdayMeeting.trangthai</td>
+                                <td>@firstSaturdayMeeting.nguoidangky<br> @firstSaturdayMeeting.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                @{
+                                    if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                                    {
+                                        <td class="td-action-approve">
+                                            @if (firstSaturdayMeeting.pheduyet == 0)
+                                        {<a class="btn btn-primary btn-xs" onclick="approve(this,@firstSaturdayMeeting.id)"><span class="glyphicon glyphicon-ok"></span></a>}
+                                    </td>
+                                        <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@firstSaturdayMeeting.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                        <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@firstSaturdayMeeting.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                    }
+                                    else if (Roles.IsUserInRole("booked") && listNotApprove.Count() > 0)
+                                    {
+                                        <td style="vertical-align: middle;">
+                                            @if (WebSecurity.CurrentUserName == firstSaturdayMeeting.nguoidangky)
+                                            {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+
+                                                <a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@firstSaturdayMeeting.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                            }
+
+                                        </td>
+                                        <td style="vertical-align: middle;">
+                                            @if (WebSecurity.CurrentUserName == firstSaturdayMeeting.nguoidangky)
+                                            {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+
+                                                <a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@firstSaturdayMeeting.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                            }
+
+                                        </td>
+                                    }
+                                }
+                            </tr>
+
+                            if (numberSaturdayMeeting > 1)
+                            {
+                                satSchedule = satSchedule.Skip(1);
+                                foreach (var fschedule in satSchedule)
+                                {
+                                    arrSaturdayMeetingTime = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                    <tr>
+                                        <td>@arrSaturdayMeetingTime[1]</td>
+                                        <td>@fschedule.noidung</td>
+                                        <td>@fschedule.thanhphan</td>
+                                        <td>@fschedule.chuanbi</td>
+                                        <td>@fschedule.diadiem</td>
+                                        <td>@fschedule.chutri</td>
+                                        <td>@fschedule.trangthai</td>
+                                        <td>@fschedule.nguoidangky<br> @fschedule.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                        @{
+                                            if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                                            {
+                                                <td class="td-action-approve">
+                                                    @if (fschedule.pheduyet == 0)
+                                                {<a class="btn btn-primary btn-xs" onclick="approve(this,@fschedule.id)"><span class="glyphicon glyphicon-ok"></span></a>}
+                                            </td>
+                                                <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                                <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                            }
+                                            else if (Roles.IsUserInRole("booked") && listNotApprove.Count() > 0)
+                                            {
+                                                <td style="vertical-align: middle;">
+                                                    @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                                    {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+
+                                                        <a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                                    }
+
+                                                </td>
+                                                <td style="vertical-align: middle;">
+                                                    @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                                    {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+
+                                                        <a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                                    }
+
+                                                </td>
+                                            }
+                                        }
+                                    </tr>
+                                }
+
+                            }
+                        }
+                    }
+
+                    <!--SUNDAY-->
+                    @{
+                        if (numberSundayMeeting > 0)
+                        {
+                            string[] arrSundayMeetingTime = Functions.splitString(firstSundayMeeting.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr>
+                                <td rowspan="@numberSundayMeeting">@firstSundayMeeting.thu @arrSundayMeetingTime[0]</td>
+
+                                <td>@arrSundayMeetingTime[1]</td>
+                                <td>@firstSundayMeeting.noidung</td>
+                                <td>@firstSundayMeeting.thanhphan</td>
+                                <td>@firstSundayMeeting.chuanbi</td>
+                                <td>@firstSundayMeeting.diadiem</td>
+                                <td>@firstSundayMeeting.chutri</td>
+                                <td>@firstSundayMeeting.trangthai</td>
+                                <td>@firstSundayMeeting.nguoidangky<br> @firstSundayMeeting.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                @{
+                                    if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                                    {
+                                        <td class="td-action-approve">
+                                            @if (firstSundayMeeting.pheduyet == 0)
+                                        {<a class="btn btn-primary btn-xs" onclick="approve(this,@firstSundayMeeting.id)"><span class="glyphicon glyphicon-ok"></span></a>}
+                                    </td>
+                                        <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@firstSundayMeeting.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                        <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@firstSundayMeeting.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                    }
+                                    else if (Roles.IsUserInRole("booked") && listNotApprove.Count() > 0)
+                                    {
+                                        <td style="vertical-align: middle;">
+                                            @if (WebSecurity.CurrentUserName == firstSundayMeeting.nguoidangky)
+                                            {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+
+                                                <a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@firstSundayMeeting.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                            }
+
+                                        </td>
+                                        <td style="vertical-align: middle;">
+                                            @if (WebSecurity.CurrentUserName == firstSundayMeeting.nguoidangky)
+                                            {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+
+                                                <a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@firstSundayMeeting.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                            }
+
+                                        </td>
+                                    }
+                                }
+                            </tr>
+
+                                    if (numberSundayMeeting > 1)
+                                    {
+                                        sunSchedule = sunSchedule.Skip(1);
+                                        foreach (var fschedule in friSchedule)
+                                        {
+                                            arrSundayMeetingTime = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                            <tr>
+                                                <td>@arrSundayMeetingTime[1]</td>
+                                                <td>@fschedule.noidung</td>
+                                                <td>@fschedule.thanhphan</td>
+                                                <td>@fschedule.chuanbi</td>
+                                                <td>@fschedule.diadiem</td>
+                                                <td>@fschedule.chutri</td>
+                                                <td>@fschedule.trangthai</td>
+                                                <td>@fschedule.nguoidangky<br> @fschedule.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                                @{
+                                                    if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                                                    {
+                                                        <td class="td-action-approve">
+                                                            @if (fschedule.pheduyet == 0)
+                                                        {<a class="btn btn-primary btn-xs" onclick="approve(this,@fschedule.id)"><span class="glyphicon glyphicon-ok"></span></a>}
+                                                    </td>
+                                                        <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                                        <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                                    }
+                                                    else if (Roles.IsUserInRole("booked") && listNotApprove.Count() > 0)
+                                                    {
+                                                        <td style="vertical-align: middle;">
+                                                            @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                                            {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+
+                                                                <a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                                            }
+
+                                                        </td>
+                                                        <td style="vertical-align: middle;">
+                                                            @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                                            {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+
+                                                                <a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                                            }
+
+                                                        </td>
+                                                    }
+                                                }
+                                            </tr>
+                                        }
+
+                                    }
+                                }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <!--TABLE LICH CONG TAC KHAC-->
+            <table class="table table-bordered">
+                <caption class="text-center">
+                    <h4><button type="button" class="btn btn-danger ribbon" style="text-align:center; width:30%;">LỊCH CÔNG TÁC KHÁC</button></h4>
+                </caption>
+                <thead>
+                    <tr>
+                        <th>Thứ/ Ngày</th>
+                        <th>T.Gian</th>
+                        <th>Nội dung</th>
+                        <th>Thành phần</th>
+                        <th>Chuẩn bị</th>
+                        <th>Địa điểm</th>
+                        <th>Chủ trì</th>
+                        <th>Tình trạng</th>
+                        <th>Người đăng ký</th>
+                        <!--IS ADMIN OR VANTHU-->
+                        @{
+                            if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                            {
+                            <th>Phê Duyệt</th>
+                            <th>Chỉnh sửa</th>
+                            <th>Xóa</th>
+                            }
+                            else if (Roles.IsUserInRole("booked") && listNotApprove2.Count() > 0)
+                            {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                            <th>Chỉnh sửa</th>
+                            <th>Xóa</th>
+                            }
+                        }
+
+                    </tr>
+                </thead>
+                <tbody>
+                    <!--MONDAY-->
+                    @{
+                        if (numberMondayMeeting2 > 0)
+                        {
+                            string[] arrMondayMeetingTime2 = Functions.splitString(firstMondayMeeting2.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr>
+                            <td rowspan="@numberMondayMeeting2">@firstMondayMeeting2.thu @arrMondayMeetingTime2[0]</td>
+
+                            <td>@arrMondayMeetingTime2[1]</td>
+                            <td>@firstMondayMeeting2.noidung</td>
+                            <td>@firstMondayMeeting2.thanhphan</td>
+                            <td>@firstMondayMeeting2.chuanbi</td>
+                            <td>@firstMondayMeeting2.diadiem</td>
+                            <td>@firstMondayMeeting2.chutri</td>
+                            <td></td>
+                            <td>@firstMondayMeeting2.nguoidangky<br> @firstMondayMeeting.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            @{
+                            if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                            {
+                                <td class="td-action-approve">@if (firstMondayMeeting2.pheduyet == 0)
+                                                              {<a class="btn btn-primary btn-xs"  onclick="approve(this,@firstMondayMeeting2.id)"><span class="glyphicon glyphicon-ok"></span></a>}</td>
+                                <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@firstMondayMeeting2.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@firstMondayMeeting2.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                            }
+                            else if (Roles.IsUserInRole("booked") && listNotApprove2.Count() > 0)
+                            {
+                                <td style="vertical-align: middle;">
+                                    @if (WebSecurity.CurrentUserName == firstMondayMeeting2.nguoidangky)
+                                    {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                        <a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@firstMondayMeeting2.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                    }
+                                </td>
+                                <td style="vertical-align: middle;">
+                                    @if (WebSecurity.CurrentUserName == firstMondayMeeting2.nguoidangky)
+                                    {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                        <a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@firstMondayMeeting2.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                    }
+                                </td>
+                            }
+                            }
+                        </tr>
+            
+                            if (numberMondayMeeting2 > 1)
+                            {
+                                monSchedule2 = monSchedule2.Skip(1);
+                                foreach (var fschedule in monSchedule2)
+                                {
+                                    arrMondayMeetingTime2 = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                    <tr>
+                                        <td>@arrMondayMeetingTime2[1]</td>
+                                        <td>@fschedule.noidung</td>
+                                        <td>@fschedule.thanhphan</td>
+                                        <td>@fschedule.chuanbi</td>
+                                        <td>@fschedule.diadiem</td>
+                                        <td>@fschedule.chutri</td>
+                                        <td></td>
+                                        <td>@fschedule.nguoidangky<br> @fschedule.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                        @{
+                                    if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                                    {
+                                            <td class="td-action-approve">@if (fschedule.pheduyet == 0)
+                                                                          {<a class="btn btn-primary btn-xs"  onclick="approve(this,@fschedule.id)"><span class="glyphicon glyphicon-ok"></span></a> }</td>
+                                            <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                            <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                    }
+                                    else if (Roles.IsUserInRole("booked") && listNotApprove2.Count() > 0)
+                                    {
+                                            <td style="vertical-align: middle;">
+                                                @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                                {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                                    <a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                                }
+
+                                            </td>
+                                            <td style="vertical-align: middle;">
+                                                @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                                {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                                    <a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                                }
+
+                                            </td>
+                                    }
+                                        }
+                                    </tr>   
+                                }
+
+                            }
+                        }
+            
+            
+                    }
+
+                    <!--TUESDAY-->
+                    @{
+                        if (numberTuesdayMeeting2 > 0)
+                        {
+                            string[] arrTuesdayMeetingTime2 = Functions.splitString(firstTuesdayMeeting2.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr>
+                            <td  rowspan="@numberTuesdayMeeting2">@firstTuesdayMeeting2.thu @arrTuesdayMeetingTime2[0]</td>
+                            <td>@arrTuesdayMeetingTime2[1]</td>
+                            <td>@firstTuesdayMeeting2.noidung</td>
+                            <td>@firstTuesdayMeeting2.thanhphan</td>
+                            <td>@firstTuesdayMeeting2.chuanbi</td>
+                            <td>@firstTuesdayMeeting2.diadiem</td>
+                            <td>@firstTuesdayMeeting2.chutri</td>
+                            <td></td>
+                            <td>@firstTuesdayMeeting2.nguoidangky<br> @firstTuesdayMeeting2.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            @{
+                            if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                            {
+                                    <td class="td-action-approve">@if (firstTuesdayMeeting2.pheduyet == 0)
+                                                                  {<a class="btn btn-primary btn-xs"  onclick="approve(this,@firstTuesdayMeeting2.id)"><span class="glyphicon glyphicon-ok"></span></a>}</td>
+                                    <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"   href="~/RegisterSchedule/@firstTuesdayMeeting2.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"   href="~/DeleteSchedule/@firstTuesdayMeeting2.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                            }
+                            else if (Roles.IsUserInRole("booked") && listNotApprove.Count() > 0)
+                            {
+                                    <td style="vertical-align: middle;">
+                                        @if (WebSecurity.CurrentUserName == firstTuesdayMeeting2.nguoidangky)
+                                        {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                            <a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@firstTuesdayMeeting2.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                        }
+
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        @if (WebSecurity.CurrentUserName == firstTuesdayMeeting2.nguoidangky)
+                                        {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                            <a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@firstTuesdayMeeting2.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                        }
+
+                                    </td>
+                            }
+                            }
+                        </tr>
+            
+                            if (numberTuesdayMeeting2 > 1)
+                            {
+                                tueSchedule2 = tueSchedule2.Skip(1);
+                                foreach (var fschedule in tueSchedule2)
+                                {
+                                    arrTuesdayMeetingTime2 = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                    <tr>
+                                        <td>@arrTuesdayMeetingTime2[1]</td>
+                                        <td>@fschedule.noidung</td>
+                                        <td>@fschedule.thanhphan</td>
+                                        <td>@fschedule.chuanbi</td>
+                                        <td>@fschedule.diadiem</td>
+                                        <td>@fschedule.chutri</td>
+                                        <td></td>
+                                        <td>@fschedule.nguoidangky<br> @fschedule.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                        @{
+                                    if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                                    {
+                                                    <td class="td-action-approve">@if (fschedule.pheduyet == 0)
+                                                                                  {
+                                                            <a class="btn btn-primary btn-xs"  onclick="approve(this,@fschedule.id)"><span class="glyphicon glyphicon-ok"></span></a> 
+                                                                                  }</td>
+                                                    <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                            <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                    }
+                                    else if (Roles.IsUserInRole("booked") && listNotApprove2.Count() > 0)
+                                    {
+                                        <td style="vertical-align: middle;">
+                                            @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                            {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                                <a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                            }
+                                        </td>
+                                        <td style="vertical-align: middle;">
+                                            @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                            {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                                <a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                            }
+                                        </td>
+                                    }
+                                        }
+                                    </tr>
+                                }
+                            }
+                        }
+            
+            
+                    }
+
+
+                    <!--WEDNESDAY-->
+                    @{
+                        if (numberWednesdayMeeting2 > 0)
+                        {
+                            string[] arrWednesdayMeetingTime2 = Functions.splitString(firstWednesdayMeeting2.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr>
+                                    <td  rowspan="@numberWednesdayMeeting2">@firstWednesdayMeeting2.thu @arrWednesdayMeetingTime2[0]</td>
+
+                                    <td>@arrWednesdayMeetingTime2[1]</td>
+                                    <td>@firstWednesdayMeeting2.noidung</td>
+                                    <td>@firstWednesdayMeeting2.thanhphan</td>
+                                    <td>@firstWednesdayMeeting2.chuanbi</td>
+                                    <td>@firstWednesdayMeeting2.diadiem</td>
+                                    <td>@firstWednesdayMeeting2.chutri</td>
+                                    <td></td>
+                                    <td>@firstWednesdayMeeting2.nguoidangky<br> @firstWednesdayMeeting2.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                    @{
+                            if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                            {
+                                <td class="td-action-approve">@if (firstWednesdayMeeting2.pheduyet == 0)
+                                                                {<a class="btn btn-primary btn-xs"  onclick="approve(this,@firstWednesdayMeeting2.id)"><span class="glyphicon glyphicon-ok"></span></a>}</td>
+                                <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@firstWednesdayMeeting2.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                        <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@firstWednesdayMeeting2.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                            }
+                            else if (Roles.IsUserInRole("booked") && listNotApprove2.Count() > 0)
+                            {
+                                <td style="vertical-align: middle;">
+                                    @if (WebSecurity.CurrentUserName == firstWednesdayMeeting2.nguoidangky)
+                                    {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                        <a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@firstWednesdayMeeting2.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                    }
+
+                                </td>
+                                <td style="vertical-align: middle;">
+                                    @if (WebSecurity.CurrentUserName == firstWednesdayMeeting2.nguoidangky)
+                                    {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                        <a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@firstWednesdayMeeting2.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                    }
+
+                                </td>
+                            }
+                                    }
+                                </tr>
+                            if (numberWednesdayMeeting2 > 1)
+                            {
+                                wedSchedule2 = wedSchedule2.Skip(1);
+                                foreach (var fschedule in wedSchedule2)
+                                {
+                                    arrWednesdayMeetingTime2 = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                    <tr>
+                                        <td>@arrWednesdayMeetingTime2[1]</td>
+                                        <td>@fschedule.noidung</td>
+                                        <td>@fschedule.thanhphan</td>
+                                        <td>@fschedule.chuanbi</td>
+                                        <td>@fschedule.diadiem</td>
+                                        <td>@fschedule.chutri</td>
+                                        <td></td>
+                                        <td>@fschedule.nguoidangky<br> @fschedule.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                        @{
+                                    if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                                    {
+                                            <td style="vertical-align: middle;" class="td-action-approve">@if (fschedule.pheduyet == 0)
+                                                                                                          {<a class="btn btn-primary btn-xs"  onclick="approve(this,@fschedule.id)"><span class="glyphicon glyphicon-ok"></span></a>}</td>
+                                            <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                            <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                    }
+                                    else if (Roles.IsUserInRole("booked") && listNotApprove.Count() > 0)
+                                    {
+                                        <td style="vertical-align: middle;">
+                                            @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                            {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                                <a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                           }
+
+                                        </td>
+                                        <td style="vertical-align: middle;">
+                                            @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                            {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                                <a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                            }
+
+                                        </td>
+                                    }
+                                        }
+                                    </tr>
+                                }
+
+                            }
+                        }
+            
+            
+                    }
+
+
+                    <!--THURSDAY-->
+                    @{
+                        if (numberThursdayMeeting2 > 0)
+                        {
+                            string[] arrThursdayMeetingTime2 = Functions.splitString(firstThursdayMeeting2.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                        <tr>
+                            <td  rowspan="@numberThursdayMeeting2">@firstThursdayMeeting2.thu @arrThursdayMeetingTime2[0]</td>
+
+                            <td>@arrThursdayMeetingTime2[1]</td>
+                            <td>@firstThursdayMeeting2.noidung</td>
+                            <td>@firstThursdayMeeting2.thanhphan</td>
+                            <td>@firstThursdayMeeting2.chuanbi</td>
+                            <td>@firstThursdayMeeting2.diadiem</td>
+                            <td>@firstThursdayMeeting2.chutri</td>
+                            <td></td>
+                            <td>@firstThursdayMeeting2.nguoidangky<br> @firstThursdayMeeting2.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                            @{
+                            if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                            {
+                                    <td class="td-action-approve">@if (firstThursdayMeeting2.pheduyet == 0)
+                                                                  {<a class="btn btn-primary btn-xs"  onclick="approve(this,@firstThursdayMeeting2.id)"><span class="glyphicon glyphicon-ok"></span></a>}</td>
+                                    <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@firstThursdayMeeting2.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@firstThursdayMeeting2.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                            }
+                            else if (Roles.IsUserInRole("booked") && listNotApprove2.Count() > 0)
+                            {
+                                <td style="vertical-align: middle;">
+                                    @if (WebSecurity.CurrentUserName == firstThursdayMeeting2.nguoidangky)
+                                    {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                    <a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@firstThursdayMeeting2.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                    }
+
+                                </td>
+                                <td style="vertical-align: middle;">
+                                        @if (WebSecurity.CurrentUserName == firstThursdayMeeting2.nguoidangky)
+                                        {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                        <a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@firstThursdayMeeting2.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                        }
+
+                                    </td>
+                            }
+                            }
+                        </tr>
+            
+                            if (numberThursdayMeeting2 > 1)
+                            {
+                                thurSchedule2 = thurSchedule2.Skip(1);
+                                foreach (var fschedule in thurSchedule2)
+                                {
+                                    arrThursdayMeetingTime2 = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                    <tr>
+                                        <td>@arrThursdayMeetingTime2[1]</td>
+                                        <td>@fschedule.noidung</td>
+                                        <td>@fschedule.thanhphan</td>
+                                        <td>@fschedule.chuanbi</td>
+                                        <td>@fschedule.diadiem</td>
+                                        <td>@fschedule.chutri</td>
+                                        <td></td>
+                                        <td>@fschedule.nguoidangky<br> @fschedule.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                        @{
+                                    if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                                    {
+                                        <td class="td-action-approve">@if (fschedule.pheduyet == 0)
+                                                                        {<a class="btn btn-primary btn-xs"  onclick="approve(this,@fschedule.id)"><span class="glyphicon glyphicon-ok"></span></a>}</td>
+                                        <td style="vertical-align: middle;"><a  class="btn btn-primary btn-xs" href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                            <td style="vertical-align: middle;"><a  class="btn btn-primary btn-xs" href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                    }
+                                    else if (Roles.IsUserInRole("booked") && listNotApprove2.Count() > 0)
+                                    {
+                                        <td style="vertical-align: middle;">
+                                            @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                            {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                            <a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                            }
+
+                                        </td>
+                                             <td style="vertical-align: middle;">
+                                            @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                            {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                            <a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                            }
+
+                                        </td>
+                                    }
+                                        }
+                                    </tr>
+                                }
+
+                            }
+                        }
+                    }
+
+
+                    <!--FRIDAY-->
+                    @{
+                        if (numberFridayMeeting2 > 0)
+                        {
+                            string[] arrFridayMeetingTime2 = Functions.splitString(firstFridayMeeting2.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr>
+                                <td  rowspan="@numberFridayMeeting2">@firstFridayMeeting2.thu @arrFridayMeetingTime2[0]</td>
+
+                                <td>@arrFridayMeetingTime2[1]</td>
+                                <td>@firstFridayMeeting2.noidung</td>
+                                <td>@firstFridayMeeting2.thanhphan</td>
+                                <td>@firstFridayMeeting2.chuanbi</td>
+                                <td>@firstFridayMeeting2.diadiem</td>
+                                <td>@firstFridayMeeting2.chutri</td>
+                                <td></td>
+                                <td>@firstFridayMeeting2.nguoidangky<br> @firstFridayMeeting2.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                @{
+                            if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                            {
+                                <td class="td-action-approve">@if (firstFridayMeeting2.pheduyet == 0)
+                                                                {<a class="btn btn-primary btn-xs"  onclick="approve(this,@firstFridayMeeting2.id)"><span class="glyphicon glyphicon-ok"></span></a>}</td>
+                                <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@firstFridayMeeting2.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                    <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@firstFridayMeeting2.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                            }
+                            else if (Roles.IsUserInRole("booked") && listNotApprove2.Count() > 0)
+                            {
+                                <td style="vertical-align: middle;">
+                                    @if (WebSecurity.CurrentUserName == firstFridayMeeting2.nguoidangky)
+                                    {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                    <a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@firstFridayMeeting2.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                    }
+
+                                </td>
+                                    <td style="vertical-align: middle;">
+                                    @if (WebSecurity.CurrentUserName == firstFridayMeeting2.nguoidangky)
+                                    {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                    <a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@firstFridayMeeting2.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                    }
+
+                                </td>
+                            }
+                                }
+                            </tr>
+            
+                            if (numberFridayMeeting2 > 1)
+                            {
+                                friSchedule2 = friSchedule2.Skip(1);
+                                foreach (var fschedule in friSchedule2)
+                                {
+                                    arrFridayMeetingTime2 = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                    <tr>
+                                        <td>@arrFridayMeetingTime2[1]</td>
+                                        <td>@fschedule.noidung</td>
+                                        <td>@fschedule.thanhphan</td>
+                                        <td>@fschedule.chuanbi</td>
+                                        <td>@fschedule.diadiem</td>
+                                        <td>@fschedule.chutri</td>
+                                        <td></td>
+                                        <td>@fschedule.nguoidangky<br> @fschedule.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                        @{
+                                    if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                                    {
+                                        <td class="td-action-approve">@if (fschedule.pheduyet == 0)
+                                                                        {<a class="btn btn-primary btn-xs"  onclick="approve(this,@fschedule.id)"><span class="glyphicon glyphicon-ok"></span></a>}</td>
+                                        <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"  href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                        <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                    }
+                                    else if (Roles.IsUserInRole("booked") && listNotApprove2.Count() > 0)
+                                    {
+                                            <td style="vertical-align: middle;">
+                                            @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                            {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+                    
+                                                <a class="btn btn-primary btn-xs"  href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                            }
+
+                                            </td>
+                                    }
+                                        }
+                                    </tr>
+                                }
+
+                            }
+                        }
+                    }
+
+                    <!--SATURDAY-->
+                    @{
+                        if (numberSaturdayMeeting2 > 0)
+                        {
+                            string[] arrSaturdayMeetingTime2 = Functions.splitString(firstSaturdayMeeting2.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                            <tr>
+                                <td rowspan="@numberSaturdayMeeting2">@firstSaturdayMeeting2.thu @arrSaturdayMeetingTime2[0]</td>
+
+                                <td>@arrSaturdayMeetingTime2[1]</td>
+                                <td>@firstSaturdayMeeting2.noidung</td>
+                                <td>@firstSaturdayMeeting2.thanhphan</td>
+                                <td>@firstSaturdayMeeting2.chuanbi</td>
+                                <td>@firstSaturdayMeeting2.diadiem</td>
+                                <td>@firstSaturdayMeeting2.chutri</td>
+                                <td></td>
+                                <td>@firstSaturdayMeeting2.nguoidangky<br> @firstSaturdayMeeting2.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                @{
+                                    if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                                    {
+                                        <td class="td-action-approve">
+                                            @if (firstSaturdayMeeting2.pheduyet == 0)
+                                        {<a class="btn btn-primary btn-xs" onclick="approve(this,@firstSaturdayMeeting2.id)"><span class="glyphicon glyphicon-ok"></span></a>}
+                                    </td>
+                                        <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@firstSaturdayMeeting2.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                        <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@firstSaturdayMeeting2.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                    }
+                                    else if (Roles.IsUserInRole("booked") && listNotApprove2.Count() > 0)
+                                    {
+                                        <td style="vertical-align: middle;">
+                                            @if (WebSecurity.CurrentUserName == firstSaturdayMeeting2.nguoidangky)
+                                            {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+
+                                                <a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@firstSaturdayMeeting2.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                                            }
+
+                                        </td>
+                                        <td style="vertical-align: middle;">
+                                            @if (WebSecurity.CurrentUserName == firstSaturdayMeeting2.nguoidangky)
+                                            {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+
+                                                <a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@firstSaturdayMeeting2.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                            }
+
+                                        </td>
+                                    }
+                                }
+                            </tr>
+
+                                    if (numberSaturdayMeeting2 > 1)
+                                    {
+                                        friSchedule2 = friSchedule2.Skip(1);
+                                        foreach (var fschedule in friSchedule2)
+                                        {
+                                            arrSaturdayMeetingTime2 = Functions.splitString(fschedule.thoigian.ToString("dd/MM/yyyy HH:mm"));
+                                            <tr>
+                                                <td>@arrSaturdayMeetingTime2[1]</td>
+                                                <td>@fschedule.noidung</td>
+                                                <td>@fschedule.thanhphan</td>
+                                                <td>@fschedule.chuanbi</td>
+                                                <td>@fschedule.diadiem</td>
+                                                <td>@fschedule.chutri</td>
+                                                <td></td>
+                                                <td>@fschedule.nguoidangky<br> @fschedule.ngaytao.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                                @{
+                                                    if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                                                    {
+                                                        <td class="td-action-approve">
+                                                            @if (fschedule.pheduyet == 0)
+                                                        {<a class="btn btn-primary btn-xs" onclick="approve(this,@fschedule.id)"><span class="glyphicon glyphicon-ok"></span></a>}
+                                                    </td>
+                                                        <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/RegisterSchedule/@fschedule.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                                        <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                                    }
+                                                    else if (Roles.IsUserInRole("booked") && listNotApprove2.Count() > 0)
+                                                    {
+                                                        <td style="vertical-align: middle;">
+                                                            @if (WebSecurity.CurrentUserName == fschedule.nguoidangky)
+                                                            {  <!--IS OWNER, THE PERSON BOOK SCHEDULE-->
+
+                                                                <a class="btn btn-primary btn-xs" href="~/DeleteSchedule/@fschedule.id"><span class="glyphicon glyphicon-trash"></span></a>
+                                                            }
+
+                                                        </td>
+                                                    }
+                                                }
+                                            </tr>
+                                                            }
+
+                                                        }
+                                                    }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+<script>
+    function approve(me, id) {
+        $.ajax({
+            type: "POST",
+            url: "/Approve",
+            data: { id: id },
+            success: function (response) {
+                $('.modal-body').html(response);
+                $('#myModal').modal();
+                $(me).parent().html('');
+            }
+        })
+    } 
+    function approveAll(fromDate,toDate) {
+        
+        $.ajax({
+            type: "POST",
+            url: "/ApproveAll",
+            data: { fromDate: fromDate, toDate: toDate },
+            success: function (response) {
+                $('.td-action-approve').html('');
+                $('.modal-body').html('Phê duyệt thành công');
+                $('#myModal').modal();
+            }
+        })
+    }
+</script>

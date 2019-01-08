@@ -1,0 +1,64 @@
+﻿@{
+    var db = Database.Open("HOME_PHUMY");
+    var rs = db.Query("SELECT * FROM ImageGallery ORDER BY id DESC");
+}
+<link rel="stylesheet"  href="Scripts/lightslider/css/lightslider.css"/>
+    <style>
+    	ul{
+			list-style: none outside none;
+		    padding-left: 0;
+            margin: 0;
+		}
+      
+	
+		img{
+			max-width: 100%;
+			height:auto;
+			
+		}
+    </style>
+    <script src="Scripts/lightslider/js/lightslider.js"></script> 
+    <script>
+    	 $(document).ready(function() {
+    	     $("#content-slider").lightSlider({
+    	        
+				pager:false,
+				item:4,
+                slideMargin: 5,
+                speed:500,
+                auto:true,
+                loop:true,
+				pauseOnHover:true,
+				controls: false //If false, prev/next buttons will not be displayed.
+
+            });
+         
+		});
+    </script>
+
+<div style="margin-top: 20px;clear:both;"></div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-defaul" style="margin-bottom:0;box-shadow: none;border-color: none; background-color: transparent; border: none;">
+            <div class="panel-heading" style="background: none; padding: 0; border: 0;">
+                <h3 class="panel-title">
+                    <button type="button" class="btn btn-info ribbon">THƯ VIỆN HÌNH ẢNH</button>
+                </h3>
+            </div>
+
+            <div class="panel-body" style="padding-bottom: 0;">
+                <ul id="content-slider" class="content-slider">
+                @foreach(var row in rs){
+                     <li> 
+                        <a target="_blank" href="~/ImageGalleryDetail/@row.id"><img src="~/UploadedFiles/ImageGallery/@row.Avatar" />
+						@row.Title</a>
+				     </li>
+                }
+            </ul>
+                
+            </div>
+        </div>
+
+    </div>
+</div>
+

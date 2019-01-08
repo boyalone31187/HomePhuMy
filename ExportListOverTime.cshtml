@@ -1,0 +1,61 @@
+﻿@{
+    if (!Roles.IsUserInRole("see_all_ot") && !Roles.IsUserInRole("admin"))
+    {
+        Response.Redirect("~/danhsachlamthem");
+    }
+    var db = Database.Open("HOME_PHUMY");
+
+    string fromDate = UrlData[0];
+    string toDate = UrlData[1];
+
+    //GET LIST DEPARTMENT
+    var listDepartment = Functions.getList("Department");
+    string selectCommand = "SELECT * FROM WorkOverTime WHERE createdTime >= '" + fromDate + "' AND createdTime <= '" + toDate + " 23:59:00' AND status = N'Đã duyệt'";
+
+    var rs = db.Query(selectCommand);
+
+    Response.AddHeader("Content-disposition", "attachment; filename=WorkOvertimeList.xls");
+    Response.ContentType = "application/octet-stream";
+
+}
+<table border="1" cellpadding="0" cellspacing="0">
+    <thead>
+         <tr align="center" bgcolor="#cccccc" height="35">
+            <th width="50" align="center"><font face="Times New Roman" size="3">STT</font></th>
+            <th width="500" align="center"><font face="Times New Roman" size="3">Họ và tên</font></th>
+            <th width="200" align="center"><font face="Times New Roman" size="3">Thời gian</font></th>
+        </tr>
+    </thead>
+   <tbody>
+    @{ string[] ordering = { "I", "II", "III", "IV", "V", "VI", "VII", "VIII" }; int i = 0; int j = 0;}
+    @foreach (var d in listDepartment)
+    {
+        i = 1;
+        <tr class="bg-info" style="text-transform:uppercase">
+            <td style="padding: 5px; font-family:'Times New Roman'; text-transform: uppercase; font-weight: bolder; text-align: left;" colspan="3"><font size="4">@ordering[j]. @d.name</font></td>
+        </tr>
+        foreach (var row in rs)
+        {
+            if (row.departmentId == d.ms_pb)
+            {
+                string workTime = "";
+                if (row.sat == "1")
+                {
+                    workTime += "- Thứ 7 (" + row.hours1 + " tiếng) </br>";
+                }
+                if (row.sun == "1")
+                {
+                    workTime += "- Chủ nhật (" + row.hours2 + " tiếng)";
+                }
+                <tr>
+                    <td style="padding: 5px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@i</font></td>
+                    <td style="padding: 5px; text-align: left; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@row.tencn</font></td>
+                    <td style="padding: 5px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@Html.Raw(workTime)</font></td>
+                </tr>
+                i++;
+            }
+        }
+        j++;
+    }
+       </tbody>
+</table>

@@ -1,0 +1,12 @@
+﻿@{ 
+    if (Roles.IsUserInRole("approve_ot") || Roles.IsUserInRole("admin"))
+    {
+        var db = Database.Open("HOME_PHUMY");
+        var id = UrlData[0];
+        string updateCommand = "UPDATE WorkOverTime SET status = N'Đã duyệt' WHERE id = " + id;
+        db.Execute(updateCommand);
+
+    }
+    Response.Redirect("~/danhsachlamthem");
+
+}

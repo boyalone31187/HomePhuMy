@@ -1,0 +1,71 @@
+﻿@{
+    if (!Roles.IsUserInRole("manage_gallery") && !Roles.IsUserInRole("admin"))
+    {
+        Response.Redirect("~/");
+    }
+    
+    
+    Layout = "~/_ScheduleLayout.cshtml";
+    Page.Title = "Quan Ly Hinh Anh";
+
+
+
+    var db = Database.Open("HOME_PHUMY");
+    string selectCommand = "SELECT * FROM ImageGallery ORDER BY id DESC";
+    var rs = db.Query(selectCommand);
+
+    int i = 1;
+}
+<style>
+    .btn-xs {
+        padding-top: 4px;
+        padding-bottom: 4px;
+    }
+    table tr th, table tr td {
+        text-align:center;
+    }
+    table tr th {
+        background-color: #2196F3;
+        color: #fff;
+        font-weight: bold;
+    }
+    .td-action-approve {
+        vertical-align: middle !important;
+    }
+</style>
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <!--TABLE LICH CONG TAC TUAN-->
+            <table class="table table-bordered">
+                <caption class="text-center">
+                    <h4><button type="button" class="btn btn-danger ribbon" style="text-align:center; width:30%;">QUẢN LÝ THƯ VIỆN HÌNH ẢNH</button></h4>
+                </caption>
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Tiêu đề</th>
+                        <th width="80">Chỉnh sửa</th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(var row in rs){
+                     <tr>
+                        <td>@i</td>
+                        <td>@row.title</td>
+                        <td style="vertical-align: middle;"><a class="btn btn-primary btn-xs" href="~/uploadimagegallery/@row.id"><span class="glyphicon glyphicon-pencil"></span></a></td>
+                                            
+                    </tr>
+                    i++;               
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+
+
+

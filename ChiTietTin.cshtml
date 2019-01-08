@@ -1,0 +1,107 @@
+﻿@{
+    Layout = "~/_SiteLayoutGencoNoSlider.cshtml";
+    Page.Title = "Chi Tiet Tin";
+    var db = Database.Open("HOME_PHUMY");
+    int id = Convert.ToInt32(UrlData[0]) ;
+    string title = "BẢN TIN NỘI BỘ »";
+   
+    
+    var newsList = db.Query("SELECT * FROM BanTinNoiBo ORDER BY createdTime DESC");
+    var rs = from news in newsList
+             where news.id == id
+             select news;
+
+             
+    string type = UrlData[1];
+    var others = (from news in newsList
+                  where news.id != id && String.IsNullOrEmpty(news.type)
+                  select news).Take(10);
+                  
+    if (!String.IsNullOrEmpty(type))
+    {
+        title = "BẢN TIN NGÀNH ĐIỆN »";
+        others = (from news in newsList
+                  where news.id != id && news.type == type
+                      select news).Take(10);
+    }
+                  
+}
+<link rel="stylesheet" href="~/CSS/InOut.css" />
+<link rel="stylesheet" href="~/CSS/tinoibo.css" />
+<style>
+
+</style>
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <div class="row">
+                    <div class="col-md-12" style="padding-left:2px;padding-right:0;">
+                        <span class="glyphicon glyphicon-credit-card"></span>
+                        <div class="title">@title</div>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <div class="panel-body" id="panel-body">
+                <div class="detail_page">
+                    <div class="detail_top">
+                        <h1>
+                            <span>@rs.ElementAt(0).title</span>
+                        </h1>
+                    </div>
+
+                    <div class="detail_content">
+                        <div style="text-align: justify;">
+                            <strong><span style="color:#000000">@rs.ElementAt(0).description</span></strong><br>
+                            &nbsp;
+                        </div>
+
+                        <div>
+                            @Html.Raw( @rs.ElementAt(0).content)
+                        </div>
+
+                    </div>
+
+                    <br style="clear:both">
+
+
+                    <div style="width: 100%" class="news_box">
+                        <div class="detail_page">
+                            <h5 class="forum_name">Các bản tin khác</h5>
+                            <ul class="icon-list">
+                                @foreach(var row in others)
+                                {
+                                <li>
+                                    <a href="~/chitiettin/@row.id">
+                                        @row.title
+                                        <span><i>- (@row.createdTime)</i></span>
+                                    </a>
+                                </li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+
+</div>
+
+<script>
+    //add class bootstrap table 
+   
+    $(document).ready(function () {
+        $("table").each(function (index) {
+            $(this).addClass("table");
+        });
+    });
+</script>

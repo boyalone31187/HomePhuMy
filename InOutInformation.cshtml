@@ -1,0 +1,312 @@
+﻿@{
+    Layout = "~/_SiteLayoutGencoNoSlider.cshtml";
+    Page.Title = "Quan Ly Vao Ra";
+
+    //get get MS_PB where user belong to
+    if (!WebSecurity.IsAuthenticated)
+    {
+        AppState["message_error"] = "Bạn cần phải đăng nhập để sử dụng chức năng này";
+        Response.Redirect("~/Error");
+    }
+
+    //if (!Roles.IsUserInRole("admin") && !Roles.IsUserInRole("vanthu") && !Roles.IsUserInRole("booked") && !Roles.IsUserInRole("see_in_out"))
+    //{
+    //    AppState["message_error"] = "Bạn cần phải đăng nhập để sử dụng chức năng này";
+    //    Response.Redirect("~/Error");
+    //}
+
+    var db = Database.Open("PM_ANNINH");
+    var listDepartment = Functions.getListDepartment().ToList();
+
+    int ms_pb = Functions.getDepartmentID(WebSecurity.CurrentUserId);
+
+    //filter department list, just get department where user belong to
+    System.Collections.Generic.IEnumerable<dynamic> listDepartmentFilter;
+
+    //if username is Tri(19) or Phung(53) or chị Tú(49)
+    //define array user id that has right to see all department
+    var listG3Department = Functions.getListG3Department();
+
+    if (Roles.IsUserInRole("see_all_in_out"))
+    {
+        listDepartmentFilter = Functions.getAllDepartment();
+        <script>
+                $(document).ready(function () {
+                    $("#ms_pb").append(new Option("Tất cả", "0"));
+                });
+        </script>
+    }
+    else
+    {
+        listDepartmentFilter = from d in listDepartment
+                                where Convert.ToInt32(d.ms_pb) == ms_pb
+                                select d;
+    }
+
+
+    string selectCommand = @"SELECT  CONGNHAN.MSTHE, CONGNHAN.TENCN, 
+		                FileChamCong_PM_Luu.giovao, FileChamCong_PM_Luu.giora,FileChamCong_PM_Luu.sogio,
+		                PhongBan.MS_PB
+                        FROM dbo.PhongBan 
+                        INNER JOIN dbo.CONGNHAN ON dbo.PhongBan.MS_PB = dbo.CONGNHAN.MS_PB 
+                        INNER JOIN dbo.FileChamCong_PM_Luu ON dbo.CONGNHAN.MSTHE = dbo.FileChamCong_PM_Luu.msthe
+                        WHERE PhongBan.LoaiSX = '1' AND PhongBan.MS_PB = " + ms_pb + " AND giovao >= convert(varchar(10), getdate(),120) ORDER BY giovao ASC";
+    var listEmployee = db.Query(selectCommand);
+    int i = 1;
+}
+<link rel="stylesheet" href="~/CSS/InOut.css" />
+<style>
+
+</style>
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <div class="row">
+                    <div class="col-md-3" style="padding-left:2px;padding-right:0;">
+                        <button class="btn btn-primary btn-xs btn-glyphicon"><span class="glyphicon glyphicon-credit-card"></span></button>
+                        <div class="title">THÔNG TIN QUÉT THẺ »</div>
+                    </div>
+                    <div class="col-md-9" style="padding-left:0;padding-right:0;">
+                        <button class="btn btn-success btn-xs btn-vaora">Vào Ra</button>
+                        <button class="btn btn-success btn-xs btn-dtvs">Đi Trễ - Về Sớm</button>
+                        <button class="btn btn-success btn-xs btn-kqt">Không Quét Thẻ</button>
+                       @* <button class="btn btn-success btn-xs btn-kdl">Không Đi Làm</button>
+                        <button class="btn btn-success btn-xs btn-cv">Chưa Về</button>*@
+                        <button class="btn btn-success btn-xs btn-tttt">Thay Đổi Tình Trạng</button>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <div class="panel-body" id="panel-body">
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        <h3 style="font-weight:bold; font-size: 12px;" class="panel-title">DANH SÁCH CBCNV QUÉT THẺ VÀO RA CỔNG</h3>
+                    </div>
+
+                    <div class="panel-body">
+                        <form class="frm-search-employee" method="post" action="~/GetInOutData.cshtml" id="searchForm">
+                            <div class="row">
+                                <div class = "col-md-6">
+                                    <div class="form-group">
+                                        <select id="ms_pb" class="form-control" name="ms_pb">
+                                            
+                                            @foreach (var row in listDepartmentFilter)
+                                            {
+                                            <option @(ms_pb == Convert.ToInt32(row.MS_PB)  ? "selected" : "") value="@row.MS_PB">@row.TenPhongBan</option>
+                                            }
+                                              
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <div id='giovao' name='giovao'></div>
+                                    </div>
+                                </div>
+                            </div>
+                             <div class="row" id="row-tinhtrang" style="display:none;">
+                                <div class = "col-md-6">
+                                    <div class="form-group">
+                                        <select id="tinhtrang" class="form-control" name="tinhtrang">
+                                            <option value="">--Chọn Tình Trạng Đi Trễ / Về Sớm--</option>
+                                            <option value="late">Đi trễ</option>
+                                            <option value="soon">Về sớm</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-2 pull-left"><button type = "submit" class = "btn btn-primary">Xem</button></div>
+                            </div>
+                            <input id="action" type="hidden" name="action" value="vaora"/>
+                        </form>
+                         <div class="row">
+                            <div class="col-md-12 text-right col-export" style="padding:10px 15px;">
+                                <a href="~/ExportInOutData.cshtml" id="export" class="btn btn-success" style="width: 15%;">Export Excel</a>
+
+                            </div>
+                                 
+                        </div>
+                         <div class="row">
+                            <div class="col-md-12" id="response-data">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>STT</th>
+		                                    <th>Mã thẻ</th>		
+		                                    <th>Họ và tên</th>
+		                                    <th>Thời gian vào</th>
+		                                    <th>Thời gian ra</th>
+		                                    <th>Thời gian làm việc</th>
+	                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var row in listEmployee)
+                                        {
+                                            <tr>
+                                                <td>@i</td>
+		                                        <td>@row.MSTHE</td>		
+		                                        <td>@row.TENCN</td>
+		                                        <td> @(row.giovao != null ? row.giovao.ToString("dd/MM/yyyy HH:mm") : "")</td>
+		                                        <td>@(row.giora != null ? row.giora.ToString("dd/MM/yyyy HH:mm") : "")</td>
+		                                        <td>@row.sogio</td>
+	                                        </tr>
+                                            i++;
+                                        }
+                                        
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+</div>
+<!-- DATE PICKER -->
+<script type="text/javascript" src="~/Scripts/jqxcore.js"></script>
+<script type="text/javascript" src="~/Scripts/jqxdatetimeinput.js"></script>
+<script type="text/javascript" src="~/Scripts/jqxcalendar.js"></script>
+<script type="text/javascript" src="~/Scripts/globalize.js"></script>
+<link rel="stylesheet" href="~/CSS/jqx.base.css" type="text/css" />
+<script src="~/Scripts/jquery.form.js"></script> 
+<script>
+    $(document).ready(function () {
+        $("#giovao").jqxDateTimeInput({ height: '32', formatString: 'dd/MM/yyyy' });
+
+        //Init params to Export Excel
+        $('#giovao').on('valueChanged', function (event) {
+            var ms_pb = $('#ms_pb').val();
+            var giovao = $('#giovao').jqxDateTimeInput('val').split('/');
+            var strGioVao = giovao[2] + '-' + giovao[1] + '-' + giovao[0];
+            var action = $('#action').val();
+            $('#export').attr('href', 'ExportInOutData/'+ action + '/' + ms_pb + '/' + strGioVao);
+        });
+
+        $('#ms_pb').change(function () {
+            var ms_pb = $('#ms_pb').val();
+            var giovao = $('#giovao').jqxDateTimeInput('val').split('/');
+            var strGioVao = giovao[2] + '-' + giovao[1] + '-' + giovao[0];
+            var action = $('#action').val();
+            $('#export').attr('href', 'ExportInOutData/' + action + '/' + ms_pb + '/' + strGioVao);
+        });
+
+        $('#tinhtrang').change(function () {
+            var ms_pb = $('#ms_pb').val();
+            var giovao = $('#giovao').jqxDateTimeInput('val').split('/');
+            var strGioVao = giovao[2] + '-' + giovao[1] + '-' + giovao[0];
+            var action = $('#action').val();
+            var tinhtrang = $(this).val();
+            $('#export').attr('href', 'ExportInOutData/' + action + '/' + ms_pb + '/' + strGioVao + '/' + tinhtrang);
+        });
+        //
+        $('#export').attr('href', 'ExportInOutData/vaora');
+
+        //$('.loading').show();
+        //$.post('InOut.cshtml', function (response) {
+        //    $('#content').html(response);
+        //    $('#export').attr('href', 'ExportInOutData/vaora');
+        //    $('.loading').hide();
+        //});
+
+        $('.btn-vaora').click(function () {
+            $('.loading').show();
+            $('#searchForm').resetForm();
+            $.post('InOut.cshtml', function (response) {
+                $('#response-data').html(response);
+                $('.panel-title').html('DANH SÁCH CBCNV QUÉT THẺ VÀO RA CỔNG');
+                $('#export').attr('href', 'ExportInOutData/vaora');
+                $('#action').val('vaora');
+                $('.loading').hide();
+            });
+        });
+        $('.btn-dtvs').click(function () {
+            $('.panel-title').html('THÔNG TIN CBCNV ĐI TRỄ - VỀ SỚM');
+            $('#searchForm').resetForm();
+            $('.loading').show();
+            $.post('DiTreVeSom.cshtml', function (response) {
+                $('#response-data').html(response);
+                $('#export').attr('href', 'ExportInOutData/dtvs');
+                $('#action').val('dtvs');
+                $('.loading').hide();
+            });
+        });
+        $('.btn-kqt').click(function () {
+            $('.panel-title').html('DANH SÁCH CBCNV KHÔNG QUÉT THẺ');
+            $('#searchForm').resetForm();
+            $('.loading').show();
+            $.post('KhongQuetThe.cshtml', function (response) {
+                $('#response-data').html(response);
+                $('#export').attr('href', 'ExportInOutData/kqt');
+                $('#action').val('kqt');
+                $('.loading').hide();
+            });
+        });
+        //$('.btn-kdl').click(function () {
+        //    $('#searchForm').resetForm();
+        //    $('.loading').show();
+        //    $.post('InOut.cshtml', function (response) {
+        //        $('#response-data').html(response);
+        //        $('.loading').hide();
+        //    });
+        //});
+        //$('.btn-cv').click(function () {
+        //    $('#searchForm').resetForm();
+        //    $('.loading').show();
+        //    $.post('InOut.cshtml', function (response) {
+        //        $('#response-data').html(response);
+        //        $('#export').attr('href', 'ExportInOutData/cv');
+        //        $('.loading').hide();
+        //    });
+        //});
+        $('.btn-tttt').click(function () {
+            $('.panel-title').html('CẬP NHẬT TÌNH TRẠNG ĐI LÀM CỦA NHÂN VIÊN');
+            $('#searchForm').resetForm();
+            $('.loading').show();
+            $.post('ThayDoiTinhTrang.cshtml', function (response) {
+                $('#response-data').html(response);
+                $('#export').attr('href', 'ExportInOutData/tdtt');
+                $('.loading').hide();
+            });
+        });
+
+
+        //submit form
+        var options = {
+            target: '#response-data',   // target element(s) to be updated with server response 
+            beforeSubmit: showRequest,  // pre-submit callback 
+            success: showResponse  // post-submit callback 
+
+            // other available options: 
+            //url:       url         // override for form's 'action' attribute 
+            //type:      type        // 'get' or 'post', override for form's 'method' attribute 
+            //dataType:  null        // 'xml', 'script', or 'json' (expected server response type) 
+            //clearForm: true        // clear all form fields after successful submit 
+            //resetForm: true        // reset the form after successful submit 
+
+            // $.ajax options can be used here too, for example: 
+            //timeout:   3000 
+        };
+
+        // bind form using 'ajaxForm' 
+        $('#searchForm').ajaxForm(options);
+
+        // pre-submit callback 
+        function showRequest(formData, jqForm, options) {
+            $('.loading').show();
+            return true;
+        }
+
+        // post-submit callback 
+        function showResponse(responseText, statusText, xhr, $form) {
+            $('.loading').hide();
+        }
+    })
+</script>

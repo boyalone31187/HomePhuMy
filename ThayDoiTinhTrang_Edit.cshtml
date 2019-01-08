@@ -1,0 +1,108 @@
+﻿@{
+    string[] roles = Roles.GetRolesForUser();
+    if (!WebSecurity.IsAuthenticated || (!Roles.IsUserInRole("booked") && !Roles.IsUserInRole("admin") && !Roles.IsUserInRole("vanthu")))
+    {
+        Response.Redirect("~/InOutInformation.cshtml");
+    }
+    Layout = "~/_ScheduleLayout.cshtml";
+    var db = Database.Open("PM_ANNINH");
+    string msthe = "";
+    if (IsPost)
+    {
+
+        string MSCN = Request["msthe"];
+        var user = Functions.getUserInfo(MSCN);
+        string TENCN = user.ElementAt(0).TENCN;
+        string PB = user.ElementAt(0).MS_PB;
+        string GHICHU = Request["ghichu"];
+        string TT = Request["rdloai"];
+        string thoigian = Request["thoigian"];
+        string[] thoigian_array = thoigian.Split(new char[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
+        DateTime fromDate = DateTime.ParseExact(thoigian_array[0].Trim(), "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture);
+        DateTime toDate = DateTime.ParseExact(thoigian_array[1].Trim(), "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture);
+        string insertCommand = "INSERT INTO CongNhan_KDL(MSCN,TENCN,PB,GHICHU,TT,NGAY,CNGAY) VALUES(@0,@1,@2,@3,@4,@5,@6)";
+        while(DateTime.Compare(fromDate, toDate) <= 0){
+            db.Execute(insertCommand, MSCN, TENCN, PB, GHICHU, TT, fromDate, fromDate.ToString("yyyy-MM-dd"));
+            fromDate = fromDate.AddDays(1);
+        }
+        Response.Redirect("~/InOutInformation.cshtml");
+    }else{
+
+        if (!String.IsNullOrEmpty(UrlData[0]))
+        {
+            msthe = UrlData[0];
+        }
+    }
+
+
+}
+<link rel="stylesheet" href="~/CSS/InOut.css" />
+<link href="~/CSS/RegisterSchedule.css" rel="stylesheet" />
+<!-- DATE PICKER -->
+<script type="text/javascript" src="~/Scripts/jqxcore.js"></script>
+<script type="text/javascript" src="~/Scripts/jqxdatetimeinput.js"></script>
+<script type="text/javascript" src="~/Scripts/jqxcalendar.js"></script>
+<script type="text/javascript" src="~/Scripts/globalize.js"></script>
+<link rel="stylesheet" href="~/CSS/jqx.base.css" type="text/css" />
+
+<div class="container">
+
+    <h1 class="thick-heading">||Thay Đổi Tình Trạng Đi Làm Nhân Viên||
+    </h1>
+
+    <!-- First Featurette -->
+    <div id="about">
+        <!------------------------code---------------start---------------->
+        <div class="row">
+            <form role="form" method="post" style="font-size: 14px;">
+                @AntiForgery.GetHtml()
+                <div class="col-lg-10 col-lg-offset-1 bg-frm-register-schedule">
+                    <div class="form-group">
+                        <div class="radio">
+                            <label>
+                                <input type="radio" name="rdloai" value="0" checked>
+                                Hành chính (Đi tầm, điều động có thời hạn, ...) 
+                            </label>
+                        </div>
+
+                        <div class="radio">
+                            <label>
+                                <input type="radio" name="rdloai" value="1">
+                                Đi ca (Điều động có thời hạn, ...)  
+                            </label>
+                        </div>
+                        <div class="radio">
+                            <label>
+                                <input type="radio" name="rdloai" value="3">
+                                Đi làm khác có vào Công ty (Con nhỏ, đi xe dưa rước, ghi công tơ, ...) 
+                            </label>
+                        </div>
+                        <div class="radio">
+                            <label>
+                                <input type="radio" name="rdloai" value="2">
+                                Không đi làm hay không vào Công ty (Nghỉ bù/phép, Thai sản, đi học, đi công tác, ...) 
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Thời gian (Từ dd/mm/yyyy đến ngày dd/mm/yyyy)</label>
+                        <script type="text/javascript">
+                            $(document).ready(function () {
+                                // create jqxcalendar.
+                                $("#jqxWidget").jqxDateTimeInput({ width: 250, height: 25, selectionMode: 'range' });
+                            });
+                        </script>
+                        <div name="thoigian" id='jqxWidget'></div>
+                            
+                    </div>
+                    <div class="form-group">
+                        <label>Lý do</label>
+                        <input class="form-control" name="ghichu" value="" />
+                    </div>
+                    <input type="hidden" name="msthe" value="@msthe" />
+                    <input type="submit" name="submit" id="submit" value="Cập Nhật" class="btn btn-danger pull-right">
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

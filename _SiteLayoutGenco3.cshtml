@@ -1,0 +1,113 @@
+﻿<html>
+<head>
+    <title>Trang chủ Công ty Nhiệt Điện Phú Mỹ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" type="text/css" href="CSS/styles.genco3.css" media="all">
+    <link rel="stylesheet" type="text/css" href="CSS/custom.css" media="all">
+    <link rel="stylesheet" type="text/css" href="CSS/RibbonButton.css" media="all">
+    <link rel="stylesheet" type="text/css" href="Scripts/menubar/ddsmoothmenu.css">
+    <link rel="stylesheet" type="text/css" href="Scripts/menubar/ddsmoothmenu-v.css">
+    <link rel="stylesheet" href="~/CSS/bootstrap.min.css">
+    <link rel="stylesheet" href="~/CSS/custom-carousel.css">
+    <script src="~/Scripts/jquery.min.js"></script>
+    <script src="~/Scripts/bootstrap.min.js"></script>
+    <script type="text/javascript" src="Scripts/menubar/ddsmoothmenu.js"></script>
+    <script src="~/Scripts/moment-with-locales.js"></script>
+    <script src="~/Scripts/highcharts.js"></script>
+    <script src="~/Scripts/exporting.js"></script>
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            @*fireworks effects*@
+            @* <link rel="stylesheet" href="~/CSS/fireworks/canvas.css">
+    <script src="~/CSS/fireworks/fireworks.js"></script>*@
+
+            
+
+            $('#myCarousel').carousel({
+                interval: 8000
+            })
+            //GET CURRENT TIME 
+            moment.locale('vi');
+            setInterval(function () { $('#current_time').html(moment().format('dddd D MMMM YYYY LTS')); }, 1000);
+        });
+        ddsmoothmenu.init({
+            mainmenuid: "smoothmenu1",
+            orientation: 'h',
+            classname: 'ddsmoothmenu',
+            contentsource: "markup"
+        })
+    </script>
+</head>
+<body>
+        <div class="page">
+            @RenderPage("_Header.cshtml")
+            <div style="height: 35px"></div>
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-9">
+                       
+                        <div id="myCarousel" class="carousel slide" data-ride="carousel">
+
+                        <div class="carousel-inner" role="listbox">
+
+
+                          <div class="item active">
+                              
+                            <img src="Images/slider1.jpg" alt="Chania" width="100%" height="345">
+                          </div>
+                           @{
+                               
+                               string[] sliders = new string[] { "slider2.jpg", "slider5.jpg", "slider6.jpg", "slider8.jpg" };
+                               foreach(var slider in sliders){
+                                 <div class="item">
+                                    <img class="img-reponsive" src="Images/@slider" >
+                                </div>
+                               }
+                            }
+                           
+                        </div>
+                             
+                        </div> 
+                        @RenderBody()
+                    </div>
+                    <div class="col-md-3" style="background-color:#fff;border-right: 1px solid #ccc;">
+                        @RenderPage("SideBar.cshtml")
+                    </div>
+                </div>
+                
+                <div style="height:5px;"></div>
+                
+            </div>
+           
+            
+            @RenderPage("Footer.cshtml")
+        </div>
+        <!-- END DIV PAGE -->
+    <!-- END DIV wrapper -->
+
+
+    
+<!-- Modal -->
+<div class = "modal fade" id = "myModal" tabindex = "-1" role = "dialog" 
+   aria-labelledby = "myModalLabel" aria-hidden = "true">
+   
+   <div class = "modal-dialog">
+      <div class = "modal-content">
+         
+         
+         <div class = "modal-body">
+            <img src="~/Images/tet743x500.jpg" />
+         </div>
+         
+      </div><!-- /.modal-content -->
+   </div><!-- /.modal-dialog -->
+  
+</div><!-- /.modal -->
+</body>
+
+</html>

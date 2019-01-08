@@ -1,0 +1,54 @@
+﻿@{
+    Layout = null;
+    var db = Database.Open("HOME_PHUMY");
+    //GET LIST TEAM OF KHVT DEPARTMENT
+    string query = "SELECT * FROM Team_KHVT";
+    var listTeam_KHVT = db.Query(query);
+    string fromDate = DateTime.ParseExact(UrlData[0], "dd-MM-yyyy", System.Globalization.CultureInfo.InvariantCulture).ToString("yyyy-MM-dd");
+    string toDate = DateTime.ParseExact(UrlData[1], "dd-MM-yyyy", System.Globalization.CultureInfo.InvariantCulture).ToString("yyyy-MM-dd");
+    string selectCommmand = @"SELECT *
+                      FROM CongViecTuan_KHVT
+                      WHERE CreatedDate >='" + fromDate + "' AND CreatedDate <='" + toDate + "'";
+    var listWeekJob = db.Query(selectCommmand);
+
+    Response.AddHeader("Content-disposition", "attachment; filename=CongViecTuan.xls");
+    Response.ContentType = "application/octet-stream";
+
+}
+<table border="1" cellpadding="0" cellspacing="0">
+    <thead>
+         <tr align="center" bgcolor="#cccccc" height="35">
+            <th width="50" align="center"><font face="Times New Roman" size="3">STT</font></th>
+            <th width="500" align="center"><font face="Times New Roman" size="3">Nội dung</font></th>
+            <th width="200" align="center"><font face="Times New Roman" size="3">Ngày bắt đầu</font></th>
+            <th width="200" align="center"><font face="Times New Roman" size="3">Ngày kết thúc</font></th>
+            <th width="200" align="center"><font face="Times New Roman" size="3">Kết quả thực hiện</font></th>
+        </tr>
+    </thead>
+   <tbody>
+    @{ string[] ordering = { "I", "II", "III", "IV", "V", "VI", "VII", "VIII" }; int i = 0; int j = 0;}
+    @foreach (var d in listTeam_KHVT)
+    {
+        i = 1;
+        <tr class="bg-info" style="text-transform:uppercase">
+            <td style="padding: 5px; font-family:'Times New Roman'; text-transform: uppercase; font-weight: bolder; text-align: left;" colspan="5"><font size="4">@ordering[j]. @d.name</font></td>
+        </tr>
+        foreach (var row in listWeekJob)
+        {
+            if (d.id == row.teamID)
+            {
+                
+                <tr>
+                    <td style="padding: 5px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@i</font></td>
+                    <td style="padding: 5px; text-align: left; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@row.NoiDung</font></td>
+                    <td style="padding: 5px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@row.NgayBatDau.ToString("dd/MM/yyyy") </font></td>
+                    <td style="padding: 5px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@row.NgayKetThuc.ToString("dd/MM/yyyy")</font></td>
+                    <td style="padding: 5px; text-align: center; font-family: 'Times New Roman'; vertical-align: top;"><font size="3">@row.KetQuaThucHien</font></td>
+                </tr>
+                i++;
+            }
+        }
+        j++;
+    }
+       </tbody>
+</table>

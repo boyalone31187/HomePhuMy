@@ -1,0 +1,126 @@
+﻿@{
+    Layout = "~/_ScheduleLayout.cshtml";
+    Page.Title = "Image Gallery";
+    
+    var db = Database.Open("HOME_PHUMY");
+    int id = 0;
+    if(!string.IsNullOrEmpty(UrlData[0])){
+        id = Convert.ToInt32(UrlData[0]);
+    }
+    var rs = db.Query("SELECT * FROM ImageGallery ORDER BY id DESC");
+    var detail = from v in rs
+                 where v.id == id
+                 select v;
+                 
+    rs = from val in rs where val.id != id select val ;
+    
+    var listImage = db.Query("SELECT * FROM ImageGallery_Image WHERE ImageGalleryID = " + id);
+    
+}
+
+
+<link rel="stylesheet"  href="@Href("Scripts/lightslider/css/lightslider.css")"/>
+    <style>
+        .container {
+            margin-top: 15px;
+        }
+
+        .container a,h3.panel-title{
+            color: #990033;
+        }
+
+        .panel-title {
+            font-weight: bold;
+            color: blue;
+        }
+    	ul{
+			list-style: none outside none;
+		    padding-left: 0;
+            margin: 0;
+		}
+        #image-gallery img {
+            width: 100%;
+            height:auto;
+        }
+        .left-col {
+            overflow-y:scroll
+        }
+        .left-col .row{
+            text-align:center
+        }
+        .left-col .row div.title{
+            padding: 10px 0;
+            font-weight:bold;
+            font-size:14px;
+        }
+        .left-col img {
+            width: 90%;
+            height:auto;
+
+        }
+    </style>
+    <script src="@Href("Scripts/lightslider/js/lightslider.js")"></script> 
+    <script>
+    	 $(document).ready(function() {
+    	     $("#image-gallery").lightSlider({
+    	        
+    	         gallery: true,
+    	         item: 1,
+    	         thumbItem: 9,
+    	         slideMargin: 0,
+    	         speed: 400,
+    	         auto: false,
+    	         loop: true,
+    	         onSliderLoad: function () {
+    	             $('#image-gallery').removeClass('cS-hidden');
+    	         }
+
+            });
+         
+		});
+    </script>
+
+<div class="container">
+
+<div class="row">
+    <div class="col-md-4  left-col">
+
+         @foreach(var row in rs){
+             
+         <div class="row">
+           
+            <a href="~/ImageGalleryDetail/@row.id">
+                <img src="~/UploadedFiles/ImageGallery/@row.avatar" />
+                <div class="title">@row.title</div>
+            </a>
+         </div>
+             
+         }
+
+    </div>
+    <div class="col-md-8">
+        <div class="panel panel-defaul">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    @detail.ElementAt(0).Title
+                </h3>
+            </div>
+
+            <div class="panel-body" style="padding-bottom: 0;">
+                <ul id="image-gallery" class="content-slider">
+                    @foreach(var row in listImage){
+                        
+                    <li data-thumb="@Href("UploadedFiles/ImageGallery/"+@row.ImagePath)"> 
+                        <img src="~/UploadedFiles/ImageGallery/@row.ImagePath" />
+                    </li>
+                        
+                    }
+                </ul>
+                
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</div>

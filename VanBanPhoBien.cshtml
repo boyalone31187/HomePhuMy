@@ -1,0 +1,74 @@
+﻿@{
+    Layout = "~/_SiteLayoutGencoNoSlider.cshtml";
+    Page.Title = "VHDN";
+ 
+
+    var db = Database.Open("HOME_PHUMY");
+    string selectCommand = "SELECT * FROM VanBanPhoBien ORDER BY id DESC";
+    var rs = db.Query(selectCommand);
+
+    //paging
+    
+    int rowsPerPage = 10;
+    int currentPageIndex = 1;
+    if (!string.IsNullOrEmpty(UrlData[0]))
+    {
+        currentPageIndex = Convert.ToInt32(UrlData[0]);
+    }
+    int skip = (currentPageIndex - 1) * rowsPerPage;
+    int count = rs.Count();
+    rs = rs.Skip(skip).Take(rowsPerPage);
+}
+<style>
+    .title {
+        display: inline-block;
+        font-weight: bolder;
+        text-decoration: underline;
+    }
+</style>
+<div class="row">
+    <div class="col-md-12" style="padding-right:0;">
+        <div class="panel panel-info">
+            <div class="panel-heading" style="padding-left:3px;">
+               <button class="btn btn-primary" style="width:3%; padding:3px 0px;"><span class="glyphicon glyphicon-list-alt"></span></button>
+                <div class="title"><a href="~/vhdn">BÀI VIẾT DỰ THI</a></div> |
+                <div class="title"> <a href="~/vanbanphobien"> VĂN BẢN PHỔ BIẾN </a></div>
+            </div>
+
+            <div class="panel-body" id="panel-body">
+                @foreach (var row in rs) { 
+                    
+                 <div class="well">
+                    <div class="media">
+                       
+                        <div class="media-body">
+                            <h4 class="media-heading"><a href="~/UploadedFiles/VBPB/@row.filename">@row.title</a></h4>
+                           
+                           
+                            <ul class="list-inline list-unstyled">
+                                <li><span><i class="glyphicon glyphicon-calendar"></i> @row.date </span></li>
+                                @if (Roles.IsUserInRole("post_vhdn") || Roles.IsUserInRole("admin"))
+                                {
+                                    
+                                <li>|</li>
+                                <a href="~/uploadvbpb/@row.id"><span><i class="glyphicon glyphicon-edit"></i> Edit</span></a>
+                                <li>|</li>
+                                
+                                }
+                              
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                    
+                }
+
+
+                 @Html.Raw( Functions.paging(count,rowsPerPage,currentPageIndex,"/vanbanphobien/"));
+            </div>
+        </div>
+
+    </div>
+
+
+</div>

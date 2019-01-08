@@ -1,0 +1,60 @@
+﻿@{
+    var db = Database.Open("PM_ANNINH");
+    int ms_pb = Functions.getDepartmentID(WebSecurity.CurrentUserId);
+    var listDepartment = Functions.getListDepartment();
+    var currentDate = DateTime.Now.ToString("yyyy-MM-dd");
+    var giovao = currentDate + " 07:35:00";
+    var giora = currentDate + " 17:00:00";
+    //strSQL="select mscn,tencn, ms_pb from congnhan where tt<>'1' and (msthe not in (select msthe from FileChamcong_PM_Luu where day(giovao) = '" & dd & "' AND month(giovao) = '" & mm & "' AND year(giovao) = '" & yy & "')and ms_pb ='01') and (MSTHE not IN  (SELECT  mscn FROM congnhan_kdl WHERE day(ngay) = '" & dd & "' AND month(ngay) = '" & mm & "' AND year(ngay) = '" & yy & "') )order by ms_pb"
+    string selectCommand = @"SELECT CONGNHAN.MSTHE, CONGNHAN.TENCN, CongNhan_KDL.GHICHU
+                            FROM CONGNHAN
+                            JOIN CongNhan_KDL ON CongNhan_KDL.MSCN = CONGNHAN.MSTHE AND CongNhan_KDL.NGAY = convert(varchar(10), getdate(),120)
+                            WHERE CONGNHAN.tt<>'1'
+                            AND MSTHE NOT IN (SELECT MSTHE FROM FileChamcong_PM_Luu WHERE CONVERT(VARCHAR(10), giovao, 126) LIKE convert(varchar(10), getdate(),120))
+                            AND  CONGNHAN.MS_PB = " + ms_pb;
+
+    var listEmployee = db.Query(selectCommand);
+    int i = 1;
+    var listG3Department = Functions.getListG3Department();
+    string json = Json.Encode(listG3Department);
+    <script>
+        $(document).ready(function () {
+            var obj = @Html.Raw(json) ;
+            $("#ms_pb option[value=47]").hide();
+            $.each(obj, function(index, value){
+                var ms_pb = value.MS_PB;
+                $("#ms_pb option[value="+ms_pb+"]").hide();
+
+            })
+        });
+    </script>
+}
+<link rel="stylesheet" href="~/CSS/InOut.css" />
+<style>
+    #row-tinhtrang {
+        display: none;
+    }
+</style>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>STT</th>
+		    <th>Mã thẻ</th>		
+		    <th>Họ và tên</th>
+		    <th>Lý do</th>
+	    </tr>
+    </thead>
+    <tbody id="response-data">
+        @foreach (var row in listEmployee)
+        {
+            <tr>
+                <td>@i</td>
+		        <td>@row.MSTHE</td>		
+		        <td>@row.TENCN</td>
+		        <td>@row.GHICHU</td>
+	        </tr>
+            i++;
+        }
+                                        
+    </tbody>
+</table>

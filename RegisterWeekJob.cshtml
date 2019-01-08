@@ -1,0 +1,373 @@
+﻿@{
+    if (!WebSecurity.IsAuthenticated)
+    {
+        Response.Redirect("~/Default.cshtml");
+    }
+    //JUST ADMIN,VANTHU,BOOKER CAN ACESS THIS PAGE
+    if (!Roles.IsUserInRole("admin") && !Roles.IsUserInRole("vanthu") && !Roles.IsUserInRole("booked"))
+    {
+        Response.Redirect("~/Default.cshtml");
+    }
+
+    //GET DEPARTMENT WHERE USER BELONG TO
+    var dbUser = Database.Open("StarterSite");
+    var user = dbUser.QuerySingle("SELECT Department FROM UserProfile WHERE UserId = " + WebSecurity.CurrentUserId);
+    int departmentID = Convert.ToInt32(user.Department);
+
+    Layout = "~/_ScheduleLayout.cshtml";
+    Page.Title = "Them Cong Viec Tuan";
+
+    var db = Database.Open("HOME_PHUMY");
+
+
+    //LOCK UPDATE WEEK JOB
+    var config = db.QuerySingle("SELECT * FROM Config");
+    int lockUpdateWeekJob = config.LockUpdateWeekJob;
+    if (lockUpdateWeekJob == 1)
+    {
+        AppState["message_error"] = "Đã khóa cập nhật công việc tuần";
+        Response.Redirect("~/Error.cshtml");
+    }
+
+
+    //USER CAN NOT EDIT OLD WEEKJOB
+
+
+
+    var listDepartment = Functions.getList("Department");
+    
+    //init variables for form-edit
+    string id = "0";
+    string tinhtrang = "";
+    string nhomcongviec = "";
+    string soden = "";
+    string ngaycongvan = "";
+    string donvigui = "";
+    string sokyhieu = "";
+    string noidung = "";
+    string donvinhan = "";
+    string donvigiaiquyet = "";
+    string ngaygiaocongvan = null;
+    string thoihan = "";
+    string ketqua = "";
+    string currentDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+    string ngayketthuc = "";
+    if (IsPost)
+    {
+        AntiForgery.Validate();
+        id = Request["id"];
+        tinhtrang = Request["tinhtrang"];
+        nhomcongviec = Request["nhomcongviec"];
+        soden = Request["soden"];
+        ngaycongvan = DateTime.ParseExact(Request["ngaycongvan"], "dd-MM-yyyy", System.Globalization.CultureInfo.InvariantCulture).ToString("yyyy-MM-dd");
+        donvigui = Request["donvigui"];
+        sokyhieu = Request["sokyhieu"];
+        noidung = Request["noidung"];
+        donvinhan = Request["donvinhan"];
+        donvigiaiquyet = Request["donvigiaiquyet"];
+        if (!String.IsNullOrEmpty(Request["ngaygiaocongvan"])){
+            ngaygiaocongvan = DateTime.ParseExact(Request["ngaygiaocongvan"], "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture).ToString("yyyy-MM-dd");
+        }
+        
+        
+        thoihan = "";
+        if (Request["thoihan"] != "")
+        {
+            thoihan = DateTime.ParseExact(Request["thoihan"], "dd-MM-yyyy", System.Globalization.CultureInfo.InvariantCulture).ToString("yyyy-MM-dd");
+        }
+
+        ketqua = Request["ketqua"];
+
+
+        //UPDATE
+        if (!string.IsNullOrEmpty(id) && id != "0")
+        {
+            id = Request["id"];
+            ngayketthuc = Request["ngayketthuc"];
+            if(!String.IsNullOrEmpty(ngayketthuc)){
+                var dt_ngayketthuc = DateTime.ParseExact(ngayketthuc, "dd/MM/yyyy", System.Globalization.CultureInfo.InvariantCulture);
+                string updateCommand = "UPDATE CongViecTuan SET TinhTrang=@0, NhomCongViec=@1, SoDen=@2, NgayCongVan=@3, DonViGui=@4, SoKyHieu=@5, NoiDung=@6, DonViNhan=@7, DonViGiaiQuyet=@8, NgayGiaoCongVan=@9 ,ThoiHan=@10,KetQua=@11,NgayCapNhat=@12,NguoiCapNhat=@13, NgayKetThuc=@14  WHERE id=@15";
+                db.Execute(updateCommand, tinhtrang, nhomcongviec, soden, ngaycongvan, donvigui, sokyhieu, noidung, donvinhan, donvigiaiquyet, ngaygiaocongvan, thoihan, ketqua, currentDate, WebSecurity.CurrentUserName, dt_ngayketthuc, id);
+            }else{
+                string updateCommand = "UPDATE CongViecTuan SET TinhTrang=@0, NhomCongViec=@1, SoDen=@2, NgayCongVan=@3, DonViGui=@4, SoKyHieu=@5, NoiDung=@6, DonViNhan=@7, DonViGiaiQuyet=@8, NgayGiaoCongVan=@9 ,ThoiHan=@10,KetQua=@11,NgayCapNhat=@12,NguoiCapNhat=@13  WHERE id=@14";
+                db.Execute(updateCommand, tinhtrang, nhomcongviec, soden, ngaycongvan, donvigui, sokyhieu, noidung, donvinhan, donvigiaiquyet, ngaygiaocongvan, thoihan, ketqua, currentDate, WebSecurity.CurrentUserName, id);
+            }
+            
+            
+            AppState["successMessage"] = "Cập Nhật Công Việc Tuần Thành Công";
+            Response.Redirect("~/ManageWeekJob");
+
+        }
+        else
+        { //INSERT
+
+            //ONLY VANTHU HAVE PERMISSION CREATE WEEK JOB
+            if (Roles.IsUserInRole("admin") || Roles.IsUserInRole("vanthu"))
+            {
+                string insertCommand = @"INSERT INTO CongViecTuan(TinhTrang,NhomCongViec,SoDen,NgayCongVan,DonViGui,SoKyHieu,NoiDung,DonViNhan,DonViGiaiQuyet,NgayGiaoCongVan,ThoiHan,KetQua,NgayTao,NguoiDangKy)
+                                VALUES(@0,@1,@2,@3,@4,@5,@6,@7,@8,@9,@10,@11,@12,@13)";
+                db.Execute(insertCommand, tinhtrang, nhomcongviec, soden, ngaycongvan, donvigui, sokyhieu, noidung, donvinhan, donvigiaiquyet, ngaygiaocongvan, thoihan, ketqua, currentDate, WebSecurity.CurrentUserName);
+                AppState["successMessage"] = "Thêm Công Việc Tuần Thành Công";
+                Response.Redirect("~/RegisterWeekJob.cshtml");
+            }
+
+        }
+    }
+    else
+    { // DISPLAY VIEW
+
+        //EDIT VIEW - IF USER IS NOT OWNER OR ADMIN OF THE RECORD, CAN NOT RIGHT ACCESS
+        if (!string.IsNullOrEmpty(UrlData[0]))
+        {
+            var weekJob = db.QuerySingle("SELECT * FROM CongViecTuan WHERE id=" + UrlData[0]);
+            if (!Roles.IsUserInRole("admin") && !Roles.IsUserInRole("vanthu"))
+            {
+                if (Roles.IsUserInRole("booked"))
+                {
+                    if (weekJob.DonViGiaiQuyet != departmentID)
+                    {
+                        AppState["message_error"] = "Bạn không có quyền chỉnh sửa công việc này!";
+                        Response.Redirect("~/Error.cshtml");
+                    }
+                }
+
+            }
+            id = weekJob.id.ToString();
+            tinhtrang = weekJob.tinhtrang;
+            nhomcongviec = weekJob.nhomcongviec;
+            soden = weekJob.soden;
+            ngaycongvan = weekJob.NgayCongVan.ToString("dd-MM-yyyy");
+            donvigui = weekJob.donvigui;
+            sokyhieu = weekJob.sokyhieu;
+            noidung = weekJob.noidung;
+            if (!String.IsNullOrEmpty(weekJob.donvinhan))
+            {
+                donvinhan = weekJob.donvinhan.ToString();
+            }
+
+            donvigiaiquyet = weekJob.donvigiaiquyet.ToString();
+            
+
+            ketqua = weekJob.ketqua;
+
+            if (weekJob.ngayketthuc != null){
+                 <script>
+                     $(document).ready(function () {
+                         $("#ngayketthuc").jqxDateTimeInput({ value: '@weekJob.ngayketthuc' });
+                    });
+                </script>  
+            }else{
+                  <script>
+                      $(document).ready(function () {
+                          $("#ngayketthuc").jqxDateTimeInput({ width: '300px', height: '25px', formatString: 'dd/MM/yyyy' });
+                          $('#inputngayketthuc').val('');
+                     });
+                </script>  
+                
+            }
+
+            if (weekJob.ngaygiaocongvan != null){
+                <script>
+                      $(document).ready(function () {
+                        $("#ngaygiaocongvan").jqxDateTimeInput({ value: '@weekJob.ngaygiaocongvan' });
+                    });
+                </script>  
+            }else{
+                  <script>
+                      $(document).ready(function () {
+                          $("#ngaygiaocongvan").jqxDateTimeInput({ width: '300px', height: '25px', formatString: 'dd/MM/yyyy' });
+                          $('#inputngaygiaocongvan').val('');
+                      });
+                </script>  
+                
+            }
+            
+            <script>
+                $(document).ready(function () {
+                    $("#thoihan").jqxDateTimeInput({ value: '@weekJob.thoihan' });
+                    $("#ngaycongvan").jqxDateTimeInput({ value: '@weekJob.ngaycongvan' });
+                });
+            </script>  
+        }
+        else
+        { //ADD NEW VIEW
+            //ONLY VANTHU HAVE PERMISSION CREATE WEEK JOB
+            if (!Roles.IsUserInRole("admin") && !Roles.IsUserInRole("vanthu"))
+            {
+                Response.Redirect("~/Default.cshtml");
+
+            }
+             <script>
+                 $(document).ready(function () {
+                     $("#ngaygiaocongvan").jqxDateTimeInput({ width: '300px', height: '25px', formatString: 'dd/MM/yyyy' });
+                });
+            </script>  
+            
+        }
+    }
+    
+    
+}
+<link href="~/CSS/RegisterSchedule.css" rel="stylesheet" />
+<style>
+    html._webkit_.version_51 div#col-right {
+        height: 552px;
+        border-right: 2px solid;
+    }
+    ._moz_.version_47 #col-right {
+        height: 570.05px;
+         border-right: 2px solid;
+    }
+    select {
+    width: 100% !important;
+}
+</style>
+<div class="container">
+    <h1 class="thick-heading">||Đăng Ký Công Việc Tuần|| @if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+                                                         {<a class="btn btn-danger pull-right" href="~/RegisterWeekJob.cshtml">Đăng ký tiếp</a>}</h1>
+
+    <!-- First Featurette -->
+    <div id="about">
+        @if (AppState["successMessage"] != null && !string.IsNullOrEmpty(AppState["successMessage"].ToString()))
+        {
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h4><span class = "label label-danger">* @AppState["successMessage"]</span></h4>
+                    </div>
+                </div>
+            AppState["successMessage"] = "";
+        }
+      
+        <div class="row">
+                <form role="form" method="post">
+                    @AntiForgery.GetHtml()
+                    <div class="col-lg-6 bg-frm-register-schedule" id="col-left">
+                        
+                       
+                        <div class="form-group">
+                            <label>Tình trạng</label>
+                            <select class="form-control" name="tinhtrang">
+                                @{
+                                    List<string> status = new List<string>() { "Đang giải quyết", "Đã giải quyết" };
+                                    foreach (var wd in status)
+                                    {
+                                        <option @{if (wd == tinhtrang.Trim())
+                                                  {<text>selected="selected"</text>} } >@wd</option>
+                                    }
+                                }
+                            </select>   
+                            
+                        </div>
+                        <div class="form-group">
+                            <label>Nhóm công việc</label>
+                            <select class="form-control" name="nhomcongviec">
+                            @{
+                                List<string> typeJob = new List<string>() { "Công việc giải quyết theo thông báo kết luận", "Công việc giải quyết theo thời hạn chỉ đạo" };
+                                foreach (var wd in typeJob)
+                                {
+                                    <option @{if (wd == nhomcongviec.Trim())
+                                              {<text>selected="selected"</text>} } >@wd</option>
+                                }
+                            }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Số đến</label>
+                            <input type="text" class="form-control" value="@soden"  name="soden" placeholder="Số đến" >
+                        </div>
+                        <div class="form-group">
+                            <label>Ngày công văn</label>
+                            <div id='ngaycongvan' name='ngaycongvan'></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Đơn vị gửi</label>
+                            <input type="text" class="form-control"  name="donvigui" value="@donvigui" placeholder="Đơn vị gửi">
+                        </div>
+                        <div class="form-group">
+                            <label>Số ký hiệu</label>
+                            <input type="text" class="form-control"  name="sokyhieu" value="@sokyhieu" placeholder="Số ký hiệu" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Trích yếu nội dung</label>
+                            <textarea name="noidung" class="form-control" cols="3">@noidung</textarea>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 bg-frm-register-schedule" id="col-right">
+                      
+                        <div class="form-group">
+                            <label for="InputName">Đơn vị nhận</label>
+                            <select multiple class="form-control" name="donvinhan">
+                            @{
+                                String[] array_dvn = donvinhan.Split(new Char[] { ',' });
+                                string idDVN = "";
+                                foreach (var row in listDepartment)
+                                {
+                                    idDVN = row.id.ToString();
+                                    <option value="@row.id" @{ if (array_dvn.Contains(idDVN))
+                                                               {<text>selected="selected"</text>} } >@row.name</option>
+                                }
+                            }
+                            </select>  
+                        </div>
+                        <div class="form-group">
+                            <label>Đơn vị giải quyết chính</label>
+                            <select class="form-control" name="donvigiaiquyet">
+                            @{
+                                foreach (var row in listDepartment)
+                                {
+                                    <option value="@row.id" @{if (@row.id.ToString() == donvigiaiquyet)
+                                                              {<text>selected="selected"</text>} } >@row.name</option>
+                                }
+                            }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Ngày giao công văn</label>
+                            <div id='ngaygiaocongvan' name='ngaygiaocongvan'></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Thời hạn trước ngày</label>
+                            <div id='thoihan' name='thoihan'></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Kết quả thực hiện</label>
+                            <input type="text" class="form-control"  name="ketqua" value="@ketqua" placeholder="Kết quả thực hiện">
+                        </div>
+                        @if (id != "0")
+                        { 
+                            <div class="form-group">
+                                <label>Ngày kết thúc</label>
+                                <div id='ngayketthuc' name='ngayketthuc'></div>
+                                @*<input type="text" class="form-control"  name="ngayketthuc" value="@ngayketthuc" placeholder="dd/mm/yyyy">*@
+                            </div>
+                         
+                            
+                        }
+                        <input type="hidden" name="id" value="@id"/>
+                        <input type="submit" name="submit" id="submit" value="@(id == "0" ? "Đăng Ký" : "Cập Nhật")" class="btn btn-danger pull-right">
+                    </div>
+                </form>
+
+            </div>
+
+        
+    </div>
+</div>
+
+
+
+
+<!-- DATE PICKER -->
+<script type="text/javascript" src="~/Scripts/jqxcore.js"></script>
+<script type="text/javascript" src="~/Scripts/jqxdatetimeinput.js"></script>
+<script type="text/javascript" src="~/Scripts/jqxcalendar.js"></script>
+<script type="text/javascript" src="~/Scripts/globalize.js"></script>
+<link rel="stylesheet" href="~/CSS/jqx.base.css" type="text/css" />
+<script>
+    $(document).ready(function () {
+        $("#thoihan").jqxDateTimeInput({ width: '300px', height: '25px', formatString: 'dd-MM-yyyy' });
+        
+        $("#ngaycongvan").jqxDateTimeInput({ width: '300px', height: '25px', formatString: 'dd-MM-yyyy' });
+        
+    });
+</script>

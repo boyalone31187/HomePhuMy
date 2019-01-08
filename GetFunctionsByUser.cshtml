@@ -1,0 +1,40 @@
+﻿@{
+    var db = Database.Open("StarterSite");
+    string userID = Request["userID"];
+    var functions = db.Query(@"SELECT [Function].*, User_Function.id as User_Function_Id
+                            FROM [Function]
+                            LEFT JOIN User_Function ON [Function].id = User_Function.FunctionId AND UserId = " + userID
+                            + " WHERE Status = 1");
+    int i = 1;
+    
+    
+}
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Nhóm chức năng</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var row in functions){
+            
+        <tr>
+            <td>@i</td>
+            <td>@row.name</td>
+            <td>
+                <select name="permission">
+                    <option value="0">--Select Permission--</option>
+                    <option value="1">Read</option>
+                    <option value="2">Write</option>
+                </select>
+                <input type="hidden" name="id" value="@(row.User_Function_Id == null ? -1 : row.User_Function_Id) " />
+                <input type="hidden" name="UserId" value="@userID" />
+                <input type="hidden" name="FunctionId" value="@row.id" />
+            </td>
+        </tr>
+            i++;
+        }
+    </tbody>
+</table>

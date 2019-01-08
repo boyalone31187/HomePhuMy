@@ -1,0 +1,260 @@
+﻿@using Microsoft.Web.Helpers;
+@{
+    
+    if (!Roles.IsUserInRole("manage_gallery") && !Roles.IsUserInRole("admin"))
+    {
+        Response.Redirect("~/");
+    } 
+    
+    Layout = "~/_ScheduleLayout.cshtml";
+    Page.Title = "Image Gallery";
+    var db = Database.Open("HOME_PHUMY");
+    string caption = "Upload thư viện hình ảnh";
+    string title = "";
+    var imagePath = "";
+    int id = 0;
+    var message = "";
+    string avatar = "";
+    WebImage photo = null;
+    string btnTitle = "Upload";
+    System.Collections.Generic.IEnumerable<dynamic> listImage = null;
+    int j = 1;
+    
+    if (IsPost)
+    {
+        //upload avatar
+        photo = WebImage.GetImageFromRequest("avatar");
+        if (photo != null)
+        {
+            avatar = Guid.NewGuid().ToString() + "_" +
+                Path.GetFileName(photo.FileName);
+            imagePath = @"UploadedFiles\ImageGallery\" + avatar;
+
+            photo.Save(@"~\" + imagePath);
+        }else{
+            avatar = Request.Form["avatar2"];
+        }
+        
+        string sqlCmd = "";
+        title = Request.Form["title"];
+        id = Convert.ToInt32(Request.Form["id"]);
+        
+        int lastInsertID = 0;
+        
+        //user update gallery
+        if(id > 0){
+            lastInsertID = id;
+            string updateCommand = String.Format("UPDATE ImageGallery SET Title=N'{0}',Avatar='{1}' WHERE id={2}",title,avatar,id);
+            db.Execute(updateCommand);
+        }else{
+            string insertCommand = String.Format("INSERT INTO ImageGallery(Title,Avatar) VALUES(N'{0}','{1}')", title,avatar);
+            db.Execute(insertCommand);
+            lastInsertID = (int)db.GetLastInsertId();
+        }
+        
+        
+
+        int numFiles = Request.Files.Count;
+        if (Request.Files[1].ContentLength > 0)
+        {
+            
+            sqlCmd = "INSERT INTO ImageGallery_Image(ImageGalleryID,ImagePath) VALUES";
+            var fileName = "";
+            var fileSavePath = "";
+        
+            int uploadedCount = 0;
+            for (int i = 1; i < numFiles; i++)
+            {
+                var uploadedFile = Request.Files[i];
+                if (uploadedFile.ContentLength > 0)
+                {
+                    fileName = Path.GetFileName(uploadedFile.FileName);
+                    if( i == 1){
+                        sqlCmd += "(" + lastInsertID + ", '" + fileName + "') "; 
+                    }else{
+                        sqlCmd += ",(" + lastInsertID + ", '" + fileName + "') "; 
+                    }
+                
+                    fileSavePath = Server.MapPath("~/UploadedFiles/ImageGallery/" +
+                      fileName);
+                    uploadedFile.SaveAs(fileSavePath);
+                    uploadedCount++;
+                
+                }
+            }
+            db.Execute(sqlCmd);
+            message = "Tải ảnh thành công. Số lượng ảnh đã tải lên: " +
+              uploadedCount.ToString();
+        
+        
+        }
+        if(id > 0){
+            Response.Redirect("~/UploadImageGallery/" + id);
+        }
+        
+    }
+    else
+    {
+        if(UrlData[0] != "") // EDIT VIEW
+        {
+            caption = "Cập Nhật Thư Viện Hình Ảnh";
+            id = Convert.ToInt32(UrlData[0]);
+            listImage = db.Query("SELECT * FROM ImageGallery_Image WHERE ImageGalleryID = " + id);
+            var detail = db.QuerySingle("SELECT * FROM ImageGallery WHERE id = " + id);
+            title = detail.Title;
+            avatar = detail.Avatar;
+            btnTitle = "Cập nhật";
+        }
+
+    }
+}
+<link href="~/CSS/RegisterSchedule.css" rel="stylesheet" />
+<style>
+    .upload {
+        color:white;
+    }
+    .upload h5{
+        font-weight:bold;
+    }
+    .upload .file-upload-buttons a{
+        color:white;
+        text-decoration:underline;
+        font-weight:bold;
+    }
+    .upload .file-upload-buttons input[type=submit] {
+                        
+        display: inline-block;
+        padding: 6px 12px;
+        margin-bottom: 0;
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1.42857143;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: middle;
+        -ms-touch-action: manipulation;
+        touch-action: manipulation;
+        cursor: pointer;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        background-image: none;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        color: #fff;
+        background-color: #d9534f;
+        border-color: #d43f3a;
+        display: block;
+        margin-top: 5px;
+        font-weight: bold;
+    }
+
+    table tr th, table tr td {
+        text-align:center;
+        vertical-align: middle !important;
+    }
+
+    .btn-xs {
+        padding: inherit;
+    }
+</style>
+<div class="container">
+
+    <h1 class="thick-heading">
+        ||@caption||
+    </h1>
+
+    <!-- First Featurette -->
+    <div id="about">
+        <!------------------------code---------------start---------------->
+        <div class="row">
+            <div class="col-lg-10 col-lg-offset-1 bg-frm-register-schedule">
+
+            <form id="myForm" method="post" enctype="multipart/form-data" action="">
+                <input type="hidden" name="id" value="@id" />
+                <input type="hidden" name="avatar2" value="@avatar" />
+                <div class="form-group">
+                        <label>Tiêu đề</label>
+                        <input class="form-control" name="title" value="@title">
+                </div>
+                <div class="form-group">
+                    <label>Hình đại diện</label>
+                    <br />
+                    @if (avatar != "")
+                    {
+                        <img width="100" height="90" src="~/UploadedFiles/ImageGallery/@avatar" />
+                    }
+                     <br />
+                    <input type="file" name="avatar" />
+                     
+                </div>
+                @if (listImage != null) { 
+                    
+                <div class="form-group">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Hình ảnh</th>
+                                <th width="80">Xóa</th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                           
+                                @foreach (var row in listImage)
+                                {
+                                    <tr>
+                                        <td>@j</td>
+                                        <td><img width="50" height="50" src="~/UploadedFiles/ImageGallery/@row.ImagePath" /> </td>
+                                        <td><a class="btn btn-primary btn-xs" onclick="deleteGallery(this,@row.id,'@row.ImagePath')" href="#"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                            
+                                    </tr>     
+                                    j++;          
+                                }
+                           
+                                
+                        </tbody>
+                    </table>
+                </div>
+                    
+                }
+                   
+                <div class="form-group upload">
+                        <h5>Chọn ảnh tải lên</h5>
+                        @if (!IsPost)
+                        {
+                            @FileUpload.GetHtml(
+                                initialNumberOfFiles: 2,
+                                allowMoreFilesToBeAdded: true,
+                                includeFormTag: true,
+                                addText: "Thêm ảnh khác",
+                                uploadText: @btnTitle)
+                        }
+                        <span>@message</span>
+                    </div>
+
+                        
+            </form>
+
+            </div>
+        </div>
+
+
+        <!----Code------end----------------------------------->
+
+    </div>
+</div>
+
+
+
+<script>
+    function deleteGallery(me,id,filename) {
+        
+        $.post('../DeleteGallery.cshtml',{ id: id, filename: filename }, function () {
+
+            $(me).closest('tr').remove();
+        })
+    }
+</script>

@@ -1,0 +1,683 @@
+﻿@{
+     if(!Roles.IsUserInRole("admin")){
+         Response.Redirect("~/Error.cshtml");
+     }
+    Layout = "~/_ScheduleLayout.cshtml";
+    Page.Title = "Assign Permission";
+    var db = Database.Open("StarterSite");
+    var users = db.Query(@"
+                        SELECT UserProfile.*, Position.name 
+                        FROM UserProfile
+                        LEFT JOIN Position ON Position.id = UserProfile.Position ");
+    
+    //LÃNH ĐẠO:21
+    var listUserLanhDao = from c in users
+                  where c.Department== "21"
+                  select c;
+
+    //Văn Phòng:1
+    var listUserVanPhong = from c in users
+                          where c.Department== "1"
+                          select c;
+                          
+    //Tổ Chức - Lao Động:14
+    var listUserTCLD = from c in users
+                           where c.Department== "14"
+                           select c;
+
+    //Kế Hoạch Vật Tư
+    var listUserKHVT = from c in users
+                       where c.Department== "5"
+                       select c;
+                       
+    //Tài Chính Kế Toán
+    var listUserTCKT = from c in users
+                       where c.Department== "4"
+                       select c;
+                       
+    //Kĩ Thuật An Toàn
+    var listUserKTAT = from c in users
+                       where c.Department== "6"
+                       select c;
+                       
+    //Phân Xưởng Vận Hành 1
+    var listUserVH1 = from c in users
+                       where c.Department== "10"
+                       select c;
+    //Phân Xưởng Vận Hành 2
+    var listUserVH2 = from c in users
+                       where c.Department== "11"
+                       select c;  
+                           
+    //Phân Xưởng Hóa
+    var listUserPXH= from c in users
+                       where c.Department== "12"
+                       select c;
+    int i = 1;
+    
+
+    if (IsPost)
+    {
+        if(Roles.IsUserInRole("admin")){
+            try
+            {
+                AntiForgery.Validate();
+            }
+            catch (Exception ex)
+            {
+                Response.Redirect("~/Error.cshtml");
+            }
+            string permission = Request["permission"];
+            
+            string[] permissionArr = permission.Split(new Char[] { ',' });
+
+            string[] ids = Request["id"].Split(new Char[] { ',' });
+            string updateCommand = "";
+            string insertCommand = "";
+            for(int j = 0; j < ids.Count(); j++){
+                if (ids[j].Trim() == "-1"){ //ADD NEW
+                    string[] UserId = Request["UserId"].Split(new Char[] { ',' });
+                    string[] FunctionId = Request["FunctionId"].Split(new Char[] { ',' });
+                    insertCommand = "INSERT INTO User_Function(UserId,FunctionId,Permission) VALUES(@0,@1,@2)";
+                    db.Execute(insertCommand, UserId[j], FunctionId[j], permissionArr[j]);
+                }else{ //UPDATE
+                    updateCommand = "UPDATE User_Function SET Permission=@0 WHERE id=@1";
+                    db.Execute(updateCommand, permissionArr[j], ids[j]);
+                }
+                
+            }
+            <script>
+                $(document).ready(function () {
+                    $('.modal-body').html("");
+                });
+            </script>
+        }
+    }
+
+     }
+<style>
+    .action {
+        width: 1%;
+    }
+    .panel-title {
+        font-weight:bold;
+    }
+    table thead tr th {
+        font-weight: bold;
+        background-color: rgba(86, 61, 124, .15);
+    }
+</style>
+<div class="container" style="margin-top: 10px;">
+    <div class="row">
+        <div class=" col-md-12">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">DANH SÁCH CÔNG NHÂN VIÊN</h3>
+                </div>
+
+                <div class="panel-body">
+                    <div class="panel-group" id="">
+
+                        <div class="panel panel-info">
+
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne"> Ban Lãnh Đạo
+                                    </a>
+                                </h4>
+                            </div>
+
+                            <div id="collapseOne" class="panel-collapse collapse in">
+                                <div class="panel-body">
+                                    <table class="table table-bordered">
+
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th>Tên đăng nhập</th>
+                                                <th>Tên đầy đủ</th>
+                                                <th>Đơn vị</th>
+                                                <th></th>
+                                                <th></th>
+
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            @{ i = 1;}
+                                            @foreach (var row in listUserLanhDao)
+                                            {
+                                                i++;
+                                            <tr>
+                                                <td>@i</td>
+                                                <td>@row.Email</td>
+                                                <td>@row.FullName</td>
+                                                <td>@row.name</td>
+                                                <td class="action" align="center">
+                                                    <button onclick="getFunctionsByUserId(@row.UserId);" type="button" class="btn btn-primary btn-sm" title="Phân quyền">
+                                                        <span class="glyphicon glyphicon-user"></span>
+                                                    </button>
+
+                                                </td>
+                                                <td class="action" align="center">
+                                                    <button type="button" class="btn btn-primary btn-sm" title="Xóa User">
+                                                        <span class="glyphicon glyphicon-remove"></span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            }
+                                        </tbody>
+
+                                    </table>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="panel panel-info">
+
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo"> Văn Phòng
+                                    </a>
+                                </h4>
+                            </div>
+
+                            <div id="collapseTwo" class="panel-collapse collapse">
+                                <div class="panel-body">
+                                    <table class="table table-bordered">
+
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th>Tên đăng nhập</th>
+                                                <th>Tên đầy đủ</th>
+                                                <th>Chức vụ</th>
+                                                <th></th>
+                                                <th></th>
+
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            @{ i = 1;}
+                                            @foreach (var row in listUserVanPhong)
+                                            {
+                                                i++;
+                                            <tr>
+                                                <td>@i</td>
+                                                <td>@row.Email</td>
+                                                <td>@row.FullName</td>
+                                                <td>@row.name</td>
+                                                <td class="action" align="center">
+                                                    <button onclick="getFunctionsByUserId(@row.UserId);" type="button" class="btn btn-primary btn-sm" title="Phân quyền">
+                                                        <span class="glyphicon glyphicon-user"></span>
+                                                    </button>
+
+                                                </td>
+                                                <td class="action" align="center">
+                                                    <button type="button" class="btn btn-primary btn-sm" title="Xóa User">
+                                                        <span class="glyphicon glyphicon-remove"></span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            }
+                                        </tbody>
+
+                                    </table>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="panel panel-info">
+
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree"> Tổ Chức - Lao Động</a>
+                                </h4>
+                            </div>
+
+                            <div id="collapseThree" class="panel-collapse collapse">
+                                <div class="panel-body">
+                                    <table class="table table-bordered">
+
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th>Tên đăng nhập</th>
+                                                <th>Tên đầy đủ</th>
+                                                <th>Chức vụ</th>
+                                                <th></th>
+                                                <th></th>
+
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            @{ i = 1;}
+                                            @foreach (var row in listUserTCLD)
+                                            {
+                                                i++;
+                                            <tr>
+                                                <td>@i</td>
+                                                <td>@row.Email</td>
+                                                <td>@row.FullName</td>
+                                                <td>@row.name</td>
+                                                <td class="action" align="center">
+                                                    <button onclick="getFunctionsByUserId(@row.UserId);" type="button" class="btn btn-primary btn-sm" title="Phân quyền">
+                                                        <span class="glyphicon glyphicon-user"></span>
+                                                    </button>
+
+                                                </td>
+                                                <td class="action" align="center">
+                                                    <button type="button" class="btn btn-primary btn-sm" title="Xóa User">
+                                                        <span class="glyphicon glyphicon-remove"></span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            }
+                                        </tbody>
+
+                                    </table>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="panel panel-info">
+
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    <a data-toggle="collapse" data-parent="#accordion" href="#collapseFour"> Kế Hoạch Vật Tư
+                                    </a>
+                                </h4>
+                            </div>
+
+                            <div id="collapseFour" class="panel-collapse collapse in">
+                                <div class="panel-body">
+                                    <table class="table table-bordered">
+
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th>Tên đăng nhập</th>
+                                                <th>Tên đầy đủ</th>
+                                                <th>Chức vụ</th>
+                                                <th></th>
+                                                <th></th>
+
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            @{ i = 1;}
+                                            @foreach (var row in listUserKHVT)
+                                            {
+                                                i++;
+                                            <tr>
+                                                <td>@i</td>
+                                                <td>@row.Email</td>
+                                                <td>@row.FullName</td>
+                                                <td>@row.name</td>
+                                                <td class="action" align="center">
+                                                    <button onclick="getFunctionsByUserId(@row.UserId);" type="button" class="btn btn-primary btn-sm" title="Phân quyền">
+                                                        <span class="glyphicon glyphicon-user"></span>
+                                                    </button>
+
+                                                </td>
+                                                <td class="action" align="center">
+                                                    <button onclick="LockUser(@row.UserId)" type="button" class="btn btn-primary btn-sm" title="Xóa User">
+                                                        <span class="glyphicon glyphicon-remove"></span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            }
+                                        </tbody>
+
+                                    </table>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="panel panel-info">
+
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    <a data-toggle="collapse" data-parent="#accordion" href="#collapseFive"> Tài Chính Kế Toán
+                                    </a>
+                                </h4>
+                            </div>
+
+                            <div id="collapseFive" class="panel-collapse collapse">
+                                <div class="panel-body">
+                                    <table class="table table-bordered">
+
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th>Tên đăng nhập</th>
+                                                <th>Tên đầy đủ</th>
+                                                <th>Chức vụ</th>
+                                                <th></th>
+                                                <th></th>
+
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            @{ i = 1;}
+                                            @foreach (var row in listUserTCKT)
+                                            {
+                                                i++;
+                                            <tr>
+                                                <td>@i</td>
+                                                <td>@row.Email</td>
+                                                <td>@row.FullName</td>
+                                                <td>@row.name</td>
+                                                <td class="action" align="center">
+                                                    <button onclick="getFunctionsByUserId(@row.UserId);" type="button" class="btn btn-primary btn-sm" title="Phân quyền">
+                                                        <span class="glyphicon glyphicon-user"></span>
+                                                    </button>
+
+                                                </td>
+                                                <td class="action" align="center">
+                                                    <button type="button" class="btn btn-primary btn-sm" title="Xóa User">
+                                                        <span class="glyphicon glyphicon-remove"></span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            }
+                                        </tbody>
+
+                                    </table>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="panel panel-info">
+
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    <a data-toggle="collapse" data-parent="#accordion" href="#collapseSix"> Kĩ Thuật An Toàn
+                                    </a>
+                                </h4>
+                            </div>
+
+                            <div id="collapseSix" class="panel-collapse collapse">
+                                <div class="panel-body">
+                                    <table class="table table-bordered">
+
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th>Tên đăng nhập</th>
+                                                <th>Tên đầy đủ</th>
+                                                <th>Chức vụ</th>
+                                                <th></th>
+                                                <th></th>
+
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            @{ i = 1;}
+                                            @foreach (var row in listUserKTAT)
+                                            {
+                                                i++;
+                                            <tr>
+                                                <td>@i</td>
+                                                <td>@row.Email</td>
+                                                <td>@row.FullName</td>
+                                                <td>@row.name</td>
+                                                <td class="action" align="center">
+                                                    <button onclick="getFunctionsByUserId(@row.UserId);" type="button" class="btn btn-primary btn-sm" title="Phân quyền">
+                                                        <span class="glyphicon glyphicon-user"></span>
+                                                    </button>
+
+                                                </td>
+                                                <td class="action" align="center">
+                                                    <button type="button" class="btn btn-primary btn-sm" title="Xóa User">
+                                                        <span class="glyphicon glyphicon-remove"></span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            }
+                                        </tbody>
+
+                                    </table>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="panel panel-info">
+
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    <a data-toggle="collapse" data-parent="#accordion" href="#collapseSeven"> Phân Xưởng Vận Hành 1
+                                    </a>
+                                </h4>
+                            </div>
+
+                            <div id="collapseSeven" class="panel-collapse collapse">
+                                <div class="panel-body">
+                                    <table class="table table-bordered">
+
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th>Tên đăng nhập</th>
+                                                <th>Tên đầy đủ</th>
+                                                <th>Chức vụ</th>
+                                                <th></th>
+                                                <th></th>
+
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            @{ i = 1;}
+                                            @foreach (var row in listUserVH1)
+                                            {
+                                                i++;
+                                            <tr>
+                                                <td>@i</td>
+                                                <td>@row.Email</td>
+                                                <td>@row.FullName</td>
+                                                <td>@row.name</td>
+                                                <td class="action" align="center">
+                                                    <button onclick="getFunctionsByUserId(@row.UserId);" type="button" class="btn btn-primary btn-sm" title="Phân quyền">
+                                                        <span class="glyphicon glyphicon-user"></span>
+                                                    </button>
+
+                                                </td>
+                                                <td class="action" align="center">
+                                                    <button type="button" class="btn btn-primary btn-sm" title="Xóa User">
+                                                        <span class="glyphicon glyphicon-remove"></span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            }
+                                        </tbody>
+
+                                    </table>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="panel panel-info">
+
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    <a data-toggle="collapse" data-parent="#accordion" href="#collapseEight"> Phân Xưởng Vận Hành 2
+                                    </a>
+                                </h4>
+                            </div>
+
+                            <div id="collapseEight" class="panel-collapse collapse">
+                                <div class="panel-body">
+                                    <table class="table table-bordered">
+
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th>Tên đăng nhập</th>
+                                                <th>Tên đầy đủ</th>
+                                                <th>Chức vụ</th>
+                                                <th></th>
+                                                <th></th>
+
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            @{ i = 1;}
+                                            @foreach (var row in listUserVH2)
+                                            {
+                                                i++;
+                                            <tr>
+                                                <td>@i</td>
+                                                <td>@row.Email</td>
+                                                <td>@row.FullName</td>
+                                                <td>@row.name</td>
+                                                <td class="action" align="center">
+                                                    <button onclick="getFunctionsByUserId(@row.UserId);" type="button" class="btn btn-primary btn-sm" title="Phân quyền">
+                                                        <span class="glyphicon glyphicon-user"></span>
+                                                    </button>
+
+                                                </td>
+                                                <td class="action" align="center">
+                                                    <button type="button" class="btn btn-primary btn-sm" title="Xóa User">
+                                                        <span class="glyphicon glyphicon-remove"></span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            }
+                                        </tbody>
+
+                                    </table>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="panel panel-info">
+
+                            <div class="panel-heading">
+                                <h4 class="panel-title">
+                                    <a data-toggle="collapse" data-parent="#accordion" href="#collapseNine"> Phân Xưởng Hóa
+                                    </a>
+                                </h4>
+                            </div>
+
+                            <div id="collapseNine" class="panel-collapse collapse">
+                                <div class="panel-body">
+                                    <table class="table table-bordered">
+
+                                        <thead>
+                                            <tr>
+                                                <th></th>
+                                                <th>Tên đăng nhập</th>
+                                                <th>Tên đầy đủ</th>
+                                                <th>Chức vụ</th>
+                                                <th></th>
+                                                <th></th>
+
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            @{ i = 1;}
+                                            @foreach (var row in listUserPXH)
+                                            {
+                                                i++;
+                                            <tr>
+                                                <td>@i</td>
+                                                <td>@row.Email</td>
+                                                <td>@row.FullName</td>
+                                                <td>@row.name</td>
+                                                <td class="action" align="center">
+                                                    <button onclick="getFunctionsByUserId(@row.UserId);" type="button" class="btn btn-primary btn-sm" title="Phân quyền">
+                                                        <span class="glyphicon glyphicon-user"></span>
+                                                    </button>
+
+                                                </td>
+                                                <td class="action" align="center">
+                                                    <button type="button" class="btn btn-primary btn-sm" title="Xóa User">
+                                                        <span class="glyphicon glyphicon-remove"></span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            }
+                                        </tbody>
+
+                                    </table>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class = "modal fade" id = "frm-assign-right" tabindex = "-1" role = "dialog" 
+   aria-labelledby = "myModalLabel" aria-hidden = "true">
+   
+   <div class = "modal-dialog">
+      <div class = "modal-content">
+         
+         <div class = "modal-header">
+            <button style="width:auto;" type = "button" class = "close" data-dismiss = "modal" aria-hidden = "true">
+                  &times;
+            </button>
+            
+            <h4 class = "modal-title" id = "myModalLabel">
+               Phân Quyền Người Dùng
+            </h4>
+         </div>
+         <form method="post">
+
+         @AntiForgery.GetHtml()
+         <div class = "modal-body">
+             
+         </div>
+         
+         <div class = "modal-footer">
+             <button type="submit" style="width:auto;" type = "button" class = "btn btn-primary" id="btn-submit">
+               OK
+            </button>
+            <button style="width:auto;" type = "button" class = "btn btn-primary" data-dismiss = "modal">
+               Close
+            </button>
+              
+         </div>
+         </form>
+      </div><!-- /.modal-content -->
+   </div><!-- /.modal-dialog -->
+  
+</div><!-- /.modal -->
+
+<script>
+    function getFunctionsByUserId(userID) {
+        $.post('GetFunctionsByUser.cshtml', { userID: userID }, function (data) {
+            $('.modal-body').html(data);
+            $('#frm-assign-right').modal();
+        })
+    }
+
+    function LockUser(userID) {
+        $.post('LockUser.cshtml', { userID: userID }, function (data) {
+            $('.modal-body').html('Xóa User Thành Công');
+            $('#frm-assign-right').modal();
+
+        })
+    }
+</script>

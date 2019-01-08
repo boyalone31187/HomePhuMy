@@ -1,0 +1,61 @@
+﻿@{
+    Layout = "_SiteLayoutGenco3.cshtml";
+    System.Collections.Generic.IEnumerable<dynamic> klgb;
+    if (WebCache.Get("klgb") == null)
+    {
+        var eoffice_phumy_db = Database.Open("EOFFICE_PHUMY");
+        klgb = eoffice_phumy_db.Query(@"SELECT trichyeu,sokyhieu,cngayvb,d.linkfile
+                                        FROM vbdi_vanbandi v 
+                                        INNER JOIN vbdi_dinhkem d on v.idvb = d.mavb 
+                                        WHERE idloai = '1535' 
+                                        ORDER BY ngayvb DESC");
+
+        WebCache.Set("klgb", klgb, 60 * 24, false);
+    }
+    else
+    {
+        klgb = WebCache.Get("klgb");
+    }
+    var grid = new WebGrid(
+            klgb,
+            canPage: true,
+            rowsPerPage: 30,
+            canSort: false
+        );
+}
+<style>
+    table thead tr th {
+        font-weight: bold;
+    }
+</style>
+<div class="row" style="margin-top: 10px;">
+    <div class="col-md-12">
+        <div class="panel panel-defaul" style="margin-bottom: 0; text-align: center; box-shadow: none; border-color: none; background-color: transparent; border: none;">
+            <div class="panel-heading" style="background: none; padding: 0; border: 0;">
+                <h3 class="panel-title">
+                    <button type="button" class="btn btn-info ribbon">KẾT LUẬN GIAO BAN</button>
+                </h3>
+            </div>
+
+            <div class="panel-body" style="padding: 0; padding-top: 10px;">
+                @grid.GetHtml(
+            tableStyle: "table table-bordered",
+             columns: grid.Columns(
+                grid.Column(header: "STT", format: item => item.WebGrid.Rows.IndexOf(item) + 1),
+                grid.Column(columnName: "trichyeu", header: "Tên văn bản"),
+                grid.Column(columnName: "sokyhieu", header: "Số ký hiệu"),
+                grid.Column(columnName: "cngayvb", header: "Ngày văn bản"),
+                grid.Column(columnName: "linkfile", header: "Tải file", format: @<a href="http://eoffice.phumytpc.com/congvan/@item.linkfile" title="Tải file nội dung" target="_blank">
+                    <img src="~/Images/taiphanmem.gif" border="0"></a>)
+
+            )
+        )
+
+            </div>
+        </div>
+
+
+    </div>
+</div>
+
+<link href="~/CSS/bootstrap.table.css" type="text/css" rel="stylesheet" />

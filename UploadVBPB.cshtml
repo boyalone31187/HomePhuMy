@@ -1,0 +1,99 @@
+﻿@{
+    if (!Roles.IsUserInRole("admin") && !Roles.IsUserInRole("post_vhdn"))
+    {
+        AppState["message_error"] = "Bạn không có quyền để sử dụng chức năng này";
+        Response.Redirect("~/Error");
+    }
+        Layout = "~/_ScheduleLayout.cshtml";
+        Page.Title = "VBPB";
+        var db = Database.Open("HOME_PHUMY");
+        string title = "";
+        string notification = "";
+        string id = "";
+        string query = "";
+        string btnName = "Upload";
+        string headerTitle = "Upload Văn Bản Phố Biến";
+        if (!string.IsNullOrEmpty(UrlData[0])){
+            id = UrlData[0];
+            query = string.Format(@"SELECT * FROM VanBanPhoBien WHERE id={0}",id);
+            var rs = db.QuerySingle(query);
+            title = rs["title"];
+            btnName = "Cập nhật";
+            headerTitle = "Chỉnh sửa Văn Bản Phố Biến";
+        }
+        
+        if (IsPost)
+        {
+            id =  Request.Form["id"];
+            var fileName = "";
+            var uploadedFile = Request.Files[0];
+            title = Request.Form["title"];
+            if (uploadedFile.ContentLength > 0)
+            {
+                fileName = Path.GetFileName(uploadedFile.FileName);
+                var fileSavePath = Server.MapPath("~/UploadedFiles/VBPB/" +
+                  fileName);
+                uploadedFile.SaveAs(fileSavePath);
+            }
+            var date = DateTime.Now;
+            if(string.IsNullOrEmpty(id)){
+                
+
+                query = @"INSERT INTO VanBanPhoBien(title,date,filename) VALUES(@0,@1,@2)";
+                db.Execute(query, title, date, fileName);
+                notification = "Upload thành công!";
+            }else{
+                if(fileName == ""){
+                    query = @"UPDATE VanBanPhoBien SET title=@0 WHERE id=@1";
+                    db.Execute(query, title, id);
+                }else{
+                    query = @"UPDATE VanBanPhoBien SET title=@0, filename=@1 WHERE id=@2";
+                    db.Execute(query, title, fileName, id);
+                }
+                Response.Redirect("~/vanbanphobien");
+            }
+        }
+
+    }
+<link href="~/CSS/RegisterSchedule.css" rel="stylesheet" />
+<div class="container">
+
+    <h1 class="thick-heading">
+        ||@headerTitle||
+    </h1>
+
+    <!-- First Featurette -->
+    <div id="about">
+        <!------------------------code---------------start---------------->
+        <div class="row">
+            <form role="form" method="post"  enctype="multipart/form-data">
+                <div class="col-lg-10 col-lg-offset-1 bg-frm-register-schedule">
+                    @if (notification != "")
+                    {
+                    <div class="form-group">
+                        <span class = "label label-danger" style="font-size:14px;">@notification</span>
+                    </div>
+                    }
+                    <div class="form-group">
+                        <label>Tiêu đề</label>
+                        <input class="form-control" name="title" value="@title">
+                    </div>
+                    <div class="form-group">
+                        <label>Upload file</label>
+                        <input type="file" name="file" /><br />
+                        
+                    </div>
+                    <input type="hidden" name="id" value="@id" />
+                    <input type="submit" name="submit" id="submit" value="@btnName" class="btn btn-danger pull-right">
+                </div>
+            </form>
+
+        </div>
+
+
+        <!----Code------end----------------------------------->
+
+    </div>
+</div>
+
+

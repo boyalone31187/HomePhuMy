@@ -1,0 +1,11 @@
+﻿@{
+    if (Roles.IsUserInRole("vanthu") || Roles.IsUserInRole("admin"))
+    {
+        var db = Database.Open("HOME_PHUMY");
+        int id = Convert.ToInt32(Request["id"]);
+
+        string deleteCommand = "DELETE FROM CongViecTuan WHERE id = " + id;
+        db.Execute(deleteCommand);
+    }
+    
+}

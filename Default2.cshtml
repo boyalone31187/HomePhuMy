@@ -1,0 +1,791 @@
+﻿
+<script>
+    var pm1 = [], pm4 = [], pm2 = [], date = []/*, total = []*/;
+
+</script>
+<style>
+    .btn-info {
+        background-color: #1877c5 !important;
+        border-color: #1877c5 !important;
+    }
+    table tr th {
+        background-color: #d1d1d1;
+    }
+
+
+</style>
+<link rel="stylesheet" type="text/css" href="CSS/bootstrap.tab.css" media="all">
+@{
+    //WebCache.Remove("CONTRACT_MANAGEMENT_MAIL_ALERT");
+    //Response.Write(DateTime.Now.Date.ToShortDateString()); Response.End();
+    //Kiểm tra và chạy gửi mail cảnh báo cho chương trình quản lý hợp đồng đấu thầu
+    
+    // nếu ngày hôm nay đã kiểm tra và cảnh báo mail rồi
+    var database = Database.Open("CONTRACT_MANAGEMENT");
+    string ShortDateString =  DateTime.Now.Date.ToShortDateString();
+    if (WebCache.Get("CONTRACT_MANAGEMENT_MAIL_ALERT") != null && WebCache.Get("CONTRACT_MANAGEMENT_MAIL_ALERT") == ShortDateString)
+    {
+        //Response.Write("Found the data in the cache");
+        goto CHECKED_AND_SENT_MAIL_ALERT; 
+    }else{
+        var config = database.Query("SELECT * FROM Config WHERE Date = '" + DateTime.Now.Date.ToShortDateString() + "'");
+        if (config.Count() == 1)
+        {
+            //Response.Write("Found the data in DB");
+            WebCache.Set("CONTRACT_MANAGEMENT_MAIL_ALERT", ShortDateString, 1440, false);
+            goto CHECKED_AND_SENT_MAIL_ALERT;
+        }
+        
+    }
+    //Response.Write("Did not found the data in the cache");
+    WebMail.From = "hddt@phumytpc.genco3.vn";
+    
+    
+    
+    //Response.Write(DateTime.Now.Day); Response.End();
+
+    //cảnh báo khi còn 15 ngày nữa là hết hạn thư bảo lãnh
+    string query = "SELECT TenHopDong,SoHD,NgayHetHieuLuc,NVPhuTrach,EmailNVPhuTrach FROM Contract WHERE NgayHetHieuLuc > GETDATE() AND  DATEDIFF(day, GETDATE() ,NgayHetHieuLuc) < 15 ";
+    var contracts = database.Query(query);
+    string soHD = "";
+    string tenHD = "";
+    string ngayHetHieuLuc = "";
+    string ngayQuyDinhGiaoHang = "";
+    string EmailNVPhuTrach = "thuydt@phumytpc.genco3.vn,thanhnt@phumytpc.genco3.vn";
+    string tinhTrang = "";
+    string html = "";
+    //Response.Write(contracts.Count()); Response.End();
+    if (contracts.Count() > 0)
+    {
+        html = @"<table style='width: 100%;max-width: 100%;margin-bottom: 20px;border: 1px solid #ddd;'>
+
+                                <caption style='padding-top: 8px;padding-bottom: 8px;color: #fff;text-align: left;'><h3>Danh sách các HĐ sắp hết hạn thư bão lãnh</h3></caption>
+                                <tbody style='border-top: 2px solid #ddd;'>
+                                    <tr style='background-color: rgb(23, 128, 208);'>
+                                        <th style='color:#fff;padding: 8px;'>Số HĐ</th>
+                                        <th style='color:#fff;padding: 8px;'>Tên HĐ</th>
+                                        <th style='color:#fff;padding: 8px;'>Ngày hết hiệu lực</th>
+                                    </tr>";
+        foreach (var row in contracts)
+        {
+            soHD = row["SoHD"];
+            tenHD = row["TenHopDong"];
+            ngayHetHieuLuc = row["NgayHetHieuLuc"].ToString("dd/MM/yyyy");
+            if (row["EmailNVPhuTrach"] != "thuydt@phumytpc.genco3.vn")
+            {
+                EmailNVPhuTrach += "," + row["EmailNVPhuTrach"];
+            }
+
+            html += @"<tr>
+
+                                        <td style='border: 1px solid #ddd;padding: 8px;'>" + @soHD + @"</td>
+                                        <td style='border: 1px solid #ddd;padding: 8px;'>" + @tenHD + @"</td>
+                                        <td style='border: 1px solid #ddd;padding: 8px;'>" + @ngayHetHieuLuc + @"</td>
+                                    </tr>";
+        }
+
+        html += "</tbody> </table>";
+
+        WebMail.Send(
+               to: EmailNVPhuTrach,
+               subject: "BẢO ĐẢM THHĐ HẾT HẠN",
+               body: html
+        );
+    }
+    //Response.Write(NVPhuTrach); Response.End();
+   
+
+    /* Gửi Mail cảnh báo các TH sau: 
+     * còn 5 ngày nữa là giao hàng
+     * đến ngày giao hàng
+     * sau 10 ngày tính từ ngay giao hàng
+     */
+    EmailNVPhuTrach = "thuydt@phumytpc.genco3.vn,thanhnt@phumytpc.genco3.vn";
+    query = @"SELECT N'Còn 5 ngày nữa giao hàng' as 'TinhTrang', TenHopDong,SoHD,NgayQuyDinhGiaoHang,NVPhuTrach,EmailNVPhuTrach                  
+                FROM Contract 
+                WHERE  DATEDIFF(day , GETDATE() , NgayQuyDinhGiaoHang) = 5
+                UNION
+                SELECT  N'Đến ngày giao hàng' as 'TinhTrang', TenHopDong,SoHD,NgayQuyDinhGiaoHang,NVPhuTrach,EmailNVPhuTrach FROM Contract WHERE CONVERT(date,NgayQuyDinhGiaoHang) =  CONVERT(DATE,getdate())
+                UNION
+                SELECT  N'Đã giao hàng được 10 ngày' as 'TinhTrang',TenHopDong,SoHD,NgayQuyDinhGiaoHang,NVPhuTrach,EmailNVPhuTrach FROM Contract WHERE  DATEDIFF(day ,  NgayQuyDinhGiaoHang,  GETDATE()) = 10";
+    contracts = database.Query(query);
+    if (contracts.Count() > 0)
+    {
+        html = @"<table style='width: 100%;max-width: 100%;margin-bottom: 20px;border: 1px solid #ddd;'>
+                    <tbody style='border-top: 2px solid #ddd;'>
+                        <tr style='background-color: rgb(23, 128, 208);'>
+                            <th style='color:#fff;padding: 8px;'>Số HĐ</th>
+                            <th style='color:#fff;padding: 8px;'>Tên HĐ</th>
+                            <th style='color:#fff;padding: 8px;'>Ngày giao hàng</th>
+                            <th style='color:#fff;padding: 8px;'>Tình trạng</th>
+                        </tr>";
+        foreach (var row in contracts)
+        {
+            soHD = row["SoHD"];
+            tenHD = row["TenHopDong"];
+            ngayQuyDinhGiaoHang = row["NgayQuyDinhGiaoHang"].ToString("dd/MM/yyyy");
+            tinhTrang = row["TinhTrang"];
+            if (row["EmailNVPhuTrach"] != "thuydt@phumytpc.genco3.vn")
+            {
+                EmailNVPhuTrach += "," + row["EmailNVPhuTrach"];
+            }
+
+            html += @"<tr>
+                        <td style='border: 1px solid #ddd;padding: 8px;'>" + @soHD + @"</td>
+                        <td style='border: 1px solid #ddd;padding: 8px;'>" + @tenHD + @"</td>
+                        <td style='border: 1px solid #ddd;padding: 8px;'>" + @ngayQuyDinhGiaoHang + @"</td>
+                        <td style='border: 1px solid #ddd;padding: 8px;'>" + tinhTrang + @"</td>
+                    </tr>";
+        }
+
+        html += "</tbody> </table>";
+
+        //Response.Write(EmailNVPhuTrach); Response.End();
+
+        WebMail.Send(
+              to: EmailNVPhuTrach,
+              subject: "Vv GIAO HÀNG CỦA NHÀ THẦU",
+              body: html
+        );
+        
+        //INSERT INTO CONFIF TABLE , NOTE THAT TODAY SENT MAIL NOTIFICATION
+
+        database.Execute(@"INSERT INTO [dbo].[Config] ([Date]) VALUES ('" + ShortDateString + "')");
+        WebCache.Set("CONTRACT_MANAGEMENT_MAIL_ALERT", ShortDateString, 1440, false);
+        
+    }
+   
+  
+
+    
+    CHECKED_AND_SENT_MAIL_ALERT:
+
+    
+    Layout = "~/_SiteLayoutGenco3.cshtml";
+    Page.Title = "Home Page";
+
+    DateTime date = DateTime.Now.AddDays(-1);
+    //Response.Write(date.ToString("yyyy-MM-dd")); Response.End();
+    var day = date.Day;
+    var month = date.Month;
+    var year = date.Year;
+    
+    var db = Database.Open("QLTHSL_TTD");
+    var db_homephumy = Database.Open("HOME_PHUMY");
+    var db_QLKT_SXD = Database.Open("QLKT_SXD");
+
+    string selectCommand = @"SELECT 
+                            CASE WHEN EMF IS NULL THEN 0 ELSE EMF END AS EMF,day,PLANTID,
+                            CASE WHEN EMF_K IS NULL THEN 0 ELSE EMF_K END AS EMF_K, 
+                            CASE WHEN EMF_DH IS NULL THEN 0 ELSE EMF_DH END AS EMF_DH, 
+                            CASE WHEN EMF_DO IS NULL THEN 0 ELSE EMF_DO END AS EMF_DO 
+                            FROM BSX_VH_PLANT_DAY  
+                            WHERE (PLANTID='P03001' OR PLANTID='P03002' OR PLANTID='P03003') 
+                            AND day(day)='" + day + "' and month(day)='" + month + "' and year(day)='" + year + "' ";
+
+    var rs = db_QLKT_SXD.Query(selectCommand);
+    
+    //Tong San Luong Dien Phat Trong Ngay c
+    decimal tongSLDTrongNgay = 0;
+    decimal tongSLDPM1 = 0;
+    decimal tongSLDPM21 = 0;
+    decimal tongSLDPM4 = 0;
+
+    //Sản lượng vận hành khí Trong Ngay
+    decimal SLKPM1 = 0;
+    decimal SLKPM21 = 0;
+    decimal SLKPM4 = 0;
+    decimal tongSLKTrongNgay = 0;
+
+    //Sản lượng vận hành dau
+    decimal SLDPM1 = 0;
+    decimal SLDPM21 = 0;
+    decimal SLDPM4 = 0;
+    decimal tongSLDauTrongNgay = 0;
+    
+    //Sản lượng vận hành duoi hoi
+    decimal SLDHPM1 = 0;
+    decimal SLDHPM21 = 0;
+    decimal SLDHPM4 = 0;
+    decimal tongSLDHTrongNgay = 0;
+    
+    
+    if(rs.Count() > 2){
+        tongSLDPM1 = rs.ElementAt(0).EMF * 1000;
+        tongSLDPM21 = rs.ElementAt(1).EMF * 1000;
+        tongSLDPM4 = rs.ElementAt(2).EMF * 1000;
+        tongSLDTrongNgay = tongSLDPM1 + tongSLDPM21 + tongSLDPM4;
+
+      
+        
+        SLKPM1 = rs.ElementAt(0).EMF_K * 1000;
+        SLKPM21 = rs.ElementAt(1).EMF_K * 1000;
+        SLKPM4 = rs.ElementAt(2).EMF_K * 1000;
+        tongSLKTrongNgay = SLKPM1 + SLKPM21 + SLKPM4;
+        
+        SLDPM1 = rs.ElementAt(0).EMF_DO * 1000;
+        SLDPM21 = rs.ElementAt(1).EMF_DO * 1000;
+        SLDPM4 = rs.ElementAt(2).EMF_DO * 1000;
+        tongSLDauTrongNgay = SLDPM1 + SLDPM21 + SLDPM4;
+
+        SLDHPM1 = rs.ElementAt(0).EMF_DH * 1000;
+        SLDHPM21 = rs.ElementAt(1).EMF_DH * 1000;
+        SLDHPM4 = rs.ElementAt(2).EMF_DH * 1000;
+        tongSLDHTrongNgay = SLDHPM1 + SLDHPM21 + SLDHPM4;
+    }
+
+
+    //San Luong Dien Theo Ke Hoach Tung Nha May
+    selectCommand = @"SELECT cn,PLANID 
+                    FROM BSX_KH_PLANT_SX_NAM  
+                    WHERE (PLANID='P03001' OR PLANID='P03002' OR PLANID='P03003') 
+                    AND paramid='2401' AND nam='" + year + "'";
+
+
+    rs = db_QLKT_SXD.Query(selectCommand);
+
+    //Tổng SLĐ Theo Kế Hoạch được giao của PM1
+    decimal SLDKHPM1 = rs.ElementAt(0).cn * 1000;
+
+    //Tổng SLĐ Theo Kế Hoạch được giao của PM2.1
+    decimal SLDKHPM21 = rs.ElementAt(1).cn * 1000;
+
+    //Tổng SLĐ Theo Kế Hoạch được giao của PM4
+    decimal SLDKHPM4 = rs.ElementAt(2).cn * 1000;
+
+    //Tổng SLĐ Theo Kế Hoạch được giao của cả nhà máy
+    decimal TongSLDTheoKH = SLDKHPM1 + SLDKHPM21 + SLDKHPM4;
+    WebCache.Set("TongSLDTheoKH", TongSLDTheoKH);
+
+    //lay tong san luong dien cua cac nha may tinh tu dau nam den hien tai
+    selectCommand = @"SELECT SUM(EMF) as total
+                    FROM BSX_VH_PLANT_DAY  
+                    WHERE DAY >= '" + year + "-01-01'";
+
+    rs = db_QLKT_SXD.Query(selectCommand);
+    decimal TongSLDTinhTuDauNamDenNay = rs.ElementAt(0).total * 1000 ;
+    string TyLeDatDuocTheoKeHoach = (TongSLDTinhTuDauNamDenNay / TongSLDTheoKH).ToString("P");
+
+
+    //lấy tổng sản lượng điện của từng nhà máy tính từ đầu năm đến nay 
+    selectCommand = @"SELECT PLANTID, SUM(EMF) as total, SUM(EMF_K) as EMF_K_Total, SUM(EMF_DO) as EMF_DO_Total, SUM(EMF_DH) as EMF_DH_Total
+                    FROM BSX_VH_PLANT_DAY  
+                    WHERE DAY >= '" + year + "-01-01' GROUP BY PLANTID";
+
+    rs = db_QLKT_SXD.Query(selectCommand);
+    
+    decimal TongSLDPM1TinhTuDauNamDenNay = rs.ElementAt(0).total * 1000;
+    string TyLePM1DatDuocTheoKeHoach = (TongSLDPM1TinhTuDauNamDenNay / SLDKHPM1).ToString("P");
+    
+    //Tổng sản lượng điện PM1 vận hành bằng khí tính từ đầu năm đến nay
+    decimal TongSL_PM1_K = rs.ElementAt(0).EMF_K_Total * 1000;
+
+    //Tổng sản lượng điện PM1 vận hành bằng dầu tính từ đầu năm đến nay
+    decimal TongSL_PM1_DO = rs.ElementAt(0).EMF_DO_Total * 1000;
+
+    //Tổng sản lượng điện PM1 vận hành bằng đuôi hơi tính từ đầu năm đến nay
+    decimal TongSL_PM1_DH = rs.ElementAt(0).EMF_DH_Total * 1000;
+    
+    
+    
+    decimal TongSLDPM21TinhTuDauNamDenNay = rs.ElementAt(1).total * 1000;
+    string TyLePM21DatDuocTheoKeHoach = (TongSLDPM21TinhTuDauNamDenNay / SLDKHPM21).ToString("P");
+    
+    //Tổng sản lượng điện PM2.1 vận hành bằng khí tính từ đầu năm đến nay
+    decimal TongSL_PM21_K = rs.ElementAt(1).EMF_K_Total * 1000;
+
+    //Tổng sản lượng điện PM2.1 vận hành bằng dầu tính từ đầu năm đến nay
+    decimal TongSL_PM21_DO = rs.ElementAt(1).EMF_DO_Total == null ? 0 : rs.ElementAt(1).EMF_DO_Total * 1000;
+
+    //Tổng sản lượng điện PM2.1 vận hành bằng đuôi hơi tính từ đầu năm đến nay
+    decimal TongSL_PM21_DH = rs.ElementAt(1).EMF_DH_Total * 1000;
+    
+    decimal TongSLDPM4TinhTuDauNamDenNay = rs.ElementAt(2).total * 1000;
+    string TyLePM4DatDuocTheoKeHoach = (TongSLDPM4TinhTuDauNamDenNay / SLDKHPM4).ToString("P");
+
+    //Tổng sản lượng điện PM4 vận hành bằng khí tính từ đầu năm đến nay
+    decimal TongSL_PM4_K = rs.ElementAt(2).EMF_K_Total * 1000;
+
+    //Tổng sản lượng điện PM4 vận hành bằng dầu tính từ đầu năm đến nay
+    decimal TongSL_PM4_DO = rs.ElementAt(2).EMF_DO_Total * 1000;
+
+    //Tổng sản lượng điện PM4 vận hành bằng đuôi hơi tính từ đầu năm đến nay
+    decimal TongSL_PM4_DH = rs.ElementAt(2).EMF_DH_Total * 1000;
+
+
+
+    selectCommand = @"SELECT PLANTID, TDBD, TDKT, SUKIEN 
+                    FROM BSX_VH_PLANT_DAY_VH  
+                    WHERE  DAY = '" + date.ToString("yyyy-MM-dd") + "'ORDER BY PLANTID ASC   ";
+                    
+    rs = db_QLKT_SXD.Query(selectCommand);
+    var TinhHinhVanHanhPM1 = from c in rs where c.PLANTID == "P03001" select c;
+    var TinhHinhVanHanhPM2 = from c in rs where c.PLANTID == "P03002" select c;
+    var TinhHinhVanHanhPM4 = from c in rs where c.PLANTID == "P03003" select c;
+
+    string tdbd = "";
+    string tdkt = "";
+    string sukien = "";
+    //--------------------------------//
+                                                  
+    
+    
+    //cập nhật sản lượng tổng của các nhà máy tính từ ngày thành lập cty, lấy dữ liệu từ PMIS sang
+    
+    selectCommand = "SELECT TOP 1 * FROM TongSanLuongDien ORDER BY date DESC";
+    var tsld = db_homephumy.QuerySingle(selectCommand);
+    decimal TongSLDPM1TuLucThanhLap = tsld.PM1; //Tong SLD PM1
+    decimal TongSLDPM21TuLucThanhLap = tsld.PM2; //Tong SLD PM2
+    decimal TongSLDPM4TuLucThanhLap = tsld.PM4; //Tong SLD PM4
+
+   
+    
+    
+    
+    
+    DateTime lastDate = tsld.date;
+
+    DateTime currentDate = DateTime.Now;
+
+    //NEU DU LIEU CUA NGAY MOI NHAT(TABLE TONGSANLUONGDIEN) + 1 CHUA BANG NGAY HIEN TAI, TRUY VAN VAO BCN_PHUMY DE LAY DU LIEU 
+    while (lastDate.AddDays(1).ToString("yyyy-MM-dd").Equals(currentDate.ToString("yyyy-MM-dd")) == false)
+    {
+        lastDate = lastDate.AddDays(1);
+        //lay tong san luong cua tung nha may theo lastDate
+
+        selectCommand = @"SELECT 
+                            CASE WHEN EMF IS NULL THEN 0 ELSE EMF END AS EMF,day,PLANTID,
+                            CASE WHEN EMF_K IS NULL THEN 0 ELSE EMF_K END AS EMF_K, 
+                            CASE WHEN EMF_DH IS NULL THEN 0 ELSE EMF_DH END AS EMF_DH, 
+                            CASE WHEN EMF_DO IS NULL THEN 0 ELSE EMF_DO END AS EMF_DO 
+                            FROM BSX_VH_PLANT_DAY  
+                            WHERE (PLANTID='P03001' OR PLANTID='P03002' OR PLANTID='P03003') 
+                            AND DAY ='" + lastDate.ToString("yyyy-MM-dd") + "'";
+        
+        var tsld_bcn_phumy = db_QLKT_SXD.Query(selectCommand);
+        if (tsld_bcn_phumy != null && tsld_bcn_phumy.Count() == 3)
+        {
+            TongSLDPM1TuLucThanhLap += tsld_bcn_phumy.ElementAt(0).EMF;
+            TongSLDPM4TuLucThanhLap += tsld_bcn_phumy.ElementAt(2).EMF;
+            TongSLDPM21TuLucThanhLap += tsld_bcn_phumy.ElementAt(1).EMF;
+        }
+        
+        
+        //INSERT DU LIEU VAO DB HOME_PHUMY - TABLE TONGSANLUONGDIEN 
+
+        String insertCommand = String.Format(@"INSERT INTO [dbo].[TongSanLuongDien]([PM1],[PM4],[PM2],[date])VALUES({0},{1},{2},'{3}')", TongSLDPM1TuLucThanhLap, TongSLDPM4TuLucThanhLap, TongSLDPM21TuLucThanhLap, lastDate);
+        db_homephumy.Execute(insertCommand);
+    }
+    
+    //LUU DU LIEU VAO CACHE DE DUNG CHO BIEU DO
+    WebCache.Set("TongSLDPM1TuLucThanhLap", TongSLDPM1TuLucThanhLap, 60 * 24, false);
+    WebCache.Set("TongSLDPM21TuLucThanhLap", TongSLDPM21TuLucThanhLap, 60 * 24, false);
+    WebCache.Set("TongSLDPM4TuLucThanhLap", TongSLDPM4TuLucThanhLap, 60 * 24, false);
+    
+    
+    
+   
+    
+    
+    
+    
+
+    //GET LAST 10 DAY RECORDS FOR LINE CHART
+
+    var lineChartData = db_QLKT_SXD.Query(@"SELECT PLANTID , EMF, DAY   FROM BSX_VH_PLANT_DAY WHERE DATEDIFF(day,DAY,getdate()) < 11 
+ORDER BY PLANTID , DAY ASC");
+                           
+    foreach (var row in lineChartData)
+    {
+        if (@row.PLANTID == "P03001")
+        {
+            <script>pm1.push(@row.EMF); date.push('@row.DAY.ToString("dd/MM/yyyy")')</script>
+            
+        }
+        else if (@row.PLANTID == "P03003")
+        {
+            <script>pm4.push(@row.EMF)</script>
+        }
+        else if (@row.PLANTID == "P03002")
+        {
+            <script>pm2.push(@row.EMF)</script>
+        }
+       
+    }
+    
+    
+    <!--THÔNG BÁO-->
+    var eoffice_phumy_db = Database.Open("EOFFICE_PHUMY");
+    var result = eoffice_phumy_db.Query(@"SELECT trichyeu,sokyhieu,cngayvb,d.linkfile,idloai,ngaynhap
+                                        FROM vbdi_vanbandi v 
+                                        INNER JOIN vbdi_dinhkem d on v.idvb = d.mavb
+                                        WHERE idloai = '1534' OR idloai = '1535' 
+                                        ORDER BY ngayvb DESC");
+    var notices = from c in result
+                  where c.idloai.Trim() == "1534"
+                  select c;
+
+    //KET LUAN GIAO BAN
+    var klgb = from c in result
+               where c.idloai.Trim() == "1535"
+               select c;
+               
+    <!--GIÁ BIÊN THỊ TRƯỜNG ĐIỆN-->
+    //var electronicPrices = db.QuerySingle(@"SELECT TOP 1 * FROM SL_GIOTOI_WEBTTD ORDER BY NGAY desc");
+
+    int i = 1;
+
+
+   
+}
+<script type="text/javascript">
+    $(function () {
+        //$('#myModal').modal('show');
+
+        $("a#xemthem").click(function () {
+            $("tfoot#chitiet-dsx").toggle();
+            $("div#san-luong-dien-chart").toggle();
+            $('a#xemthem span').toggleClass('glyphicon-chevron-down glyphicon-chevron-up'); //Adds 'a', removes 'b' and vice versa
+
+        });
+
+        //console.log(total); return;
+        $('#san-luong-dien-chart').highcharts({
+            credits: {
+                enabled: false
+            },
+            title: {
+                text: 'BIỂU ĐỒ SẢN LƯỢNG 10 NGÀY GẦN NHẤT (ĐVT: MWh)',
+                style: {
+                    color: '#4DB200',
+                    fontWeight: 'bold',
+                    fontFamily: 'Verdana'
+                }
+            },
+            subtitle: {
+                text: '',
+                x: -20
+            },
+            xAxis: {
+                categories: date
+            },
+            yAxis: {
+                title: {
+                    text: 'MWh '
+                },
+                plotLines: [{
+                    value: 0,
+                    width: 1,
+                    color: '#808080'
+                }]
+            },
+            tooltip: {
+                valueSuffix: ''
+            },
+            plotOptions: {
+                line: {
+                    dataLabels: {
+                        enabled: true
+                    },
+                    enableMouseTracking: false
+                }
+            },
+            series: [{
+                name: 'Sản lượng PM1',
+                data: pm1
+            }, {
+                name: 'Sản lượng PM2.1 & 2.1MR',
+                data: pm2
+            }, {
+                name: 'Sản lượng PM4',
+                data: pm4
+            }/*,{
+                name: 'Sản lượng tổng các NMĐ Phú Mỹ',
+                data: total
+            }*/]
+        });
+
+    });
+</script>
+<div style="height:10px;"></div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-defaul" style="margin-bottom:0;text-align:center;box-shadow: none;border-color: none; background-color: transparent; border: none;">
+                    <div class="panel-heading" style="background: none; padding: 0; border: 0;">
+                        <h3 class="panel-title">
+                            <button type="button" class="btn btn-info ribbon">ĐIỆN SẢN XUẤT</button>
+                        </h3>
+                    </div>
+
+                    <div class="panel-body" style="padding: 0; padding-top: 10px;">
+
+                        <div class="panel-group" id="accordion">
+                            <div class="panel panel-success">
+
+                                <div class="panel-heading">
+                                    <h4 class="panel-title text-left">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" style="color:blue; font-size:14px; font-weight:bold;">
+                                            <span style="font-size:12px;" class="glyphicon glyphicon-asterisk"></span>Sản lượng điện phát ngày @date.ToString("dd/MM/yyyy"):  @tongSLDTrongNgay.ToString("#,##") kWh
+                                        </a>
+                                    </h4>
+                                </div>
+
+                                <div id="collapseOne" class="panel-collapse collapse in">
+                                    <div class="panel-body">
+                                        <table class="table table-bordered cell-border" id="dsx">
+
+                                            <thead>
+                                                <tr>
+                                                    <th><strong>Trong đó</strong>  </th>
+                                                    <th><strong>Phú Mỹ 1</strong></th>
+                                                    <th><strong>Phú Mỹ 4</strong></th>
+                                                    <th><strong>Phú Mỹ 2.1</strong></th>
+                                                    <th><strong>Tổng</strong></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>Sản lượng tổng</td>
+                                                    <td>@tongSLDPM1.ToString("#,##") kWh </td>
+                                                    <td>@tongSLDPM4.ToString("#,##") kWh</td>
+                                                    <td>@tongSLDPM21.ToString("#,##") kWh </td>
+                                                    <td>@tongSLDTrongNgay.ToString("#,##") kWh </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Sản lượng vận hành khí</td>
+                                                    <td>@SLKPM1.ToString("#,##") kWh </td>
+                                                    <td>@SLKPM4.ToString("#,##") kWh </td>
+                                                    <td>@SLKPM21.ToString("#,##") kWh </td>
+                                                    <td>@tongSLKTrongNgay.ToString("#,##") kWh </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Sản lượng vận hành dầu</td>
+                                                    <td>@(SLDPM1 > 0 ? SLDPM1.ToString("#,##") : "0") kWh </td>
+                                                    <td>@(SLDPM4 > 0 ? SLDPM4.ToString("#,##") : "0") kWh </td>
+                                                    <td>@(SLDPM21 > 0 ? SLDPM21.ToString("#,##") : "0") kWh </td>
+                                                    <td>@(tongSLDauTrongNgay > 0 ? tongSLDauTrongNgay.ToString("#,##") : "0")  kWh </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Sản lượng vận hành đuôi hơi</td>
+                                                    <td>@SLDHPM1.ToString("#,##") kWh </td>
+                                                    <td>@SLDHPM4.ToString("#,##") kWh </td>
+                                                    <td>@SLDHPM21.ToString("#,##") kWh </td>
+                                                    <td>@tongSLDHTrongNgay.ToString("#,##") kWh </td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="5">Sản lượng điện kế hoạch BCT giao
+                                          
+
+                                                        năm @year @TongSLDTheoKH.ToString("#,##") kWh
+                                                        <br />
+                                                        <span style="color: #727272;">(Trong đó PM1: @SLDKHPM1.ToString("#,##"); PM4: @SLDKHPM4.ToString("#,##"); PM21: @SLDKHPM21.ToString("#,##"))</span></td>
+                                                </tr>
+
+                                                  <tr>
+                                                    <td colspan="5">Sản lượng điện tính từ lúc thành lập nhà máy đến 24giờ00 ngày @lastDate.ToString("dd/MM/yyyy") đạt: @((TongSLDPM1TuLucThanhLap + TongSLDPM4TuLucThanhLap + TongSLDPM21TuLucThanhLap).ToString("#,##")) MWh
+                                                        <br />
+                                                        <span style="color: #727272;">(Trong đó: PM1: @TongSLDPM1TuLucThanhLap.ToString("#,##"); PM4:  @TongSLDPM4TuLucThanhLap.ToString("#,##"); PM21: @TongSLDPM21TuLucThanhLap.ToString("#,##"))</span>
+                                                    </td>
+                                                </tr>
+
+                                                 <tr>
+                                                    <td colspan="5"> Sản lượng điện tích lũy năm 2018 tính đến 24giờ00 ngày @currentDate.ToString("dd/MM/yyyy"); đạt: @TongSLDTinhTuDauNamDenNay.ToString("#,##") kWh≈@TyLeDatDuocTheoKeHoach (so với KH)
+                                                    </td>
+                                                </tr>
+
+
+                                              
+                                               
+                                            </tbody>
+                                            <tfoot id="chitiet-dsx" style="display: none;">
+                                                <!----------Chi tiet ------------>
+                                                <tr>
+                                                    <th><strong>Trong đó</strong>  </th>
+                                                    <th><strong>Phú Mỹ 1</strong></th>
+                                                    <th><strong>Phú Mỹ 4</strong></th>
+                                                    <th colspan="2"><strong>Phú Mỹ 2.1</strong></th>
+                                                </tr>
+                                                <tr>
+                                                    <td>Sản lượng tổng</td>
+                                                    <td>@TongSLDPM1TinhTuDauNamDenNay.ToString("#,##") kWh
+                                                <br>
+                                                        (≈@TyLePM1DatDuocTheoKeHoach) </td>
+                                                    <td>@TongSLDPM4TinhTuDauNamDenNay.ToString("#,##") kWh
+                                                <br>
+                                                        (≈@TyLePM4DatDuocTheoKeHoach) </td>
+                                                    <td colspan="2">@TongSLDPM21TinhTuDauNamDenNay.ToString("#,##") kWh
+                                                <br>
+                                                        (≈@TyLePM21DatDuocTheoKeHoach) </td>
+
+
+                                                </tr>
+                                                <tr>
+                                                    <td>Sản lượng vận hành khí</td>
+                                                    <td>@( TongSL_PM1_K.ToString("#,##")) kWh </td>
+                                                    <td>@( TongSL_PM4_K.ToString("#,##")) kWh </td>
+                                                    <td colspan="2">@( TongSL_PM21_K.ToString("#,##")) kWh </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Sản lượng vận hành dầu</td>
+                                                    <td>@( TongSL_PM1_DO > 0 ? TongSL_PM1_DO.ToString("#,##") : "0") kWh </td>
+                                                    <td>@( TongSL_PM4_DO > 0 ? TongSL_PM4_DO.ToString("#,##") : "0") kWh  </td>
+                                                    <td colspan="2">@( TongSL_PM21_DO > 0 ? TongSL_PM21_DO.ToString("#,##") : "0") kWh  </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Sản lượng vận hành đuôi hơi</td>
+                                                    <td>@( TongSL_PM1_DH.ToString("#,##")) kWh </td>
+                                                    <td>@( TongSL_PM4_DH.ToString("#,##" ) )   kWh </td>
+                                                    <td colspan="2">@( TongSL_PM21_DH.ToString("#,##")) kWh </td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td class="border-bottom" rowspan="4">Tình hình vận hành trong ngày</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="none-border-left">Phú Mỹ 1</td>
+                                                    <td class="none-border-left" colspan="3">
+                                                    @foreach (var row in TinhHinhVanHanhPM1) {
+                                                        tdbd = row.TDBD;
+                                                        tdkt = row.TDKT;
+                                                        sukien = row.SUKIEN;
+                                                        <div>@tdbd.Substring(11,5) - @tdkt.Substring(11,5) : @sukien</div>
+                                                    }
+                                                    </td>
+                                                </tr>
+                                                 <tr>
+                                                    <td class="none-border-left">Phú Mỹ 2.1</td>
+                                                    <td class="none-border-left" colspan="3">
+                                                    @foreach (var row in TinhHinhVanHanhPM2) {
+                                                        tdbd = row.TDBD;
+                                                        tdkt = row.TDKT;
+                                                        sukien = row.SUKIEN;
+                                                        <div>@tdbd.Substring(11,5) - @tdkt.Substring(11,5) : @sukien</div>
+                                                    }
+                                                    </td>
+                                                </tr>
+                                                 <tr>
+                                                    <td class="none-border-left">Phú Mỹ 4	</td>
+                                                    <td class="none-border-left" colspan="3">
+                                                        @foreach (var row in TinhHinhVanHanhPM4) {
+                                                        tdbd = row.TDBD;
+                                                        tdkt = row.TDKT;
+                                                        sukien = row.SUKIEN;
+                                                        <div>@tdbd.Substring(11,5) - @tdkt.Substring(11,5) : @sukien</div>
+                                                    }
+                                                    </td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                        <div id="san-luong-dien-chart" style="width: 690px; height: 400px; display: none;"></div>
+                                        <a id="xemthem" href="#chitiet-dsx"><span class="glyphicon glyphicon-chevron-down" style="font-size: 20px;"></span></a>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-defaul" style="margin-bottom:0;box-shadow: none;border-color: none; background-color: transparent; border: none;">
+                    <div class="panel-heading" style="background: none; padding: 0; border: 0;">
+                        <h3 class="panel-title">
+                            <button type="button" class="btn btn-info ribbon">THÔNG BÁO</button>
+                        </h3>
+                    </div>
+
+                    <div class="panel-body" style="padding-bottom: 0;">
+                        <table id="thongbao" class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th><strong>STT</strong></th>
+                                    <th><strong>Tên văn bản</strong></th>
+                                    <th><strong>Số ký hiệu</strong></th>
+                                    <th><strong>Ngày văn bản</strong></th>
+                                    <th><strong>Tải file</strong></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var row in notices.Take(5))
+                                {
+                                    <tr>
+                                        <td>@i</td>
+                                        <td>@row.trichyeu 
+                                            @if (row.ngaynhap.AddDays(7) > DateTime.Now) { 
+                                                <img src="~/Images/new.gif" />
+                                            }
+                                        </td>
+                                        <td>@row.sokyhieu</td>
+                                        <td>@row.cngayvb</td>
+                                        <td><a href="http://eoffice.phumytpc.com/congvan/@row.linkfile" title="Tải file nội dung" target="_blank">
+                                            <img src="~/Images/taiphanmem.gif" border="0"></a></td>
+                                    </tr>
+                                            i++;
+                                }
+                                <tr>
+                                    <td class="text-right" colspan="5"><a href="~/Thongbao"><i>Xem tất cả »</i></a></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-defaul" style="margin-bottom:0;box-shadow: none;border-color: none; background-color: transparent; border: none;">
+                    <div class="panel-heading" style="background: none; padding: 0; border: 0;">
+                        <h3 class="panel-title">
+                            <button type="button" class="btn btn-info ribbon">KẾT LUẬN GIAO BAN</button>
+                        </h3>
+                    </div>
+
+                    <div class="panel-body" style="padding-bottom: 0;">
+                        <table id="klgb" class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th><strong>STT</strong></th>
+                                    <th><strong>Tên văn bản</strong></th>
+                                    <th><strong>Số ký hiệu</strong></th>
+                                    <th><strong>Ngày văn bản</strong></th>
+                                    <th><strong>Tải file</strong></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var row in klgb.Take(5))
+                                {
+                                    <tr>
+                                        <td>@i</td>
+                                        <td>@row.trichyeu</td>
+                                        <td>@row.sokyhieu</td>
+                                        <td>@row.cngayvb</td>
+                                        <td><a href="http://eoffice.phumytpc.com/congvan/@row.linkfile" title="Tải file nội dung" target="_blank">
+                                            <img src="~/Images/taiphanmem.gif" border="0"></a></td>
+                                    </tr>
+                                    i++;
+                                }
+                                <tr>
+                                    <td class="text-right" colspan="5"><a href="~/KLGB"><i>Xem tất cả »</i></a></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        @RenderPage("WeekSchedule.cshtml")
+        @RenderPage("TinTucSuKien.cshtml")
+        @RenderPage("ImageGallery.cshtml")
+    </div>
+</div>
+
+

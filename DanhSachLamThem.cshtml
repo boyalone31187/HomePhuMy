@@ -1,0 +1,206 @@
+﻿@{
+    if (!WebSecurity.IsAuthenticated)
+    {
+        Response.Redirect("~/Account/Login?returnUrl=" + Request.Url.LocalPath);
+    }
+    Layout = "~/_SiteLayoutGencoNoSlider.cshtml";
+    Page.Title = "Danh Sach Lam Them";
+    var db = Database.Open("HOME_PHUMY");
+    int userId = WebSecurity.CurrentUserId;
+    int departmentId = Functions.getDepartmentID(userId);
+
+
+
+
+    DateTime firstDay = new DateTime();
+    DateTime lastDay = new DateTime();
+
+    
+    
+    var dayOfWeek = DateTime.Now.DayOfWeek;
+    if (dayOfWeek == System.DayOfWeek.Monday)
+    {
+        firstDay = DateTime.Now;
+        lastDay = DateTime.Now.AddDays(6);
+
+    }
+    else if (dayOfWeek == System.DayOfWeek.Tuesday)
+    {
+        firstDay = DateTime.Now.AddDays(-1);
+        lastDay = DateTime.Now.AddDays(5);
+
+    }
+    else if (dayOfWeek == System.DayOfWeek.Wednesday)
+    {
+        firstDay = DateTime.Now.AddDays(-2);
+        lastDay = DateTime.Now.AddDays(4);
+    }
+    else if (dayOfWeek == System.DayOfWeek.Thursday)
+    {
+        firstDay = DateTime.Now.AddDays(-3);
+        lastDay = DateTime.Now.AddDays(3);
+    }
+    else if (dayOfWeek == System.DayOfWeek.Friday)
+    {
+        firstDay = DateTime.Now.AddDays(-4);
+        lastDay = DateTime.Now.AddDays(2);
+
+    }
+    else if (dayOfWeek == System.DayOfWeek.Saturday)
+    {
+        firstDay = DateTime.Now.AddDays(-5);
+        lastDay = DateTime.Now.AddDays(1);
+    }
+    else if (dayOfWeek == System.DayOfWeek.Sunday)
+    {
+        firstDay = DateTime.Now.AddDays(-6);
+        lastDay = DateTime.Now;
+    }
+
+    string sat = lastDay.AddDays(-1).ToString("dd/MM/yyyy");
+    string sun = lastDay.ToString("dd/MM/yyyy");
+    //GET LIST DEPARTMENT
+    var listDepartment = Functions.getList("Department");
+    
+    string selectCommand = "SELECT * FROM WorkOverTime WHERE createdTime >= '" + firstDay.ToString("yyyy-MM-dd") + "' AND createdTime <= '" + lastDay.ToString("yyyy-MM-dd 23:59:00") + "'";
+    if(Roles.IsUserInRole("admin")){
+    }
+    else if (Roles.IsUserInRole("vanthu") /*|| Roles.IsUserInRole("admin")*/)
+    {
+        selectCommand += " AND status = N'Đã duyệt'";
+    }else{
+        selectCommand += " AND departmentId = " + departmentId;
+    }
+    var rs = db.Query(selectCommand);
+    int i = 1;
+
+}
+<style>
+    table tr th {
+        background-color: #2196F3;
+        color: #fff;
+        font-weight: bold;
+    }
+    .btn-xs {
+        padding-top: 4px;
+        padding-bottom: 4px;
+    }
+    tr.solved td {
+        font-weight: bolder;
+    }
+</style>
+    <div class="row">
+        <div class="col-md-12">
+
+                <table class="table table-bordered">
+                <caption class="text-center">
+                    <h4><button type="button" class="btn btn-danger ribbon" style="text-align:center; width:56%;">DANH SÁCH LÀM THÊM THỨ 7, CHỦ NHẬT</button></h4>
+                    <div class="row">
+                        <div class="col-md-4 pull-right text-right">
+                            <div style="padding-top: 10px;">
+                                <a href="~/dangkylamthem"><strong>Đăng ký</strong></a>
+                                @if (Roles.IsUserInRole("see_all_ot") || Roles.IsUserInRole("admin")) { 
+                                    <a href="~/danhsachlamthemall"><strong> | Xem tất cả</strong></a>
+                                }
+                                
+                            </div>
+                        </div>
+                    </div>
+                </caption>
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Họ và tên</th>
+                        <th>Thời gian</th>
+                        <th>Số giờ làm</th>
+                        <th>Tình trạng</th>
+                        <th class="@(Roles.IsUserInRole("approve_ot") || Roles.IsUserInRole("admin") ? "" : "hidden")">Phê duyệt</th>
+                        <th class="@(Roles.IsUserInRole("approve_ot") || Roles.IsUserInRole("admin") ? "" : "hidden")">Sửa</th>
+                        <th class="@(Roles.IsUserInRole("approve_ot") || Roles.IsUserInRole("admin") ? "" : "hidden")">Xóa</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var row in rs)
+                {
+                    string workTime = "";
+                    string workDate = "";
+                    bool visible = Roles.IsUserInRole("approve_ot") || Roles.IsUserInRole("admin") || row.status == "Chưa duyệt" && Roles.IsUserInRole("booked");
+                    if (row.sat == "1")
+                    {
+                        workTime += row.hours1 + " tiếng </br>";
+                        workDate += "- Thứ 7, " + sat + " </br>";
+                    }
+                    if (row.sun == "1")
+                    {
+                        workTime += row.hours2 + " tiếng";
+                        workDate += "- Chủ nhật, " + sun + "</br>";
+                    }
+                    <tr>
+                        <td>@i</td>
+                        <td>@row.tencn</td>
+                        <td>@Html.Raw(workDate) </td>
+                        <td>@Html.Raw(workTime) </td>
+                        <td>@row.status</td>
+                        <td class="text-center @(Roles.IsUserInRole("approve_ot") || Roles.IsUserInRole("admin") ? "" : "hidden")">
+                        @if (row.status == "Chưa duyệt")
+                        {
+                            <a class="btn btn-primary btn-xs" href="~/approveworkot/@row.id">Duyệt</a>
+                        }
+                        
+                        </td>
+                        <td class="@(visible ? "" : "hidden")">
+                            <a class="btn btn-primary btn-xs" href="~/dangkylamthem/@row.id"><span class="glyphicon glyphicon-pencil"></span></a>
+                        </td>
+                        <td class="@(visible ? "" : "hidden")">
+                            <a class="btn btn-primary btn-xs" href="~/DeleteOT/@row.id"><span class="glyphicon glyphicon-trash"></span></a>
+                        </td>
+                    </tr>
+                    i++;
+                }
+                    
+                </tbody>
+            </table>
+            
+        </div>
+    </div>
+
+
+
+
+
+
+<script>
+    function deleteWeekJob(me, id) {
+        
+        $.ajax({
+            type: "POST",
+            url: "/DeleteWeekJob.cshtml",
+            data: { id: id },
+            success: function (response) {
+                $(me).closest('tr').remove();
+            }
+        })
+    }
+
+    $(document).ready(function () {
+        $('a.toogleLock').click(function () {
+            var status = $(this).attr('status');
+            var me = $(this);
+            $.ajax({
+                type: "POST",
+                url: "/LockUpdateWeekJob.cshtml",
+                data: { status: status },
+                success: function (response) {
+                    if (status == "1") {
+                        me.html("Khóa cập nhật");
+                        me.attr('status', 0);
+
+                    } else {
+                        me.html("Mở khóa");
+                        me.attr('status', 1);
+                    }
+                }
+            })
+        });
+    });
+</script>
